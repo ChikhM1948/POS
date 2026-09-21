@@ -101,10 +101,17 @@ propre build statique via un serveur local à **port fixe**
 (`http://127.0.0.1:47623`, voir `RENDERER_PORT` dans `apps/desktop/main.ts`) et appelle l'API à
 l'URL figée dans le bundle au moment du build via `NEXT_PUBLIC_API_URL`.
 
-**1. Déployer l'API** quelque part de joignable publiquement (VPS, PaaS...), avec MongoDB Atlas en
-base cloud. Configurez son `.env` :
+**0. Créer le cluster MongoDB Atlas** sur [cloud.mongodb.com](https://cloud.mongodb.com) :
+- Database Access → créer un utilisateur applicatif (distinct de votre login Atlas), mot de passe
+  généré fort.
+- Network Access → autoriser l'IP publique du serveur qui hébergera `apps/api` (éviter `0.0.0.0/0`
+  au-delà de tests jetables).
+- Connect → Drivers → copier l'URI `mongodb+srv://...`, en ajoutant le nom de la base avant les
+  paramètres : `mongodb+srv://<user>:<password>@<cluster>.mongodb.net/pos-dz?retryWrites=true&w=majority`.
+
+**1. Déployer l'API** quelque part de joignable publiquement (VPS, PaaS...). Configurez son `.env` :
 ```bash
-MONGODB_URI=<uri Atlas>
+MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/pos-dz?retryWrites=true&w=majority
 JWT_SECRET=<secret fort, différent du défaut dev>
 CORS_ORIGIN=http://127.0.0.1:47623
 # + le domaine du front web si vous déployez aussi un accès navigateur, séparé par une virgule :
