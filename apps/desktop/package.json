@@ -1,0 +1,49 @@
+{
+  "name": "@pos-dz/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "tsc -p . && electron dist/main.js",
+    "build": "tsc -p . && node scripts/copy-renderer.js && electron-builder",
+    "typecheck": "tsc -p . --noEmit"
+  },
+  "dependencies": {
+    "escpos": "^3.0.0-alpha.6",
+    "escpos-usb": "^3.0.0-alpha.4"
+  },
+  "devDependencies": {
+    "7zip-bin": "^5.2.0",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.0",
+    "typescript": "^5.5.0"
+  },
+  "build": {
+    "appId": "dz.posalgerie.desktop",
+    "productName": "POS Algerie",
+    "electronVersion": "31.7.7",
+    "npmRebuild": false,
+    "files": [
+      "dist/**/*",
+      "renderer/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

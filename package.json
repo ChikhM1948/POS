@@ -1,0 +1,25 @@
+{
+  "name": "pos-dz",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace @pos-dz/api",
+    "dev:web": "npm run dev --workspace @pos-dz/web",
+    "dev:desktop": "NEXT_DEV_URL=${NEXT_DEV_URL:-http://localhost:3000} npm run dev --workspace @pos-dz/desktop",
+    "build:web:export": "BUILD_TARGET=desktop npm run build --workspace @pos-dz/web",
+    "build:desktop:win": "npm run build:web:export && npm run build --workspace @pos-dz/desktop -- --win",
+    "seed": "npm run seed --workspace @pos-dz/api",
+    "typecheck": "npm run typecheck --workspace @pos-dz/api && npm run typecheck --workspace @pos-dz/web && npm run typecheck --workspace @pos-dz/desktop",
+    "db:up": "docker compose up -d mongo",
+    "db:down": "docker compose down",
+    "dev:mongo": "npm run dev:mongo --workspace @pos-dz/api"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "mongodb-memory-server@11.2.0": true
+  }
+}

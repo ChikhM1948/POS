@@ -1,0 +1,103 @@
+'use client';
+
+import { useState } from 'react';
+import type { RevenueByDayPoint } from '@pos-dz/shared';
+
+// Hue "sequential" du skill dataviz — une seule teinte pour une série de magnitude (voir palette.md).
+const SEQUENTIAL_BLUE = '#2a78d6';
+
+const formatDZD = (cents: number) =>
+  new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: 'DZD', maximumFractionDigits: 0 }).format(cents / 100);
+const formatDayLabel = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('fr-DZ', { day: '2-digit', month: 'short' });
+
+interface Props {
+  data: RevenueByDayPoint[];
+}
+
+/** Barres verticales, une seule teinte : pas de légende requise (une seule série — voir marks-and-anatomy.md). */
+export function RevenueBarChart({ data }: Props) {
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  if (data.length === 0) {
+    return <p className="text-sm text-neutral-500">Aucune donnée sur cette période.</p>;
+  }
+
+  const max = Math.max(1, ...data.map((d) => d.revenueCents));
+  const maxIndex = data.reduce((best, d, i) => (d.revenueCents > data[best].revenueCents ? i : best), 0);
+  const showDayLabels = data.length <= 14;
+
+  return (
+    <div>
+      <div className="relative flex h-48 items-end gap-[3px] border-b border-neutral-200 pl-12">
+        <div className="pointer-events-none absolute inset-y-0 left-12 right-0">
+          {[0, 0.5, 1].map((f) => (
+            <div key={f} className="absolute left-0 right-0 border-t border-neutral-100" style={{ bottom: `${f * 100}%` }} />
+          ))}
+        </div>
+        <div className="absolute left-0 top-0 w-11 pr-1 text-right text-[10px] text-neutral-400">{formatDZD(max)}</div>
+        <div className="absolute bottom-0 left-0 w-11 pr-1 text-right text-[10px] text-neutral-400">0</div>
+
+        {data.map((d, i) => (
+          <div
+            key={d.date}
+            className="relative h-full flex-1"
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered((h) => (h === i ? null : h))}
+          >
+            <div
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-t-[4px]"
+              style={{
+                height: `${(d.revenueCents / max) * 100}%`,
+                width: 'min(24px, 100%)',
+                backgroundColor: SEQUENTIAL_BLUE,
+                opacity: hovered === null || hovered === i ? 1 : 0.55,
+              }}
+            />
+            {i === maxIndex && (
+              <span
+                className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-medium text-neutral-700"
+                style={{ bottom: `calc(${(d.revenueCents / max) * 100}% + 4px)` }}
+              >
+                {formatDZD(d.revenueCents)}
+              </span>
+            )}
+            {hovered === i && (
+              <div className="absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-neutral-900 px-2 py-1 text-xs text-white shadow">
+                {formatDayLabel(d.date)} · {formatDZD(d.revenueCents)} · {d.salesCount} vente{d.salesCount > 1 ? 's' : ''}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="mt-1 flex gap-[3px] pl-12 text-[10px] text-neutral-400">
+        {data.map((d) => (
+          <span key={d.date} className="flex-1 text-center">
+            {showDayLabels ? formatDayLabel(d.date) : ''}
+          </span>
+        ))}
+      </div>
+
+      <details className="mt-3">
+        <summary className="cursor-pointer text-sm font-medium text-brand-600 hover:text-brand-700">Voir en tableau</summary>
+        <table className="mt-2 w-full text-sm">
+          <thead className="border-b text-left text-neutral-500">
+            <tr>
+              <th className="py-1">Date</th>
+              <th className="py-1">Ventes</th>
+              <th className="py-1 text-right">Chiffre d'affaires</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((d) => (
+              <tr key={d.date} className="border-b border-neutral-100 last:border-0">
+                <td className="py-1">{formatDayLabel(d.date)}</td>
+                <td className="py-1">{d.salesCount}</td>
+                <td className="py-1 text-right">{formatDZD(d.revenueCents)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
+    </div>
+  );
+}
