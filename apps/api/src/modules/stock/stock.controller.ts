@@ -2,8 +2,8 @@ import { Router, Response } from 'express';
 import type { AuthenticatedRequest } from '../../middleware/auth';
 import { requireRole } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/asyncHandler';
-import { getStockBalances, getMovementHistory, createManualMovement } from './stock.service';
-import type { CreateStockMovementInput } from '@pos-dz/shared';
+import { getStockBalances, getMovementHistory, createManualMovement, createPurchase } from './stock.service';
+import type { CreateStockMovementInput, CreatePurchaseInput } from '@pos-dz/shared';
 
 export const stockRouter = Router();
 
@@ -33,6 +33,23 @@ stockRouter.post(
     }
 
     const movement = await createManualMovement(req.auth!.tenantId, req.body);
+    res.status(201).json({ movement });
+  }),
+);
+
+stockRouter.post(
+  '/purchases',
+  requireRole('store_admin', 'stock_manager', 'super_admin'),
+  asyncHandler(async (req: AuthenticatedRequest & { body: CreatePurchaseInput }, res: Response) => {
+    const { productId, storeId, quantity, unitCostCents, paidCents } = req.body;
+    if (!productId || !storeId || !quantity || quantity <= 0 || typeof unitCostCents !== 'number' || unitCostCents < 0) {
+      return res.status(400).json({ error: 'productId, storeId, quantity (positive) et unitCostCents sont requis.' });
+    }
+    if (typeof paidCents !== 'number' || paidCents < 0) {
+      return res.status(400).json({ error: 'paidCents doit être un montant positif ou nul.' });
+    }
+
+    const movement = await createPurchase(req.auth!.tenantId, req.body);
     res.status(201).json({ movement });
   }),
 );

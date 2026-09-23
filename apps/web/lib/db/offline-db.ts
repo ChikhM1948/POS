@@ -10,9 +10,17 @@ export interface LocalProduct {
   category?: string;
   imageUrl?: string;
   sellingPriceCents: number;
+  costPriceCents: number;
+  minMarginCents?: number;
   taxRate: 19 | 9 | 0;
   unit: string;
   updatedAt: string;
+}
+
+export interface LocalCustomer {
+  id: string; // Mongo _id (string)
+  name: string;
+  phone?: string;
 }
 
 export interface LocalSale {
@@ -59,6 +67,7 @@ export class OfflineDB extends Dexie {
   stockMovements!: Table<LocalStockMovement, string>;
   outbox!: Table<OutboxEntry, number>;
   meta!: Table<SyncMeta, string>;
+  customers!: Table<LocalCustomer, string>;
 
   constructor(deviceId: string) {
     super(`pos-db-${deviceId}`);
@@ -68,6 +77,10 @@ export class OfflineDB extends Dexie {
       stockMovements: 'clientGeneratedId, productId, syncStatus',
       outbox: '++id',
       meta: 'key',
+    });
+    // v2 : clients synchronisés pour la sélection à la caisse lors d'une vente à crédit ("Karna").
+    this.version(2).stores({
+      customers: 'id, name',
     });
   }
 }

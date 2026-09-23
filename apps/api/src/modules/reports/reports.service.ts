@@ -1,6 +1,10 @@
 import { Types } from 'mongoose';
 import { Sale } from '../../models/Sale';
-import type { SalesSummaryDTO, TopProductDTO } from '@pos-dz/shared';
+import { SupplierLedgerEntry } from '../../models/SupplierLedgerEntry';
+import { CustomerLedgerEntry } from '../../models/CustomerLedgerEntry';
+import { Supplier } from '../../models/Supplier';
+import { Customer } from '../../models/Customer';
+import type { SalesSummaryDTO, TopProductDTO, ProfitSummaryDTO, DebtsSummaryDTO, DebtorDTO } from '@pos-dz/shared';
 
 /** Fuseau du marché algérien — les journées commerciales sont regroupées sur cette base, pas UTC. */
 const TIMEZONE = 'Africa/Algiers';
@@ -111,4 +115,87 @@ export async function getTopProducts(tenantId: string, filters: RangeFilters, li
     quantity: r.quantity,
     revenueCents: r.revenueCents,
   }));
+}
+
+/**
+ * Bénéfice = chiffre d'affaires net de TVA moins le coût d'achat figé sur chaque ligne au moment
+ * de la vente (`SaleLine.costPriceCents`, jamais un lookup live vers Product). Les retours de la
+ * période annulent symétriquement le CA et le coût (voir sales.service.createRefund).
+ */
+export async function getProfitSummary(tenantId: string, filters: RangeFilters): Promise<ProfitSummaryDTO> {
+  const saleMatch = { ...baseMatch(tenantId, filters), type: 'sale', status: 'completed' };
+  const refundMatch = { ...baseMatch(tenantId, filters), type: 'refund', status: 'completed' };
+
+  async function netTotals(match: Record<string, unknown>) {
+    const [row] = await Sale.aggregate([
+      { $match: match },
+      { $unwind: '$lines' },
+      {
+        $group: {
+          _id: null,
+          revenueCents: { $sum: { $subtract: ['$lines.lineTotalCents', { $multiply: ['$lines.lineTotalCents', { $divide: ['$lines.taxRate', { $add: [100, '$lines.taxRate'] }] }] }] } },
+          costCents: { $sum: { $multiply: ['$lines.costPriceCents', '$lines.quantity'] } },
+        },
+      },
+    ]);
+    return { revenueCents: Math.round(row?.revenueCents ?? 0), costCents: row?.costCents ?? 0 };
+  }
+
+  const [sales, refunds] = await Promise.all([netTotals(saleMatch), netTotals(refundMatch)]);
+
+  const revenueCents = sales.revenueCents - refunds.revenueCents;
+  const costCents = sales.costCents - refunds.costCents;
+  const grossProfitCents = revenueCents - costCents;
+
+  return {
+    revenueCents,
+    costCents,
+    grossProfitCents,
+    marginPercent: revenueCents > 0 ? Math.round((grossProfitCents / revenueCents) * 1000) / 10 : 0,
+  };
+}
+
+async function topDebtors(
+  ledgerModel: any,
+  entityModel: any,
+  idField: 'supplierId' | 'customerId',
+  tenantId: string,
+  limit = 5,
+): Promise<{ totalCents: number; top: DebtorDTO[] }> {
+  const tenantObjectId = new Types.ObjectId(tenantId);
+  const balances = await ledgerModel.aggregate([
+    { $match: { tenantId: tenantObjectId } },
+    { $group: { _id: `$${idField}`, balanceCents: { $sum: '$amountCents' } } },
+    { $match: { balanceCents: { $gt: 0 } } },
+    { $sort: { balanceCents: -1 } },
+  ]);
+
+  const totalCents = balances.reduce((sum: number, b: any) => sum + b.balanceCents, 0);
+  const topBalances = balances.slice(0, limit);
+  const entities: any[] = await entityModel
+    .find({ tenantId: tenantObjectId, _id: { $in: topBalances.map((b: any) => b._id) } })
+    .select('name')
+    .lean();
+  const nameById = new Map(entities.map((e: any) => [String(e._id), e.name as string]));
+
+  return {
+    totalCents,
+    top: topBalances.map((b: any) => ({ id: String(b._id), name: nameById.get(String(b._id)) ?? 'Inconnu', balanceCents: b.balanceCents })),
+  };
+}
+
+/** Dettes fournisseurs (ce qu'on doit) et clients (ce qu'on nous doit) — soldes recalculés depuis
+ * les ledgers append-only, jamais depuis un champ mutable (voir SupplierLedgerEntry/CustomerLedgerEntry). */
+export async function getDebtsSummary(tenantId: string): Promise<DebtsSummaryDTO> {
+  const [suppliers, customers] = await Promise.all([
+    topDebtors(SupplierLedgerEntry, Supplier, 'supplierId', tenantId),
+    topDebtors(CustomerLedgerEntry, Customer, 'customerId', tenantId),
+  ]);
+
+  return {
+    totalSupplierDebtCents: suppliers.totalCents,
+    totalCustomerDebtCents: customers.totalCents,
+    topSuppliers: suppliers.top,
+    topCustomers: customers.top,
+  };
 }

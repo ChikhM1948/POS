@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import type { AuthenticatedRequest } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/asyncHandler';
-import { getSalesSummary, getTopProducts } from './reports.service';
+import { getSalesSummary, getTopProducts, getProfitSummary, getDebtsSummary } from './reports.service';
 
 export const reportsRouter = Router();
 
@@ -22,4 +22,15 @@ reportsRouter.get('/top-products', asyncHandler(async (req: AuthenticatedRequest
   const range = parseRange(rest);
   const products = await getTopProducts(req.auth!.tenantId, range, limit ? parseInt(limit, 10) : undefined);
   res.json({ products });
+}));
+
+reportsRouter.get('/profit', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const range = parseRange(req.query as Record<string, string | undefined>);
+  const profit = await getProfitSummary(req.auth!.tenantId, range);
+  res.json({ profit });
+}));
+
+reportsRouter.get('/debts', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const debts = await getDebtsSummary(req.auth!.tenantId);
+  res.json({ debts });
 }));

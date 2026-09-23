@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { IconBanknote, IconX } from '../icons';
-
-const formatDZD = (cents: number) =>
-  new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: 'DZD' }).format(cents / 100);
+import { useTranslation } from '../../lib/i18n/LanguageContext';
+import { formatCurrency } from '../../lib/format';
 
 interface Props {
   totalCents: number;
@@ -17,6 +16,8 @@ const QUICK_NOTES_DZD = [500, 1000, 2000, 5000];
 
 /** Saisie du montant reçu en espèces + calcul de la monnaie à rendre — flux standard caisse physique. */
 export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }: Props) {
+  const { t, locale } = useTranslation();
+  const formatDZD = (cents: number) => formatCurrency(cents, locale);
   const [digits, setDigits] = useState(''); // montant en DZD (unité entière), saisi chiffre par chiffre
 
   const tenderedCents = digits ? parseInt(digits, 10) * 100 : 0;
@@ -43,7 +44,7 @@ export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }
         <div className="flex items-center justify-between bg-neutral-900 px-5 py-4 text-white">
           <div className="flex items-center gap-2">
             <IconBanknote className="h-5 w-5" />
-            <p className="text-sm font-semibold">Paiement en espèces</p>
+            <p className="text-sm font-semibold">{t('cashModal.title')}</p>
           </div>
           <button onClick={onCancel} className="rounded-lg p-1 text-neutral-300 transition hover:bg-white/10 hover:text-white">
             <IconX className="h-5 w-5" />
@@ -52,12 +53,12 @@ export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }
 
         <div className="flex flex-col gap-4 px-5 py-5">
           <div className="flex items-center justify-between rounded-xl bg-neutral-100 px-4 py-3">
-            <span className="text-sm font-medium text-neutral-500">Total à payer</span>
+            <span className="text-sm font-medium text-neutral-500">{t('cashModal.totalToPay')}</span>
             <span className="text-xl font-bold text-neutral-900">{formatDZD(totalCents)}</span>
           </div>
 
           <div className="flex flex-col items-end gap-1 rounded-xl border-2 border-brand-200 bg-brand-50 px-4 py-3">
-            <span className="text-xs font-medium uppercase tracking-wide text-brand-600">Montant reçu</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-brand-600">{t('cashModal.amountReceived')}</span>
             <span className="text-3xl font-bold tabular-nums text-brand-900">{formatDZD(tenderedCents)}</span>
           </div>
 
@@ -66,7 +67,7 @@ export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }
               onClick={() => setQuickDZD(exactAmountDZD)}
               className="flex-1 rounded-lg border border-neutral-300 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
             >
-              Appoint
+              {t('cashModal.exact')}
             </button>
             {QUICK_NOTES_DZD.map((amount) => (
               <button
@@ -94,7 +95,7 @@ export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }
           {tenderedCents > 0 && (
             <div className={`flex items-center justify-between rounded-xl px-4 py-3 ${isSufficient ? 'bg-emerald-50' : 'bg-red-50'}`}>
               <span className={`text-sm font-medium ${isSufficient ? 'text-emerald-700' : 'text-red-700'}`}>
-                {isSufficient ? 'Monnaie à rendre' : 'Montant insuffisant'}
+                {isSufficient ? t('cashModal.changeDue') : t('cashModal.insufficientAmount')}
               </span>
               <span className={`text-lg font-bold ${isSufficient ? 'text-emerald-700' : 'text-red-700'}`}>
                 {isSufficient ? formatDZD(changeCents) : formatDZD(totalCents - tenderedCents)}
@@ -108,14 +109,14 @@ export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }
             onClick={onCancel}
             className="flex-1 rounded-xl border border-neutral-300 py-3 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
           >
-            Annuler
+            {t('common.cancel')}
           </button>
           <button
             disabled={!isSufficient || submitting}
             onClick={() => onConfirm(tenderedCents)}
             className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-card transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting ? 'Encaissement…' : 'Valider le paiement'}
+            {submitting ? t('cashModal.confirming') : t('cashModal.confirm')}
           </button>
         </div>
       </div>

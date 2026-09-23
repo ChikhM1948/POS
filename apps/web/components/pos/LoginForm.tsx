@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { BrandMark } from '../BrandMark';
+import { LanguageSwitcher } from '../LanguageSwitcher';
+import { useTranslation } from '../../lib/i18n/LanguageContext';
 import { clearRegisterConfig, loadRegisterConfig, saveRegisterConfig, type RegisterConfig } from '../../lib/registerConfig';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -24,6 +26,7 @@ export interface Session {
 type LoginMethod = 'pin' | 'password';
 
 export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) {
+  const { t } = useTranslation();
   const [config, setConfig] = useState<RegisterConfig | null | undefined>(undefined); // undefined = pas encore lu du localStorage
   const [tenantId, setTenantId] = useState('');
   const [storeId, setStoreId] = useState('');
@@ -66,12 +69,12 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
       });
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error ?? 'Connexion refusée.');
+        throw new Error(errBody.error ?? t('login.errorDefault'));
       }
       const { token, user } = await res.json();
       onLogin({ token, tenantId: config.tenantId, storeId: config.storeId, cashierId: user.id, cashierName: user.name });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur de connexion.');
+      setError(err instanceof Error ? err.message : t('login.errorGeneric'));
       setPinCode('');
       setPassword('');
     } finally {
@@ -102,14 +105,17 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
   if (config === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-brand-950 via-brand-900 to-neutral-950">
-        <p className="text-sm text-white/50">Chargement…</p>
+        <p className="text-sm text-white/50">{t('common.loading')}</p>
       </div>
     );
   }
 
   if (!config) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-brand-950 via-brand-900 to-neutral-950 px-4 py-12">
+      <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-brand-950 via-brand-900 to-neutral-950 px-4 py-12">
+        <div className="absolute top-4 end-4">
+          <LanguageSwitcher />
+        </div>
         <form
           onSubmit={handleSetupSubmit}
           className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-white/10 bg-white p-8 shadow-popover"
@@ -117,29 +123,27 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
           <div className="mb-1 flex flex-col items-center gap-3 text-center">
             <BrandMark size={44} />
             <div>
-              <h1 className="text-lg font-semibold text-neutral-900">Configuration du poste</h1>
-              <p className="text-sm text-neutral-500">
-                À faire une seule fois par appareil — identifiants donnés par votre administrateur.
-              </p>
+              <h1 className="text-lg font-semibold text-neutral-900">{t('login.setupTitle')}</h1>
+              <p className="text-sm text-neutral-500">{t('login.setupSubtitle')}</p>
             </div>
           </div>
 
           <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-            Identifiant boutique (tenant)
+            {t('login.tenantLabel')}
             <input
               value={tenantId}
               onChange={(e) => setTenantId(e.target.value)}
-              placeholder="ex. tenant_demo"
+              placeholder={t('login.tenantPlaceholder')}
               className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
               required
             />
           </label>
           <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-            Point de vente
+            {t('login.storeLabel')}
             <input
               value={storeId}
               onChange={(e) => setStoreId(e.target.value)}
-              placeholder="ex. store_alger_01"
+              placeholder={t('login.storePlaceholder')}
               className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
               required
             />
@@ -149,17 +153,20 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
             type="submit"
             className="mt-1 flex items-center justify-center rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700"
           >
-            Enregistrer ce poste
+            {t('login.setupSubmit')}
           </button>
 
-          <p className="text-center text-xs text-neutral-400">POS Algérie · Caisse hors-ligne, synchronisée automatiquement</p>
+          <p className="text-center text-xs text-neutral-400">{t('login.setupFooter')}</p>
         </form>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-brand-950 via-brand-900 to-neutral-950 px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-brand-950 via-brand-900 to-neutral-950 px-4 py-12">
+      <div className="absolute top-4 end-4">
+        <LanguageSwitcher />
+      </div>
       <form
         onSubmit={handleLoginSubmit}
         className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-white/10 bg-white p-8 shadow-popover"
@@ -167,8 +174,8 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
         <div className="mb-1 flex flex-col items-center gap-3 text-center">
           <BrandMark size={44} />
           <div>
-            <h1 className="text-lg font-semibold text-neutral-900">Connexion caisse</h1>
-            <p className="text-sm text-neutral-500">Identifiez-vous pour ouvrir la session de vente</p>
+            <h1 className="text-lg font-semibold text-neutral-900">{t('login.title')}</h1>
+            <p className="text-sm text-neutral-500">{t('login.subtitle')}</p>
           </div>
         </div>
 
@@ -180,7 +187,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
               method === 'pin' ? 'bg-white text-neutral-900 shadow-card' : 'text-neutral-500 hover:text-neutral-700'
             }`}
           >
-            Code PIN
+            {t('login.methodPin')}
           </button>
           <button
             type="button"
@@ -189,13 +196,13 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
               method === 'password' ? 'bg-white text-neutral-900 shadow-card' : 'text-neutral-500 hover:text-neutral-700'
             }`}
           >
-            Email / mot de passe
+            {t('login.methodPassword')}
           </button>
         </div>
 
         {method === 'pin' ? (
           <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-            Code PIN
+            {t('login.pinLabel')}
             <input
               value={pinCode}
               onChange={(e) => setPinCode(e.target.value)}
@@ -211,11 +218,11 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
         ) : (
           <>
             <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-              Email
+              {t('login.emailLabel')}
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="vous@commerce.dz"
+                placeholder={t('login.emailPlaceholder')}
                 type="email"
                 autoFocus
                 className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
@@ -223,11 +230,11 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
               />
             </label>
             <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-              Mot de passe
+              {t('login.passwordLabel')}
               <input
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder={t('login.passwordPlaceholder')}
                 type="password"
                 className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
                 required
@@ -247,7 +254,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
           type="submit"
           className="mt-1 flex items-center justify-center rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading ? 'Connexion…' : 'Se connecter'}
+          {loading ? t('login.submitting') : t('login.submit')}
         </button>
 
         <button
@@ -255,7 +262,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
           onClick={handleChangeStore}
           className="text-center text-xs text-neutral-400 underline-offset-2 hover:text-neutral-600 hover:underline"
         >
-          Changer de boutique
+          {t('login.changeStore')}
         </button>
       </form>
     </div>

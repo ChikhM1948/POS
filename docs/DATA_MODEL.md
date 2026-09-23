@@ -19,10 +19,26 @@ retaper un mot de passe long à chaque changement de caissier.
 
 ## Product
 Fiche produit avec `name.fr` / `name.ar`, `taxRate`, et un tableau `variants[]` (taille, couleur,
-code-barres propre, prix optionnel). Le **prix d'achat moyen pondéré (PUMP)** n'est pas stocké
-comme un champ mutable sur `Product` : il est **recalculé** à partir du ledger `StockMovement`
-(moyenne pondérée des mouvements `type: 'purchase'`), pour rester cohérent même si des achats sont
-saisis hors-ligne dans le désordre.
+code-barres propre, prix optionnel). `costPriceCents` est le **prix d'achat moyen pondéré (PUMP)** :
+un cache recalculé (moyenne pondérée incrémentale, voir `products.service.recomputeCostPrice`)
+chaque fois qu'un achat fournisseur est enregistré (`stock.service.createPurchase`) — pas un champ
+saisi librement, même s'il reste corrigeable à la main en back-office. Ce cache existe pour que la
+caisse hors-ligne (Dexie) puisse figer un coût sur chaque `SaleLine` sans requête réseau ; la source
+de vérité reste le ledger `StockMovement` (`unitCostCents` des mouvements `type: 'purchase'`),
+recalculable à tout moment si le cache divergeait. `minMarginCents` est un plancher de marge
+optionnel : si défini, une remise en caisse qui ferait descendre le prix net sous
+`costPriceCents + minMarginCents` déclenche un avertissement (non bloquant) côté caisse.
+
+## Supplier / SupplierLedgerEntry, Customer / CustomerLedgerEntry
+Même pattern que `StockMovement` : l'identité (`Supplier`, `Customer`) ne porte aucun solde mutable,
+la dette est la somme signée des écritures d'un ledger append-only (`SupplierLedgerEntry`,
+`CustomerLedgerEntry` — `amountCents` positif augmente la dette, négatif la réduit). Une réception
+fournisseur payée partiellement (`POST /stock/purchases`) crée une écriture `purchase_on_credit` sur
+le fournisseur choisi ; une vente avec un paiement `method: 'credit'` (voir `SalePayment`) crée une
+écriture `sale_credit` sur le client, appliquée une seule fois par vente même en cas de rejeu de la
+synchro (`sync.service.applyOperation`, protégé via `includeResultMetadata`/`updatedExisting`). Un
+paiement reçu (`POST /suppliers/:id/payments` ou `/customers/:id/payments`) ajoute une écriture
+`payment` négative. Le solde affiché est toujours recalculé par agrégation, jamais stocké.
 
 ## StockMovement (le cœur du modèle offline-safe)
 **Append-only.** Chaque entrée/sortie de stock (vente, achat, retour, transfert, correction
@@ -40,9 +56,11 @@ transfert d'origine), `clientGeneratedId` (idempotence sync).
 ## Sale
 Une vente = un ticket. `clientGeneratedId` (UUID généré côté caisse, avant même la tentative de
 sync) est la clé d'idempotence — index unique `{tenantId, clientGeneratedId}`. `lines[]` fige le
-prix, la TVA et la remise **au moment de la vente** (jamais de référence live à `Product`, pour
+prix, le **coût** (`costPriceCents`, pour calculer le bénéfice a posteriori sans lookup live),
+la TVA et la remise **au moment de la vente** (jamais de référence live à `Product`, pour
 que l'historique reste exact même si le produit change de prix ensuite). `payments[]` supporte
-plusieurs moyens de paiement sur une même vente (ex. espèces + crédit partiel).
+plusieurs moyens de paiement sur une même vente (ex. espèces + crédit partiel — voir Supplier /
+SupplierLedgerEntry, Customer / CustomerLedgerEntry).
 
 ## Receipt
 Représentation imprimable d'une `Sale` (peut être réimprimée). Conserve le contenu rendu
@@ -66,4 +84,8 @@ StockMovement:  { tenantId: 1, storeId: 1, productId: 1, createdAt: -1 }
                 { tenantId: 1, clientGeneratedId: 1 } unique
 Sale:           { tenantId: 1, clientGeneratedId: 1 } unique
                 { tenantId: 1, storeId: 1, createdAtLocal: -1 }
+SupplierLedgerEntry: { tenantId: 1, clientGeneratedId: 1 } unique
+                     { tenantId: 1, supplierId: 1, createdAt: -1 }
+CustomerLedgerEntry: { tenantId: 1, clientGeneratedId: 1 } unique
+                     { tenantId: 1, customerId: 1, createdAt: -1 }
 ```

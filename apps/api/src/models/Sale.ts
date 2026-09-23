@@ -39,6 +39,7 @@ const SaleSchema = new Schema<ISale>(
         name: { fr: String, ar: String },
         quantity: { type: Number, required: true },
         unitPriceCents: { type: Number, required: true },
+        costPriceCents: { type: Number, required: true },
         taxRate: { type: Number, enum: [19, 9, 0], required: true },
         discountCents: { type: Number, default: 0 },
         lineTotalCents: { type: Number, required: true },

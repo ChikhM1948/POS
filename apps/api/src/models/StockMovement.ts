@@ -15,6 +15,7 @@ export interface IStockMovement extends Document {
   type: StockMovementType;
   quantityDelta: number; // signé : positif = entrée, négatif = sortie
   unitCostCents?: number; // requis pour type='purchase', sert au calcul du PUMP
+  supplierId?: Types.ObjectId; // renseigné pour type='purchase' — sert à la dette fournisseur
   lotNumber?: string;
   expiryDate?: Date;
   note?: string; // saisi manuellement en back-office (ex. "inventaire annuel", "casse")
@@ -47,6 +48,7 @@ const StockMovementSchema = new Schema<IStockMovement>(
     },
     quantityDelta: { type: Number, required: true },
     unitCostCents: Number,
+    supplierId: { type: Schema.Types.ObjectId, ref: 'Supplier' },
     lotNumber: String,
     expiryDate: Date,
     note: String,

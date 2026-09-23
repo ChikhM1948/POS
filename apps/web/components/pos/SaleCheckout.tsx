@@ -4,13 +4,13 @@ import { useState } from 'react';
 import { useCreateSale } from '../../hooks/useCreateSale';
 import { renderReceiptToImageData } from '../../lib/print/receipt-renderer';
 import { imageDataToEscPosRaster, buildPrintJob } from '../../lib/print/escpos-raster';
+import { useTranslation } from '../../lib/i18n/LanguageContext';
+import { formatCurrency, formatDateTime } from '../../lib/format';
 import { CashPaymentModal } from './CashPaymentModal';
+import { CustomerCreditModal } from './CustomerCreditModal';
 import type { CompletedSale } from './Receipt';
-import { IconBanknote, IconCreditCard } from '../icons';
+import { IconBanknote, IconCreditCard, IconWallet } from '../icons';
 import type { SaleLine, SalePayment, SaleTotals } from '@pos-dz/shared';
-
-const formatDZD = (cents: number) =>
-  new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: 'DZD' }).format(cents / 100);
 
 interface Props {
   deviceId: string;
@@ -25,8 +25,11 @@ interface Props {
 
 /** Flux caisse : calcule les totaux, encaisse (espèces avec monnaie, ou CIB), écrit la vente en local, imprime le ticket. */
 export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashierId, cartLines, tenantBranding, onSaleComplete }: Props) {
+  const { t, locale } = useTranslation();
+  const formatDZD = (cents: number) => formatCurrency(cents, locale);
   const { createSale } = useCreateSale(deviceId);
   const [showCashModal, setShowCashModal] = useState(false);
+  const [showCreditModal, setShowCreditModal] = useState(false);
   const [processingMethod, setProcessingMethod] = useState<SalePayment['method'] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +52,8 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
             saleNumber: sale.number,
             lines: cartLines,
             totals,
-            dateLabel: new Date(sale.createdAtLocal).toLocaleString('fr-DZ'),
+            dateLabel: formatDateTime(sale.createdAtLocal, locale),
+            locale,
           });
           const raster = imageDataToEscPosRaster(imageData);
           const job = buildPrintJob(raster);
@@ -60,9 +64,10 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
       }
 
       setShowCashModal(false);
+      setShowCreditModal(false);
       onSaleComplete({ number: sale.number, createdAtLocal: sale.createdAtLocal, lines: cartLines, totals, payments });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur lors de l'encaissement. Réessayez.");
+      setError(err instanceof Error ? err.message : t('saleCheckout.errorGeneric'));
     } finally {
       setProcessingMethod(null);
     }
@@ -85,19 +90,28 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
     ]);
   }
 
+  async function handleCreditConfirm(customerId: string, paidNowCents: number) {
+    setProcessingMethod('credit');
+    const payments: SalePayment[] = [];
+    if (paidNowCents > 0) payments.push({ method: 'cash', amountCents: paidNowCents });
+    const remainingCents = totals.grandTotalCents - paidNowCents;
+    if (remainingCents > 0) payments.push({ method: 'credit', amountCents: remainingCents, customerId });
+    await finalize(payments);
+  }
+
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex flex-col gap-1 border-t border-dashed border-neutral-200 pt-3">
         <div className="flex items-baseline justify-between text-sm text-neutral-500">
-          <span>Sous-total</span>
+          <span>{t('common.subtotal')}</span>
           <span>{formatDZD(totals.subtotalCents)}</span>
         </div>
         <div className="flex items-baseline justify-between text-sm text-neutral-500">
-          <span>TVA</span>
+          <span>{t('common.tax')}</span>
           <span>{formatDZD(totals.taxTotalCents)}</span>
         </div>
         <div className="flex items-baseline justify-between text-2xl font-bold text-neutral-900">
-          <span>Total</span>
+          <span>{t('common.total')}</span>
           <span>{formatDZD(totals.grandTotalCents)}</span>
         </div>
       </div>
@@ -108,22 +122,30 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <button
           disabled={isBusy || cartLines.length === 0}
           onClick={() => setShowCashModal(true)}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-2xl bg-neutral-900 py-5 text-base font-semibold text-white shadow-card transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex flex-col items-center justify-center gap-1.5 rounded-2xl bg-neutral-900 py-5 text-sm font-semibold text-white shadow-card transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <IconBanknote className="h-6 w-6" />
-          Espèces
+          {t('saleCheckout.cash')}
         </button>
         <button
           disabled={isBusy || cartLines.length === 0}
           onClick={handleCib}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-2xl bg-brand-600 py-5 text-base font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex flex-col items-center justify-center gap-1.5 rounded-2xl bg-brand-600 py-5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <IconCreditCard className="h-6 w-6" />
-          {processingMethod === 'cib' ? 'Traitement…' : 'CIB / Edahabia'}
+          {processingMethod === 'cib' ? t('saleCheckout.processing') : 'CIB / Edahabia'}
+        </button>
+        <button
+          disabled={isBusy || cartLines.length === 0}
+          onClick={() => setShowCreditModal(true)}
+          className="flex flex-col items-center justify-center gap-1.5 rounded-2xl bg-amber-600 py-5 text-sm font-semibold text-white shadow-card transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <IconWallet className="h-6 w-6" />
+          {t('saleCheckout.credit')}
         </button>
       </div>
 
@@ -133,6 +155,16 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
           submitting={processingMethod === 'cash'}
           onCancel={() => setShowCashModal(false)}
           onConfirm={handleCashConfirm}
+        />
+      )}
+
+      {showCreditModal && (
+        <CustomerCreditModal
+          deviceId={deviceId}
+          totalCents={totals.grandTotalCents}
+          submitting={processingMethod === 'credit'}
+          onCancel={() => setShowCreditModal(false)}
+          onConfirm={handleCreditConfirm}
         />
       )}
     </div>

@@ -4,6 +4,8 @@ import { Tenant } from '../models/Tenant';
 import { Store } from '../models/Store';
 import { User } from '../models/User';
 import { Product } from '../models/Product';
+import { Supplier } from '../models/Supplier';
+import { Customer } from '../models/Customer';
 
 /** Jeu de données minimal pour tester la caisse en local : un tenant, une boutique, deux users, trois produits. */
 async function seed() {
@@ -46,15 +48,17 @@ async function seed() {
     { upsert: true },
   );
 
+  // costPriceCents ~ 55-65% du prix de vente, minMarginCents fixé sur deux produits pour pouvoir
+  // tester l'avertissement de marge minimale en caisse dès le premier lancement.
   const products = [
-    { sku: 'PRD-001', barcode: '6130001000019', name: { fr: 'Lait 1L', ar: 'حليب 1 لتر' }, category: 'Boissons', sellingPriceCents: 12000, taxRate: 9 as const, unit: 'unité' },
-    { sku: 'PRD-002', barcode: '6130001000026', name: { fr: 'Pain', ar: 'خبز' }, category: 'Boulangerie', sellingPriceCents: 3000, taxRate: 0 as const, unit: 'unité' },
-    { sku: 'PRD-003', barcode: '6130001000033', name: { fr: 'Huile 1L', ar: 'زيت 1 لتر' }, category: 'Épicerie', sellingPriceCents: 45000, taxRate: 19 as const, unit: 'unité' },
-    { sku: 'PRD-004', barcode: '6130001000040', name: { fr: 'Eau minérale 1.5L', ar: 'مياه معدنية 1.5 لتر' }, category: 'Boissons', sellingPriceCents: 4000, taxRate: 9 as const, unit: 'unité' },
-    { sku: 'PRD-005', barcode: '6130001000057', name: { fr: 'Croissant', ar: 'كرواسان' }, category: 'Boulangerie', sellingPriceCents: 3500, taxRate: 9 as const, unit: 'unité' },
-    { sku: 'PRD-006', barcode: '6130001000064', name: { fr: 'Sucre 1kg', ar: 'سكر 1 كغ' }, category: 'Épicerie', sellingPriceCents: 15000, taxRate: 19 as const, unit: 'kg' },
-    { sku: 'PRD-007', barcode: '6130001000071', name: { fr: 'Savon liquide', ar: 'صابون سائل' }, category: 'Hygiène', sellingPriceCents: 25000, taxRate: 19 as const, unit: 'unité' },
-    { sku: 'PRD-008', barcode: '6130001000088', name: { fr: 'Dentifrice', ar: 'معجون أسنان' }, category: 'Hygiène', sellingPriceCents: 32000, taxRate: 19 as const, unit: 'unité' },
+    { sku: 'PRD-001', barcode: '6130001000019', name: { fr: 'Lait 1L', ar: 'حليب 1 لتر' }, category: 'Boissons', sellingPriceCents: 12000, costPriceCents: 7500, minMarginCents: 2000, taxRate: 9 as const, unit: 'unité' },
+    { sku: 'PRD-002', barcode: '6130001000026', name: { fr: 'Pain', ar: 'خبز' }, category: 'Boulangerie', sellingPriceCents: 3000, costPriceCents: 1800, taxRate: 0 as const, unit: 'unité' },
+    { sku: 'PRD-003', barcode: '6130001000033', name: { fr: 'Huile 1L', ar: 'زيت 1 لتر' }, category: 'Épicerie', sellingPriceCents: 45000, costPriceCents: 28000, minMarginCents: 8000, taxRate: 19 as const, unit: 'unité' },
+    { sku: 'PRD-004', barcode: '6130001000040', name: { fr: 'Eau minérale 1.5L', ar: 'مياه معدنية 1.5 لتر' }, category: 'Boissons', sellingPriceCents: 4000, costPriceCents: 2200, taxRate: 9 as const, unit: 'unité' },
+    { sku: 'PRD-005', barcode: '6130001000057', name: { fr: 'Croissant', ar: 'كرواسان' }, category: 'Boulangerie', sellingPriceCents: 3500, costPriceCents: 2000, taxRate: 9 as const, unit: 'unité' },
+    { sku: 'PRD-006', barcode: '6130001000064', name: { fr: 'Sucre 1kg', ar: 'سكر 1 كغ' }, category: 'Épicerie', sellingPriceCents: 15000, costPriceCents: 9500, taxRate: 19 as const, unit: 'kg' },
+    { sku: 'PRD-007', barcode: '6130001000071', name: { fr: 'Savon liquide', ar: 'صابون سائل' }, category: 'Hygiène', sellingPriceCents: 25000, costPriceCents: 15000, taxRate: 19 as const, unit: 'unité' },
+    { sku: 'PRD-008', barcode: '6130001000088', name: { fr: 'Dentifrice', ar: 'معجون أسنان' }, category: 'Hygiène', sellingPriceCents: 32000, costPriceCents: 19000, taxRate: 19 as const, unit: 'unité' },
   ];
 
   for (const p of products) {
@@ -64,6 +68,18 @@ async function seed() {
       { upsert: true },
     );
   }
+
+  await Supplier.findOneAndUpdate(
+    { tenantId: tenant._id, name: 'Grossiste Alger Import' },
+    { $setOnInsert: { tenantId: tenant._id, name: 'Grossiste Alger Import', phone: '0555 12 34 56', active: true } },
+    { upsert: true },
+  );
+
+  await Customer.findOneAndUpdate(
+    { tenantId: tenant._id, name: 'Karim (client régulier)' },
+    { $setOnInsert: { tenantId: tenant._id, name: 'Karim (client régulier)', phone: '0661 98 76 54', active: true } },
+    { upsert: true },
+  );
 
   console.log('Seed terminé.');
   console.log(`  tenantId: ${tenant._id}`);

@@ -1,4 +1,6 @@
 import type { RevenueByPaymentMethodPoint } from '@pos-dz/shared';
+import { useTranslation } from '../../../lib/i18n/LanguageContext';
+import { formatCurrency } from '../../../lib/format';
 
 // Slots catégoriels validés (ordre fixe — voir dataviz skill palette.md), jamais réassignés
 // dynamiquement : un moyen de paiement garde toujours la même couleur d'un rapport à l'autre.
@@ -12,26 +14,20 @@ const CATEGORICAL_SLOTS: Record<(typeof CATEGORICAL_ORDER)[number], string> = {
   voucher: '#008300',
 };
 
-const PAYMENT_LABELS: Record<string, string> = {
-  cash: 'Espèces',
-  cib: 'CIB',
-  edahabia: 'Edahabia',
-  cheque: 'Chèque',
-  credit: 'Crédit',
-  voucher: "Bon d'achat",
-};
-
-const formatDZD = (cents: number) =>
-  new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: 'DZD', maximumFractionDigits: 0 }).format(cents / 100);
-
 /**
  * Barres horizontales, étiquetage direct obligatoire (le fond clair de certains slots — vert,
  * jaune, magenta — passe sous 3:1 de contraste ; le texte hors barre est le mécanisme de secours
  * prescrit par le skill dataviz plutôt que du texte blanc dans la barre).
  */
 export function PaymentBreakdown({ data }: { data: RevenueByPaymentMethodPoint[] }) {
+  const { t, locale } = useTranslation();
+  const formatDZD = (cents: number) => formatCurrency(cents, locale, { maximumFractionDigits: 0 });
+  const PAYMENT_LABELS: Record<string, string> = Object.fromEntries(
+    CATEGORICAL_ORDER.map((m) => [m, t(`common.paymentMethods.${m}`)]),
+  );
+
   if (data.length === 0) {
-    return <p className="text-sm text-neutral-500">Aucune donnée sur cette période.</p>;
+    return <p className="text-sm text-neutral-500">{t('paymentBreakdown.empty')}</p>;
   }
 
   const max = Math.max(...data.map((d) => d.amountCents));
@@ -47,7 +43,7 @@ export function PaymentBreakdown({ data }: { data: RevenueByPaymentMethodPoint[]
               style={{ width: `${(d.amountCents / max) * 100}%`, backgroundColor: CATEGORICAL_SLOTS[d.method as keyof typeof CATEGORICAL_SLOTS] ?? '#898781' }}
             />
           </div>
-          <span className="w-24 shrink-0 text-right text-sm font-medium text-neutral-900">{formatDZD(d.amountCents)}</span>
+          <span className="w-24 shrink-0 text-end text-sm font-medium text-neutral-900">{formatDZD(d.amountCents)}</span>
         </div>
       ))}
     </div>

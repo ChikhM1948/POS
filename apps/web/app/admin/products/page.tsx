@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAdminAuth } from '../../../lib/adminAuth';
 import { adminFetch } from '../../../lib/adminApi';
 import { ProductForm } from '../../../components/admin/ProductForm';
+import { useTranslation } from '../../../lib/i18n/LanguageContext';
+import { formatCurrency } from '../../../lib/format';
 import { IconPlus, IconSearch } from '../../../components/icons';
 import type { ProductDTO, ProductInput } from '@pos-dz/shared';
 
-const formatDZD = (cents: number) => new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: 'DZD' }).format(cents / 100);
-
 export default function ProductsPage() {
+  const { t, locale } = useTranslation();
+  const formatDZD = (cents: number) => formatCurrency(cents, locale);
   const { session } = useAdminAuth();
   const [products, setProducts] = useState<ProductDTO[]>([]);
   const [search, setSearch] = useState('');
@@ -28,7 +30,7 @@ export default function ProductsPage() {
       setProducts(products);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur de chargement.');
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,7 @@ export default function ProductsPage() {
 
   async function handleDeactivate(product: ProductDTO) {
     if (!session) return;
-    if (!confirm(`Désactiver "${product.name.fr}" ? Il restera visible dans l'historique mais plus disponible à la vente.`)) return;
+    if (!confirm(t('products.confirmDeactivate', { name: product.name.fr }))) return;
     await adminFetch(session.token, `/products/${product.id}`, { method: 'DELETE' });
     await load();
   }
@@ -59,23 +61,23 @@ export default function ProductsPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900">Produits</h1>
+        <h1 className="text-xl font-semibold text-neutral-900">{t('products.title')}</h1>
         <button
           onClick={() => setEditing('new')}
           className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700"
         >
           <IconPlus className="h-4 w-4" />
-          Nouveau produit
+          {t('products.newProduct')}
         </button>
       </div>
 
       <div className="relative max-w-sm">
-        <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+        <IconSearch className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher par nom, SKU ou code-barres…"
-          className="w-full rounded-lg border border-neutral-300 py-2 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500"
+          placeholder={t('products.searchPlaceholder')}
+          className="w-full rounded-lg border border-neutral-300 py-2 ps-9 pe-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500"
         />
       </div>
 
@@ -85,16 +87,16 @@ export default function ProductsPage() {
 
       <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-card">
         <table className="w-full text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
             <tr>
               <th className="px-4 py-2"></th>
-              <th className="px-4 py-2">Produit</th>
-              <th className="px-4 py-2">SKU</th>
-              <th className="px-4 py-2">Code-barres</th>
-              <th className="px-4 py-2">Catégorie</th>
-              <th className="px-4 py-2">Prix</th>
-              <th className="px-4 py-2">TVA</th>
-              <th className="px-4 py-2">Statut</th>
+              <th className="px-4 py-2">{t('products.tableProduct')}</th>
+              <th className="px-4 py-2">{t('products.tableSku')}</th>
+              <th className="px-4 py-2">{t('products.tableBarcode')}</th>
+              <th className="px-4 py-2">{t('products.tableCategory')}</th>
+              <th className="px-4 py-2">{t('products.tablePrice')}</th>
+              <th className="px-4 py-2">{t('products.tableTax')}</th>
+              <th className="px-4 py-2">{t('products.tableStatus')}</th>
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
@@ -126,16 +128,16 @@ export default function ProductsPage() {
                 <td className="px-4 py-2.5 text-neutral-600">{p.taxRate}%</td>
                 <td className="px-4 py-2.5">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${p.active ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-200 text-neutral-600'}`}>
-                    {p.active ? 'Actif' : 'Inactif'}
+                    {p.active ? t('common.active') : t('common.inactive')}
                   </span>
                 </td>
-                <td className="px-4 py-2.5 text-right">
-                  <button onClick={() => setEditing(p)} className="mr-3 text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline">
-                    Modifier
+                <td className="px-4 py-2.5 text-end">
+                  <button onClick={() => setEditing(p)} className="me-3 text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline">
+                    {t('common.edit')}
                   </button>
                   {p.active && (
                     <button onClick={() => handleDeactivate(p)} className="text-sm font-medium text-red-600 hover:text-red-700 hover:underline">
-                      Désactiver
+                      {t('common.deactivate')}
                     </button>
                   )}
                 </td>
@@ -144,7 +146,7 @@ export default function ProductsPage() {
             {!loading && products.length === 0 && (
               <tr>
                 <td colSpan={9} className="px-4 py-6 text-center text-neutral-500">
-                  Aucun produit.
+                  {t('products.empty')}
                 </td>
               </tr>
             )}

@@ -12,6 +12,8 @@ export interface IProduct extends Document {
   unit: string; // 'unité', 'kg', 'litre', ...
   variants: ProductVariant[];
   sellingPriceCents: number;
+  costPriceCents: number;
+  minMarginCents?: number;
   taxRate: TaxRate;
   isPerishable: boolean;
   lowStockThreshold?: number; // alerte de seuil critique — voir docs/ARCHITECTURE.md
@@ -39,6 +41,11 @@ const ProductSchema = new Schema<IProduct>(
       },
     ],
     sellingPriceCents: { type: Number, required: true, min: 0 },
+    // Moyenne pondérée recalculée à chaque achat fournisseur (voir stock.service.recomputeCostPrice) —
+    // pas un ledger à part : contrairement au stock, une valeur "en cache, recalculable" suffit ici et
+    // évite de rejouer tout StockMovement pour connaître le coût courant à la caisse (y compris hors-ligne).
+    costPriceCents: { type: Number, default: 0, min: 0 },
+    minMarginCents: { type: Number, min: 0 },
     taxRate: { type: Number, enum: [19, 9, 0], default: 19 },
     isPerishable: { type: Boolean, default: false },
     lowStockThreshold: { type: Number, min: 0 },

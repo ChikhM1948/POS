@@ -8,18 +8,24 @@ import { SyncEngine } from '../lib/sync/sync-engine';
 import { LoginForm, type Session } from '../components/pos/LoginForm';
 import { OfflineBanner } from '../components/pos/OfflineBanner';
 import { SaleCheckout } from '../components/pos/SaleCheckout';
+import { DiscountEditor } from '../components/pos/DiscountEditor';
 import { Receipt, type CompletedSale } from '../components/pos/Receipt';
 import { BrandMark } from '../components/BrandMark';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { useTranslation } from '../lib/i18n/LanguageContext';
+import { formatCurrency } from '../lib/format';
 import { IconBarcode, IconCart, IconImageOff, IconLogout, IconMinus, IconPlus, IconTrash } from '../components/icons';
 import type { SaleLine } from '@pos-dz/shared';
 
-const formatDZD = (cents: number) =>
-  new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: 'DZD' }).format(cents / 100);
-
-const ALL_CATEGORIES = 'Tous';
-const UNCATEGORIZED = 'Autres';
+// Valeurs internes fixes (pas des libellés affichés) : ALL_CATEGORIES sert de sentinelle pour "pas
+// de filtre" et UNCATEGORIZED regroupe les produits sans catégorie — voir t('pos.categoryAll'/'pos.categoryOther')
+// pour leur affichage traduit.
+const ALL_CATEGORIES = '__all__';
+const UNCATEGORIZED = '__uncategorized__';
 
 export default function PosPage() {
+  const { t, locale } = useTranslation();
+  const formatDZD = (cents: number) => formatCurrency(cents, locale);
   const deviceId = useDeviceId();
   const [session, setSession] = useState<Session | null>(null);
   const [cart, setCart] = useState<SaleLine[]>([]);
@@ -43,7 +49,7 @@ export default function PosPage() {
   const categories = useMemo(() => {
     const set = new Set<string>();
     for (const p of products) set.add(p.category?.trim() || UNCATEGORIZED);
-    return [ALL_CATEGORIES, ...Array.from(set).sort((a, b) => a.localeCompare(b, 'fr'))];
+    return [ALL_CATEGORIES, ...Array.from(set).sort((a, b) => a.localeCompare(b, locale))];
   }, [products]);
 
   const filteredProducts = useMemo(() => {
@@ -76,6 +82,7 @@ export default function PosPage() {
         name: { fr: product.nameFr, ar: product.nameAr },
         quantity: 1,
         unitPriceCents: product.sellingPriceCents,
+        costPriceCents: product.costPriceCents,
         taxRate: product.taxRate,
         discountCents: 0,
         lineTotalCents: product.sellingPriceCents,
@@ -100,6 +107,12 @@ export default function PosPage() {
     setCart((prev) => prev.filter((l) => l.productId !== productId));
   }
 
+  function applyDiscount(productId: string, discountCents: number) {
+    setCart((prev) =>
+      prev.map((l) => (l.productId === productId ? { ...l, discountCents, lineTotalCents: l.unitPriceCents * l.quantity - discountCents } : l)),
+    );
+  }
+
   function handleScanSubmit(e: React.FormEvent) {
     e.preventDefault();
     const value = query.trim();
@@ -110,7 +123,7 @@ export default function PosPage() {
       setQuery('');
       setScanFeedback(null);
     } else {
-      setScanFeedback(`Aucun produit pour « ${value} »`);
+      setScanFeedback(t('pos.noProductFound', { value }));
       setTimeout(() => setScanFeedback(null), 2000);
     }
     scanInputRef.current?.focus();
@@ -133,23 +146,24 @@ export default function PosPage() {
         <div className="flex items-center gap-3">
           <BrandMark size={38} />
           <div>
-            <h1 className="text-base font-bold leading-tight text-neutral-900">Caisse</h1>
+            <h1 className="text-base font-bold leading-tight text-neutral-900">{t('pos.title')}</h1>
             <p className="text-xs text-neutral-500">{session.cashierName}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           <a
             href="/admin"
             className="rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900"
           >
-            Back-office
+            {t('pos.backoffice')}
           </a>
           <button
             onClick={() => setSession(null)}
             className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900"
           >
             <IconLogout className="h-4 w-4" />
-            Déconnexion
+            {t('pos.logout')}
           </button>
         </div>
       </header>
@@ -158,14 +172,14 @@ export default function PosPage() {
         <section className="flex flex-col overflow-hidden">
           <div className="flex flex-col gap-3 border-b border-neutral-200 bg-white px-6 py-4">
             <form onSubmit={handleScanSubmit} className="relative">
-              <IconBarcode className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" />
+              <IconBarcode className="pointer-events-none absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" />
               <input
                 ref={scanInputRef}
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Scanner un code-barres ou rechercher un produit…"
-                className="w-full rounded-xl border border-neutral-300 bg-neutral-50 py-3.5 pl-12 pr-4 text-base text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white"
+                placeholder={t('pos.searchPlaceholder')}
+                className="w-full rounded-xl border border-neutral-300 bg-neutral-50 py-3.5 ps-12 pe-4 text-base text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white"
               />
             </form>
             {scanFeedback && <p className="text-sm font-medium text-red-600">{scanFeedback}</p>}
@@ -180,7 +194,7 @@ export default function PosPage() {
                       : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                   }`}
                 >
-                  {cat}
+                  {cat === ALL_CATEGORIES ? t('pos.categoryAll') : cat === UNCATEGORIZED ? t('pos.categoryOther') : cat}
                 </button>
               ))}
             </div>
@@ -192,7 +206,7 @@ export default function PosPage() {
                 <button
                   key={product.id}
                   onClick={() => addToCart(product)}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left shadow-card transition duration-150 hover:-translate-y-1 hover:border-brand-300 hover:shadow-popover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.97]"
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-start shadow-card transition duration-150 hover:-translate-y-1 hover:border-brand-300 hover:shadow-popover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.97]"
                 >
                   <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-neutral-100">
                     {product.imageUrl ? (
@@ -220,21 +234,19 @@ export default function PosPage() {
               ))}
               {filteredProducts.length === 0 && (
                 <p className="col-span-full rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-center text-sm text-neutral-500">
-                  {products.length === 0
-                    ? "Aucun produit synchronisé. Vérifiez que l'API est démarrée et que le seed a été exécuté."
-                    : 'Aucun produit ne correspond à cette recherche.'}
+                  {products.length === 0 ? t('pos.noProductsSynced') : t('pos.noSearchResults')}
                 </p>
               )}
             </div>
           </div>
         </section>
 
-        <section className="flex flex-col overflow-hidden border-l border-neutral-200 bg-white">
+        <section className="flex flex-col overflow-hidden border-s border-neutral-200 bg-white">
           <h2 className="flex items-center gap-2 border-b border-neutral-200 bg-neutral-50 px-4 py-3.5 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             <IconCart className="h-4 w-4" />
-            Panier
+            {t('pos.cart.title')}
             {cart.length > 0 && (
-              <span className="ml-auto rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700">
+              <span className="ms-auto rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700">
                 {cart.reduce((sum, l) => sum + l.quantity, 0)}
               </span>
             )}
@@ -242,20 +254,32 @@ export default function PosPage() {
 
           <div className="flex-1 overflow-y-auto scrollbar-thin">
             {cart.length === 0 ? (
-              <p className="p-6 text-center text-sm text-neutral-400">Le panier est vide — sélectionnez un produit ou scannez un code-barres.</p>
+              <p className="p-6 text-center text-sm text-neutral-400">{t('pos.cart.empty')}</p>
             ) : (
               <ul className="divide-y divide-neutral-100">
-                {cart.map((line) => (
-                  <li key={`${line.productId}-${line.variantSku ?? ''}`} className="flex items-center gap-3 px-4 py-3">
+                {cart.map((line) => {
+                  const product = products.find((p) => p.id === line.productId);
+                  return (
+                  <li key={`${line.productId}-${line.variantSku ?? ''}`} className="relative flex items-center gap-3 px-4 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-neutral-900">{line.name.fr}</p>
-                      <p className="text-xs text-neutral-500">{formatDZD(line.unitPriceCents)} / unité</p>
+                      <p className="text-xs text-neutral-500">
+                        {formatDZD(line.unitPriceCents)} {t('pos.cart.perUnit')}
+                      </p>
+                      <DiscountEditor
+                        quantity={line.quantity}
+                        unitPriceCents={line.unitPriceCents}
+                        costPriceCents={line.costPriceCents}
+                        minMarginCents={product?.minMarginCents}
+                        discountCents={line.discountCents}
+                        onApply={(discountCents) => applyDiscount(line.productId, discountCents)}
+                      />
                     </div>
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => changeQuantity(line.productId, -1)}
                         className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 transition hover:bg-neutral-200"
-                        aria-label="Diminuer"
+                        aria-label={t('pos.cart.decrease')}
                       >
                         <IconMinus className="h-3.5 w-3.5" />
                       </button>
@@ -263,21 +287,22 @@ export default function PosPage() {
                       <button
                         onClick={() => changeQuantity(line.productId, 1)}
                         className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 transition hover:bg-neutral-200"
-                        aria-label="Augmenter"
+                        aria-label={t('pos.cart.increase')}
                       >
                         <IconPlus className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                    <span className="w-20 shrink-0 text-right text-sm font-semibold text-neutral-900">{formatDZD(line.lineTotalCents)}</span>
+                    <span className="w-20 shrink-0 text-end text-sm font-semibold text-neutral-900">{formatDZD(line.lineTotalCents)}</span>
                     <button
                       onClick={() => removeLine(line.productId)}
                       className="text-neutral-300 transition hover:text-red-600"
-                      aria-label="Retirer"
+                      aria-label={t('pos.cart.remove')}
                     >
                       <IconTrash className="h-4 w-4" />
                     </button>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -289,7 +314,7 @@ export default function PosPage() {
             registerId="R1"
             cashierId={session.cashierId}
             cartLines={cart}
-            tenantBranding={{ nameFr: 'Épicerie Demo', footer: 'Merci de votre visite !' }}
+            tenantBranding={{ nameFr: 'Épicerie Demo', footer: t('pos.demoFooter') }}
             onSaleComplete={handleSaleComplete}
           />
         </section>
@@ -298,7 +323,7 @@ export default function PosPage() {
       {lastSale && (
         <Receipt
           sale={lastSale}
-          tenantBranding={{ nameFr: 'Épicerie Demo', footer: 'Merci de votre visite !' }}
+          tenantBranding={{ nameFr: 'Épicerie Demo', footer: t('pos.demoFooter') }}
           onClose={() => {
             setLastSale(null);
             scanInputRef.current?.focus();

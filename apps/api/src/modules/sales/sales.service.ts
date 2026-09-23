@@ -169,6 +169,7 @@ export async function createRefund(
       name: originalLine.name,
       quantity: requested.quantity,
       unitPriceCents: originalLine.unitPriceCents,
+      costPriceCents: originalLine.costPriceCents,
       taxRate: originalLine.taxRate,
       discountCents: 0,
       lineTotalCents,

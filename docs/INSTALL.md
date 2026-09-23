@@ -109,6 +109,15 @@ l'URL figée dans le bundle au moment du build via `NEXT_PUBLIC_API_URL`.
 - Connect → Drivers → copier l'URI `mongodb+srv://...`, en ajoutant le nom de la base avant les
   paramètres : `mongodb+srv://<user>:<password>@<cluster>.mongodb.net/pos-dz?retryWrites=true&w=majority`.
 
+> **Si `mongodb+srv://` échoue avec `queryTxt ETIMEOUT`** : certains réseaux/sandbox bloquent
+> spécifiquement les requêtes DNS `TXT` (utilisées par le format SRV pour les options de connexion)
+> tout en laissant passer les `SRV`. Contournement : passer au format `mongodb://` classique avec
+> les 3 hôtes du replica set en clair (visibles via `nslookup -type=SRV _mongodb._tcp.<cluster>.mongodb.net`
+> ou dans Atlas → Connect → "Standard connection string") :
+> ```
+> mongodb://<user>:<password>@<host-00>:27017,<host-01>:27017,<host-02>:27017/pos-dz?ssl=true&authSource=admin&retryWrites=true&w=majority
+> ```
+
 **1. Déployer l'API** quelque part de joignable publiquement (VPS, PaaS...). Configurez son `.env` :
 ```bash
 MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/pos-dz?retryWrites=true&w=majority

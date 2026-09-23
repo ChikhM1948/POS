@@ -108,9 +108,9 @@ export class SyncEngine {
     );
     if (!res.ok) return;
 
-    const { products, serverTime } = await res.json();
+    const { products, customers, serverTime } = await res.json();
 
-    await this.db.transaction('rw', this.db.products, this.db.meta, async () => {
+    await this.db.transaction('rw', this.db.products, this.db.customers, this.db.meta, async () => {
       for (const p of products) {
         await this.db.products.put({
           id: p._id,
@@ -121,10 +121,15 @@ export class SyncEngine {
           category: p.category,
           imageUrl: p.imageUrl,
           sellingPriceCents: p.sellingPriceCents,
+          costPriceCents: p.costPriceCents ?? 0,
+          minMarginCents: p.minMarginCents,
           taxRate: p.taxRate,
           unit: p.unit,
           updatedAt: p.updatedAt,
         });
+      }
+      for (const c of customers ?? []) {
+        await this.db.customers.put({ id: c._id, name: c.name, phone: c.phone });
       }
       await this.db.meta.put({ key: 'lastSyncedAt', value: serverTime });
     });

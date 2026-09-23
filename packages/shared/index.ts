@@ -35,6 +35,8 @@ export interface SaleLine {
   name: LocalizedText;
   quantity: number;
   unitPriceCents: number;
+  /** Coût d'achat unitaire figé au moment de la vente — sert au calcul du bénéfice a posteriori. */
+  costPriceCents: number;
   taxRate: TaxRate;
   discountCents: number;
   lineTotalCents: number;
@@ -104,6 +106,10 @@ export interface ProductDTO {
   unit: string;
   variants: ProductVariant[];
   sellingPriceCents: number;
+  /** Coût d'achat — moyenne pondérée recalculée à chaque réception fournisseur, corrigeable à la main. */
+  costPriceCents: number;
+  /** Marge minimale (DZD) sous laquelle une remise caisse déclenche un avertissement — optionnel. */
+  minMarginCents?: number;
   taxRate: TaxRate;
   isPerishable: boolean;
   lowStockThreshold?: number;
@@ -149,12 +155,79 @@ export interface CreateStockMovementInput {
   productId: string;
   variantSku?: string;
   storeId: string;
-  type: Extract<StockMovementType, 'purchase' | 'adjustment' | 'inventory_count' | 'spoilage'>;
+  type: Extract<StockMovementType, 'adjustment' | 'inventory_count' | 'spoilage'>;
   quantityDelta: number;
-  unitCostCents?: number;
   lotNumber?: string;
   expiryDate?: string;
   note?: string;
+}
+
+/** Réception fournisseur — flux dédié (voir POST /stock/purchases) car il met à jour le coût
+ * moyen pondéré du produit et peut générer une dette fournisseur pour la part non payée. */
+export interface CreatePurchaseInput {
+  productId: string;
+  variantSku?: string;
+  storeId: string;
+  quantity: number; // toujours positif
+  unitCostCents: number;
+  supplierId?: string;
+  paidCents: number; // 0 <= paidCents <= quantity * unitCostCents
+  lotNumber?: string;
+  expiryDate?: string;
+  note?: string;
+}
+
+// --- Back-office fournisseurs / clients & dettes (ledgers append-only) ---
+
+export type LedgerEntryType = 'purchase_on_credit' | 'sale_credit' | 'payment' | 'adjustment';
+
+export interface LedgerEntryDTO {
+  id: string;
+  type: LedgerEntryType;
+  amountCents: number; // signé : positif = augmente la dette, négatif = la réduit
+  note?: string;
+  reference?: { type: 'sale' | 'purchase' | 'manual'; id: string };
+  createdAtLocal: string;
+}
+
+export interface CreateLedgerPaymentInput {
+  amountCents: number; // toujours positif, réduit la dette
+  note?: string;
+}
+
+export interface SupplierDTO {
+  id: string;
+  name: string;
+  phone?: string;
+  address?: string;
+  active: boolean;
+  balanceCents: number; // > 0 = on doit de l'argent à ce fournisseur
+}
+
+export interface SupplierInput {
+  name: string;
+  phone?: string;
+  address?: string;
+  active?: boolean;
+}
+
+export interface CustomerDTO {
+  id: string;
+  name: string;
+  phone?: string;
+  active: boolean;
+  balanceCents: number; // > 0 = ce client nous doit de l'argent ("Karna")
+}
+
+export interface CreateCustomerInput {
+  name: string;
+  phone?: string;
+}
+
+export interface UpdateCustomerInput {
+  name?: string;
+  phone?: string;
+  active?: boolean;
 }
 
 // --- Back-office ventes / rapports ---
@@ -229,6 +302,26 @@ export interface TopProductDTO {
   name: LocalizedText;
   quantity: number;
   revenueCents: number;
+}
+
+export interface ProfitSummaryDTO {
+  revenueCents: number; // net de TVA, ventes moins retours
+  costCents: number;
+  grossProfitCents: number;
+  marginPercent: number; // grossProfit / revenue * 100, 0 si revenue = 0
+}
+
+export interface DebtorDTO {
+  id: string;
+  name: string;
+  balanceCents: number;
+}
+
+export interface DebtsSummaryDTO {
+  totalSupplierDebtCents: number;
+  totalCustomerDebtCents: number;
+  topSuppliers: DebtorDTO[];
+  topCustomers: DebtorDTO[];
 }
 
 // --- Auth : création du commerce (premier lancement) & connexion ---

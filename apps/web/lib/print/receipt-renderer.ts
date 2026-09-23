@@ -1,4 +1,6 @@
 import type { SaleLine, SaleTotals } from '@pos-dz/shared';
+import type { Locale } from '../i18n/LanguageContext';
+import { formatCurrency } from '../format';
 
 /**
  * La plupart des imprimantes thermiques ESC/POS n'ont pas de jeu de caractères arabe
@@ -18,12 +20,17 @@ export interface ReceiptRenderInput {
   dateLabel: string;
   lines: SaleLine[];
   totals: SaleTotals;
+  locale: Locale;
 }
 
-const formatDZD = (cents: number) =>
-  new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: 'DZD' }).format(cents / 100);
+const RECEIPT_LABELS: Record<Locale, { ticket: string; total: string; stampDuty: string }> = {
+  fr: { ticket: 'Ticket', total: 'Total', stampDuty: 'Dont timbre fiscal' },
+  ar: { ticket: 'التذكرة', total: 'الإجمالي', stampDuty: 'منها الطابع الجبائي' },
+};
 
 export async function renderReceiptToImageData(input: ReceiptRenderInput): Promise<ImageData> {
+  const formatDZD = (cents: number) => formatCurrency(cents, input.locale);
+  const labels = RECEIPT_LABELS[input.locale];
   const widthDots = input.widthMm * DOTS_PER_MM_203DPI; // 576 (80mm) ou 464 (58mm)
   const paddingX = 16;
   const lineHeight = 28;
@@ -41,13 +48,21 @@ export async function renderReceiptToImageData(input: ReceiptRenderInput): Promi
 
   let y = 30;
 
+  // En arabe, le bord "début de ligne" (où s'alignent libellés et noms d'article) est à droite du
+  // ticket ; le montant, toujours en chiffres latins, reste à l'opposé — voir formatCurrency.
+  const isRtl = input.locale === 'ar';
+  const startX = isRtl ? canvas.width - paddingX : paddingX;
+  const endX = isRtl ? paddingX : canvas.width - paddingX;
+  const startAlign: CanvasTextAlign = isRtl ? 'right' : 'left';
+  const endAlign: CanvasTextAlign = isRtl ? 'left' : 'right';
+
   ctx.textAlign = 'center';
   ctx.font = 'bold 26px sans-serif';
   ctx.fillText(input.header, canvas.width / 2, y);
   y += 34;
 
   ctx.font = '16px sans-serif';
-  ctx.fillText(`Ticket ${input.saleNumber}`, canvas.width / 2, y);
+  ctx.fillText(`${labels.ticket} ${input.saleNumber}`, canvas.width / 2, y);
   y += 20;
   ctx.fillText(input.dateLabel, canvas.width / 2, y);
   y += 20;
@@ -55,13 +70,12 @@ export async function renderReceiptToImageData(input: ReceiptRenderInput): Promi
   drawRule(ctx, canvas.width, y, paddingX);
   y += 20;
 
-  ctx.textAlign = 'left';
   for (const line of input.lines) {
+    ctx.textAlign = startAlign;
     ctx.font = '17px sans-serif';
-    ctx.fillText(`${line.name.fr} × ${line.quantity}`, paddingX, y);
-    ctx.textAlign = 'right';
-    ctx.fillText(formatDZD(line.lineTotalCents), canvas.width - paddingX, y);
-    ctx.textAlign = 'left';
+    ctx.fillText(`${line.name.fr} × ${line.quantity}`, startX, y);
+    ctx.textAlign = endAlign;
+    ctx.fillText(formatDZD(line.lineTotalCents), endX, y);
     y += lineHeight;
 
     if (line.name.ar) {
@@ -79,18 +93,18 @@ export async function renderReceiptToImageData(input: ReceiptRenderInput): Promi
   y += 26;
 
   ctx.font = 'bold 22px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('Total', paddingX, y);
-  ctx.textAlign = 'right';
-  ctx.fillText(formatDZD(input.totals.grandTotalCents), canvas.width - paddingX, y);
+  ctx.textAlign = startAlign;
+  ctx.fillText(labels.total, startX, y);
+  ctx.textAlign = endAlign;
+  ctx.fillText(formatDZD(input.totals.grandTotalCents), endX, y);
   y += 26;
 
   if (input.totals.stampDutyCents > 0) {
     ctx.font = '15px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('Dont timbre fiscal', paddingX, y);
-    ctx.textAlign = 'right';
-    ctx.fillText(formatDZD(input.totals.stampDutyCents), canvas.width - paddingX, y);
+    ctx.textAlign = startAlign;
+    ctx.fillText(labels.stampDuty, startX, y);
+    ctx.textAlign = endAlign;
+    ctx.fillText(formatDZD(input.totals.stampDutyCents), endX, y);
     y += 24;
   }
 

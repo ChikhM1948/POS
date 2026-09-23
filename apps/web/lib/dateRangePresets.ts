@@ -1,12 +1,6 @@
 export type DateRangePreset = 'today' | '7d' | '30d' | 'month' | 'custom';
 
-export const PRESET_LABELS: Record<DateRangePreset, string> = {
-  today: "Aujourd'hui",
-  '7d': '7 derniers jours',
-  '30d': '30 derniers jours',
-  month: 'Ce mois-ci',
-  custom: 'Personnalisé',
-};
+export const DATE_RANGE_PRESETS: DateRangePreset[] = ['today', '7d', '30d', 'month', 'custom'];
 
 function toDateInputValue(date: Date): string {
   return date.toISOString().slice(0, 10);

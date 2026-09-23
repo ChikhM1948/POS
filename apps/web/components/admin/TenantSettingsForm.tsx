@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useTranslation } from '../../lib/i18n/LanguageContext';
 import type { TenantSettingsDTO, UpdateTenantSettingsInput } from '@pos-dz/shared';
 
 const MAX_LOGO_DIMENSION = 320;
@@ -36,6 +37,7 @@ interface Props {
 
 /** Branding du commerce — logo, téléphone, couleurs — imprimé sur les tickets et affiché au back-office. */
 export function TenantSettingsForm({ initial, onSubmit }: Props) {
+  const { t } = useTranslation();
   const [name, setName] = useState(initial.name);
   const [phone, setPhone] = useState(initial.phone ?? '');
   const [logoUrl, setLogoUrl] = useState(initial.branding.logoUrl ?? '');
@@ -51,14 +53,14 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
     e.target.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setLogoError('Le fichier doit être une image.');
+      setLogoError(t('tenantSettings.errorImageType'));
       return;
     }
     try {
       setLogoError(null);
       setLogoUrl(await resizeImageToDataUrl(file));
     } catch {
-      setLogoError("Impossible de charger l'image.");
+      setLogoError(t('tenantSettings.errorImageLoad'));
     }
   }
 
@@ -75,7 +77,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
       });
       setSaved(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement.");
+      setError(err instanceof Error ? err.message : t('tenantSettings.errorSave'));
     } finally {
       setSubmitting(false);
     }
@@ -89,17 +91,17 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="" className="h-full w-full object-contain" />
           ) : (
-            <span className="text-xs text-neutral-400">Logo</span>
+            <span className="text-xs text-neutral-400">{t('tenantSettings.logoPlaceholder')}</span>
           )}
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="w-fit cursor-pointer rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50">
-            {logoUrl ? 'Changer le logo' : 'Ajouter un logo'}
+            {logoUrl ? t('tenantSettings.changeLogo') : t('tenantSettings.addLogo')}
             <input type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
           </label>
           {logoUrl && (
-            <button type="button" onClick={() => setLogoUrl('')} className="text-left text-xs font-medium text-red-600 hover:underline">
-              Retirer le logo
+            <button type="button" onClick={() => setLogoUrl('')} className="text-start text-xs font-medium text-red-600 hover:underline">
+              {t('tenantSettings.removeLogo')}
             </button>
           )}
           {logoError && <p className="text-xs text-red-600">{logoError}</p>}
@@ -107,7 +109,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
       </div>
 
       <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-        Nom du commerce
+        {t('tenantSettings.name')}
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -116,19 +118,19 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
         />
       </label>
       <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-        Téléphone
+        {t('tenantSettings.phone')}
         <input
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           type="tel"
-          placeholder="0555 12 34 56"
+          placeholder={t('tenantSettings.phonePlaceholder')}
           className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500"
         />
       </label>
 
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-          Couleur principale
+          {t('tenantSettings.primaryColor')}
           <div className="flex items-center gap-2">
             <input
               type="color"
@@ -144,7 +146,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
           </div>
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-          Couleur secondaire
+          {t('tenantSettings.secondaryColor')}
           <div className="flex items-center gap-2">
             <input
               type="color"
@@ -162,7 +164,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
-      {saved && !error && <p className="text-sm text-emerald-600">Paramètres enregistrés.</p>}
+      {saved && !error && <p className="text-sm text-emerald-600">{t('tenantSettings.saved')}</p>}
 
       <div>
         <button
@@ -170,7 +172,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
           type="submit"
           className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? 'Enregistrement…' : 'Enregistrer'}
+          {submitting ? t('common.saving') : t('common.save')}
         </button>
       </div>
     </form>

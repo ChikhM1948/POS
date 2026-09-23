@@ -13,6 +13,8 @@ import { salesRouter } from './modules/sales/sales.controller';
 import { reportsRouter } from './modules/reports/reports.controller';
 import { usersRouter } from './modules/users/users.controller';
 import { tenantRouter } from './modules/tenant/tenant.controller';
+import { suppliersRouter } from './modules/suppliers/suppliers.controller';
+import { customersRouter } from './modules/customers/customers.controller';
 import { requireAuth, requireRole } from './middleware/auth';
 
 async function main() {
@@ -40,6 +42,10 @@ async function main() {
   // dans chaque routeur (users: tout réservé aux admins ; tenant: lecture ouverte, écriture admin).
   app.use('/users', requireAuth, usersRouter);
   app.use('/tenant', requireAuth, tenantRouter);
+  // Fournisseurs (dettes d'achat) et clients (dettes de vente / crédit "Karna") — restrictions de
+  // rôle appliquées dans chaque routeur, voir suppliers.controller.ts / customers.controller.ts.
+  app.use('/suppliers', requireAuth, suppliersRouter);
+  app.use('/customers', requireAuth, customersRouter);
 
   // Filet de sécurité final : toute erreur relayée par asyncHandler (voir middleware/asyncHandler.ts)
   // atterrit ici en 500 au lieu de faire planter le process — DOIT rester le dernier middleware.

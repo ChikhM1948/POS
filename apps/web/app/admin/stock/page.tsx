@@ -4,9 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAdminAuth } from '../../../lib/adminAuth';
 import { adminFetch } from '../../../lib/adminApi';
 import { StockMovementPanel } from '../../../components/admin/StockMovementPanel';
+import { useTranslation } from '../../../lib/i18n/LanguageContext';
 import type { StockBalanceDTO, StoreDTO } from '@pos-dz/shared';
 
 export default function StockPage() {
+  const { t } = useTranslation();
   const { session } = useAdminAuth();
   const [stores, setStores] = useState<StoreDTO[]>([]);
   const [storeId, setStoreId] = useState('');
@@ -22,7 +24,7 @@ export default function StockPage() {
         setStores(stores);
         setStoreId((current) => current || stores[0]?.id || '');
       })
-      .catch((err) => setError(err instanceof Error ? err.message : 'Erreur.'));
+      .catch((err) => setError(err instanceof Error ? err.message : t('common.errorGeneric')));
   }, [session]);
 
   const loadBalances = useCallback(async () => {
@@ -33,7 +35,7 @@ export default function StockPage() {
       setBalances(balances);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur de chargement.');
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -46,7 +48,7 @@ export default function StockPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900">Stock</h1>
+        <h1 className="text-xl font-semibold text-neutral-900">{t('stock.title')}</h1>
         <select
           value={storeId}
           onChange={(e) => {
@@ -76,11 +78,11 @@ export default function StockPage() {
 
       <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-card">
         <table className="w-full text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
             <tr>
-              <th className="px-4 py-2">Produit</th>
-              <th className="px-4 py-2">Stock actuel</th>
-              <th className="px-4 py-2">Seuil critique</th>
+              <th className="px-4 py-2">{t('products.tableProduct')}</th>
+              <th className="px-4 py-2">{t('stock.tableCurrent')}</th>
+              <th className="px-4 py-2">{t('stock.tableThreshold')}</th>
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
@@ -95,12 +97,12 @@ export default function StockPage() {
                   </td>
                   <td className={`px-4 py-2.5 font-medium ${isLow ? 'text-red-600' : 'text-neutral-900'}`}>
                     {b.quantity} {b.unit}
-                    {isLow && <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">Stock faible</span>}
+                    {isLow && <span className="ms-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{t('stock.lowStock')}</span>}
                   </td>
                   <td className="px-4 py-2.5 text-neutral-600">{b.lowStockThreshold ?? '—'}</td>
-                  <td className="px-4 py-2.5 text-right">
+                  <td className="px-4 py-2.5 text-end">
                     <button onClick={() => setSelected(b)} className="text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline">
-                      Mouvement / historique
+                      {t('stock.movementHistory')}
                     </button>
                   </td>
                 </tr>
@@ -109,7 +111,7 @@ export default function StockPage() {
             {!loading && balances.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-4 py-6 text-center text-neutral-500">
-                  Aucun produit.
+                  {t('products.empty')}
                 </td>
               </tr>
             )}

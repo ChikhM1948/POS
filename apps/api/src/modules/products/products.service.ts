@@ -13,6 +13,8 @@ function toDTO(doc: any): ProductDTO {
     unit: doc.unit,
     variants: doc.variants ?? [],
     sellingPriceCents: doc.sellingPriceCents,
+    costPriceCents: doc.costPriceCents ?? 0,
+    minMarginCents: doc.minMarginCents,
     taxRate: doc.taxRate,
     isPerishable: doc.isPerishable,
     lowStockThreshold: doc.lowStockThreshold,
@@ -42,6 +44,32 @@ export async function updateProduct(tenantId: string, productId: string, input: 
     { new: true },
   );
   return doc ? toDTO(doc) : null;
+}
+
+/**
+ * Moyenne pondérée incrémentale du coût d'achat : pas besoin de rejouer tout le ledger
+ * StockMovement, seul le solde de stock courant (avant la réception) est nécessaire. Si le stock
+ * était à 0 ou négatif (rupture), le nouveau coût remplace simplement l'ancien.
+ */
+export async function recomputeCostPrice(
+  tenantId: string,
+  productId: string,
+  currentQtyBeforePurchase: number,
+  purchaseQty: number,
+  purchaseUnitCostCents: number,
+): Promise<number> {
+  const product = await Product.findOne({ tenantId: new Types.ObjectId(tenantId), _id: productId });
+  if (!product) throw new Error('Produit introuvable.');
+
+  const priorQty = Math.max(0, currentQtyBeforePurchase);
+  const newCostPriceCents =
+    priorQty > 0
+      ? Math.round((priorQty * (product.costPriceCents ?? 0) + purchaseQty * purchaseUnitCostCents) / (priorQty + purchaseQty))
+      : purchaseUnitCostCents;
+
+  product.costPriceCents = newCostPriceCents;
+  await product.save();
+  return newCostPriceCents;
 }
 
 /** Pas de suppression physique : un produit peut être référencé par des ventes/mouvements passés. */
