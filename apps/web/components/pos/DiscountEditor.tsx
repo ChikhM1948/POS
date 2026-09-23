@@ -8,18 +8,18 @@ import { IconMinus } from '../icons';
 interface Props {
   quantity: number;
   unitPriceCents: number;
-  costPriceCents: number;
-  minMarginCents?: number;
+  minSellingPriceCents?: number;
   discountCents: number;
   onApply: (discountCents: number) => void;
 }
 
 /**
- * Remise par ligne, saisie en DZD. Si une marge minimale est configurée sur le produit
- * (Product.minMarginCents) et que la remise ferait passer le prix net sous ce plancher, on affiche
- * un avertissement — mais la vente reste possible : décision produit, voir plan de la fonctionnalité.
+ * Remise par ligne, saisie en DZD. Si un prix de vente minimum est configuré sur le produit
+ * (Product.minSellingPriceCents) et que la remise ferait passer le prix net sous ce plancher, on
+ * affiche un avertissement — mais la vente reste possible : décision produit, voir plan de la
+ * fonctionnalité.
  */
-export function DiscountEditor({ quantity, unitPriceCents, costPriceCents, minMarginCents, discountCents, onApply }: Props) {
+export function DiscountEditor({ quantity, unitPriceCents, minSellingPriceCents, discountCents, onApply }: Props) {
   const { t, locale } = useTranslation();
   const formatDZD = (cents: number) => formatCurrency(cents, locale);
   const [open, setOpen] = useState(false);
@@ -27,8 +27,7 @@ export function DiscountEditor({ quantity, unitPriceCents, costPriceCents, minMa
 
   const candidateDiscountCents = Math.max(0, Math.round(parseFloat(input.replace(',', '.') || '0') * 100));
   const netUnitCents = quantity > 0 ? (unitPriceCents * quantity - candidateDiscountCents) / quantity : unitPriceCents;
-  const floorCents = minMarginCents !== undefined ? costPriceCents + minMarginCents : undefined;
-  const belowFloor = floorCents !== undefined && netUnitCents < floorCents;
+  const belowFloor = minSellingPriceCents !== undefined && netUnitCents < minSellingPriceCents;
 
   function apply() {
     onApply(Math.min(candidateDiscountCents, unitPriceCents * quantity));

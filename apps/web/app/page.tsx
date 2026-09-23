@@ -269,8 +269,7 @@ export default function PosPage() {
                       <DiscountEditor
                         quantity={line.quantity}
                         unitPriceCents={line.unitPriceCents}
-                        costPriceCents={line.costPriceCents}
-                        minMarginCents={product?.minMarginCents}
+                        minSellingPriceCents={product?.minSellingPriceCents}
                         discountCents={line.discountCents}
                         onApply={(discountCents) => applyDiscount(line.productId, discountCents)}
                       />

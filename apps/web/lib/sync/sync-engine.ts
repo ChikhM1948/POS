@@ -122,7 +122,7 @@ export class SyncEngine {
           imageUrl: p.imageUrl,
           sellingPriceCents: p.sellingPriceCents,
           costPriceCents: p.costPriceCents ?? 0,
-          minMarginCents: p.minMarginCents,
+          minSellingPriceCents: p.minSellingPriceCents,
           taxRate: p.taxRate,
           unit: p.unit,
           updatedAt: p.updatedAt,

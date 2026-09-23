@@ -11,7 +11,7 @@ export interface LocalProduct {
   imageUrl?: string;
   sellingPriceCents: number;
   costPriceCents: number;
-  minMarginCents?: number;
+  minSellingPriceCents?: number;
   taxRate: 19 | 9 | 0;
   unit: string;
   updatedAt: string;

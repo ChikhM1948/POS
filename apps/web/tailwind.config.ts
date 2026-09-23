@@ -6,8 +6,8 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: [
-          'Inter',
-          'Noto Sans Arabic',
+          'var(--font-inter)',
+          'var(--font-tajawal)',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',

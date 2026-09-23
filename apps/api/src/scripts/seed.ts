@@ -48,12 +48,12 @@ async function seed() {
     { upsert: true },
   );
 
-  // costPriceCents ~ 55-65% du prix de vente, minMarginCents fixé sur deux produits pour pouvoir
-  // tester l'avertissement de marge minimale en caisse dès le premier lancement.
+  // costPriceCents ~ 55-65% du prix de vente, minSellingPriceCents fixé sur deux produits pour
+  // pouvoir tester l'avertissement de prix plancher en caisse dès le premier lancement.
   const products = [
-    { sku: 'PRD-001', barcode: '6130001000019', name: { fr: 'Lait 1L', ar: 'حليب 1 لتر' }, category: 'Boissons', sellingPriceCents: 12000, costPriceCents: 7500, minMarginCents: 2000, taxRate: 9 as const, unit: 'unité' },
+    { sku: 'PRD-001', barcode: '6130001000019', name: { fr: 'Lait 1L', ar: 'حليب 1 لتر' }, category: 'Boissons', sellingPriceCents: 12000, costPriceCents: 7500, minSellingPriceCents: 9500, taxRate: 9 as const, unit: 'unité' },
     { sku: 'PRD-002', barcode: '6130001000026', name: { fr: 'Pain', ar: 'خبز' }, category: 'Boulangerie', sellingPriceCents: 3000, costPriceCents: 1800, taxRate: 0 as const, unit: 'unité' },
-    { sku: 'PRD-003', barcode: '6130001000033', name: { fr: 'Huile 1L', ar: 'زيت 1 لتر' }, category: 'Épicerie', sellingPriceCents: 45000, costPriceCents: 28000, minMarginCents: 8000, taxRate: 19 as const, unit: 'unité' },
+    { sku: 'PRD-003', barcode: '6130001000033', name: { fr: 'Huile 1L', ar: 'زيت 1 لتر' }, category: 'Épicerie', sellingPriceCents: 45000, costPriceCents: 28000, minSellingPriceCents: 36000, taxRate: 19 as const, unit: 'unité' },
     { sku: 'PRD-004', barcode: '6130001000040', name: { fr: 'Eau minérale 1.5L', ar: 'مياه معدنية 1.5 لتر' }, category: 'Boissons', sellingPriceCents: 4000, costPriceCents: 2200, taxRate: 9 as const, unit: 'unité' },
     { sku: 'PRD-005', barcode: '6130001000057', name: { fr: 'Croissant', ar: 'كرواسان' }, category: 'Boulangerie', sellingPriceCents: 3500, costPriceCents: 2000, taxRate: 9 as const, unit: 'unité' },
     { sku: 'PRD-006', barcode: '6130001000064', name: { fr: 'Sucre 1kg', ar: 'سكر 1 كغ' }, category: 'Épicerie', sellingPriceCents: 15000, costPriceCents: 9500, taxRate: 19 as const, unit: 'kg' },

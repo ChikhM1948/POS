@@ -53,8 +53,10 @@ export function ProductForm({ initial, onSubmit, onCancel }: Props) {
   const [imageError, setImageError] = useState<string | null>(null);
   const [unit, setUnit] = useState(initial?.unit ?? 'unité');
   const [priceInput, setPriceInput] = useState(centsToInput(initial?.sellingPriceCents));
-  const costPriceCents = initial?.costPriceCents ?? 0;
-  const [minMarginInput, setMinMarginInput] = useState(initial?.minMarginCents !== undefined ? centsToInput(initial.minMarginCents) : '');
+  const [costPriceInput, setCostPriceInput] = useState(centsToInput(initial?.costPriceCents));
+  const [minSellingPriceInput, setMinSellingPriceInput] = useState(
+    initial?.minSellingPriceCents !== undefined ? centsToInput(initial.minSellingPriceCents) : '',
+  );
   const [taxRate, setTaxRate] = useState<TaxRate>(initial?.taxRate ?? 19);
   const [isPerishable, setIsPerishable] = useState(initial?.isPerishable ?? false);
   const [threshold, setThreshold] = useState(initial?.lowStockThreshold?.toString() ?? '');
@@ -76,8 +78,8 @@ export function ProductForm({ initial, onSubmit, onCancel }: Props) {
         unit: unit.trim() || 'unité',
         variants: initial?.variants ?? [],
         sellingPriceCents: inputToCents(priceInput),
-        costPriceCents,
-        minMarginCents: minMarginInput ? inputToCents(minMarginInput) : undefined,
+        costPriceCents: inputToCents(costPriceInput),
+        minSellingPriceCents: minSellingPriceInput ? inputToCents(minSellingPriceInput) : undefined,
         taxRate,
         isPerishable,
         lowStockThreshold: threshold ? parseInt(threshold, 10) : undefined,
@@ -163,26 +165,26 @@ export function ProductForm({ initial, onSubmit, onCancel }: Props) {
           <input value={priceInput} onChange={(e) => setPriceInput(e.target.value)} inputMode="decimal" required className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500" />
           {inputToCents(priceInput) > 0 && (
             <span className="text-xs text-neutral-500">
-              {t('productForm.marginHint', { percent: marginPercent(inputToCents(priceInput), costPriceCents) })}
+              {t('productForm.marginHint', { percent: marginPercent(inputToCents(priceInput), inputToCents(costPriceInput)) })}
             </span>
           )}
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
           {t('productForm.costPrice')}
           <input
-            value={costPriceCents > 0 ? centsToInput(costPriceCents) : ''}
-            disabled
-            placeholder={t('productForm.costPriceUnknown')}
-            className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-neutral-500 placeholder:text-neutral-400"
+            value={costPriceInput}
+            onChange={(e) => setCostPriceInput(e.target.value)}
+            inputMode="decimal"
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-          {t('productForm.minMargin')}
+          {t('productForm.minSellingPrice')}
           <input
-            value={minMarginInput}
-            onChange={(e) => setMinMarginInput(e.target.value)}
+            value={minSellingPriceInput}
+            onChange={(e) => setMinSellingPriceInput(e.target.value)}
             inputMode="decimal"
-            placeholder={t('productForm.minMarginPlaceholder')}
+            placeholder={t('productForm.minSellingPricePlaceholder')}
             className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500"
           />
         </label>

@@ -173,9 +173,8 @@ export interface TranslationDict {
     unit: string;
     price: string;
     costPrice: string;
-    costPriceUnknown: string;
-    minMargin: string;
-    minMarginPlaceholder: string;
+    minSellingPrice: string;
+    minSellingPricePlaceholder: string;
     marginHint: string;
     taxRate: string;
     taxExempt: string;
@@ -646,10 +645,9 @@ const fr: TranslationDict = {
     category: 'Catégorie',
     unit: 'Unité',
     price: 'Prix de vente (DZD)',
-    costPrice: "Prix d'achat (calculé)",
-    costPriceUnknown: 'Pas encore de réception fournisseur',
-    minMargin: 'Marge minimale (DZD)',
-    minMarginPlaceholder: 'ex. 2000',
+    costPrice: "Prix d'achat (DZD)",
+    minSellingPrice: 'Prix de vente minimum (DZD)',
+    minSellingPricePlaceholder: 'ex. 9500',
     marginHint: 'Marge estimée : {percent}%',
     taxRate: 'TVA',
     taxExempt: 'Exonéré',
@@ -934,7 +932,7 @@ const fr: TranslationDict = {
     button: 'Remise',
     label: 'Remise sur la ligne (DZD)',
     apply: 'Appliquer',
-    marginWarning: 'Marge minimale non respectée pour ce produit.',
+    marginWarning: 'Le prix de vente minimum de ce produit n\'est pas respecté.',
   },
   creditModal: {
     title: 'Vente à crédit',
@@ -1121,10 +1119,9 @@ const ar: TranslationDict = {
     category: 'الفئة',
     unit: 'الوحدة',
     price: 'سعر البيع (دج)',
-    costPrice: 'سعر الشراء (محسوب)',
-    costPriceUnknown: 'لا يوجد استلام من مورد بعد',
-    minMargin: 'الهامش الأدنى (دج)',
-    minMarginPlaceholder: 'مثال: 2000',
+    costPrice: 'سعر الشراء (دج)',
+    minSellingPrice: 'الحد الأدنى لسعر البيع (دج)',
+    minSellingPricePlaceholder: 'مثال: 9500',
     marginHint: 'الهامش التقديري: {percent}%',
     taxRate: 'الضريبة',
     taxExempt: 'معفى',
@@ -1409,7 +1406,7 @@ const ar: TranslationDict = {
     button: 'خصم',
     label: 'خصم على السطر (دج)',
     apply: 'تطبيق',
-    marginWarning: 'الهامش الأدنى لهذا المنتج غير محترم.',
+    marginWarning: 'الحد الأدنى لسعر بيع هذا المنتج غير محترم.',
   },
   creditModal: {
     title: 'بيع بالدين',

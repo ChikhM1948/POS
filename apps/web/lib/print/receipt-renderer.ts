@@ -37,6 +37,13 @@ export async function renderReceiptToImageData(input: ReceiptRenderInput): Promi
   const estimatedHeight =
     220 + input.lines.length * lineHeight * 2 + (input.footer ? 60 : 0);
 
+  // Le canvas ne va chercher une police @font-face qu'une fois `document.fonts` confirmé chargé —
+  // sans ce await, le premier ticket imprimé après le chargement de la page retombe sur le
+  // fallback sans-serif tant que Tajawal n'est pas prêt.
+  if (input.locale === 'ar') {
+    await Promise.all([document.fonts.load('400 16px Tajawal'), document.fonts.load('700 16px Tajawal')]);
+  }
+
   const canvas = document.createElement('canvas');
   canvas.width = widthDots;
   canvas.height = estimatedHeight;
@@ -55,13 +62,16 @@ export async function renderReceiptToImageData(input: ReceiptRenderInput): Promi
   const endX = isRtl ? paddingX : canvas.width - paddingX;
   const startAlign: CanvasTextAlign = isRtl ? 'right' : 'left';
   const endAlign: CanvasTextAlign = isRtl ? 'left' : 'right';
+  // Les libellés et le texte article en arabe utilisent Tajawal (chargée ci-dessus) ; le fallback
+  // générique reste pour le français, dont les noms d'article latins n'ont pas besoin d'auto-hébergement ici.
+  const family = isRtl ? '"Tajawal", sans-serif' : 'sans-serif';
 
   ctx.textAlign = 'center';
-  ctx.font = 'bold 26px sans-serif';
+  ctx.font = `bold 26px ${family}`;
   ctx.fillText(input.header, canvas.width / 2, y);
   y += 34;
 
-  ctx.font = '16px sans-serif';
+  ctx.font = `16px ${family}`;
   ctx.fillText(`${labels.ticket} ${input.saleNumber}`, canvas.width / 2, y);
   y += 20;
   ctx.fillText(input.dateLabel, canvas.width / 2, y);
@@ -82,7 +92,7 @@ export async function renderReceiptToImageData(input: ReceiptRenderInput): Promi
       ctx.save();
       ctx.direction = 'rtl';
       ctx.textAlign = 'right';
-      ctx.font = '17px "Noto Sans Arabic", sans-serif';
+      ctx.font = '17px "Tajawal", sans-serif';
       ctx.fillText(line.name.ar, canvas.width - paddingX, y);
       ctx.restore();
       y += lineHeight;
@@ -92,7 +102,7 @@ export async function renderReceiptToImageData(input: ReceiptRenderInput): Promi
   drawRule(ctx, canvas.width, y, paddingX);
   y += 26;
 
-  ctx.font = 'bold 22px sans-serif';
+  ctx.font = `bold 22px ${family}`;
   ctx.textAlign = startAlign;
   ctx.fillText(labels.total, startX, y);
   ctx.textAlign = endAlign;
@@ -100,7 +110,7 @@ export async function renderReceiptToImageData(input: ReceiptRenderInput): Promi
   y += 26;
 
   if (input.totals.stampDutyCents > 0) {
-    ctx.font = '15px sans-serif';
+    ctx.font = `15px ${family}`;
     ctx.textAlign = startAlign;
     ctx.fillText(labels.stampDuty, startX, y);
     ctx.textAlign = endAlign;
@@ -111,7 +121,7 @@ export async function renderReceiptToImageData(input: ReceiptRenderInput): Promi
   if (input.footer) {
     y += 16;
     ctx.textAlign = 'center';
-    ctx.font = '14px sans-serif';
+    ctx.font = `14px ${family}`;
     wrapText(ctx, input.footer, canvas.width / 2, y, canvas.width - paddingX * 2, 18);
   }
 

@@ -14,7 +14,7 @@ function toDTO(doc: any): ProductDTO {
     variants: doc.variants ?? [],
     sellingPriceCents: doc.sellingPriceCents,
     costPriceCents: doc.costPriceCents ?? 0,
-    minMarginCents: doc.minMarginCents,
+    minSellingPriceCents: doc.minSellingPriceCents,
     taxRate: doc.taxRate,
     isPerishable: doc.isPerishable,
     lowStockThreshold: doc.lowStockThreshold,

@@ -106,10 +106,10 @@ export interface ProductDTO {
   unit: string;
   variants: ProductVariant[];
   sellingPriceCents: number;
-  /** Coût d'achat — moyenne pondérée recalculée à chaque réception fournisseur, corrigeable à la main. */
+  /** Coût d'achat — saisi librement par produit, ou recalculé en moyenne pondérée lors d'une réception fournisseur. */
   costPriceCents: number;
-  /** Marge minimale (DZD) sous laquelle une remise caisse déclenche un avertissement — optionnel. */
-  minMarginCents?: number;
+  /** Prix de vente minimum (DZD) sous lequel une remise caisse déclenche un avertissement — optionnel. */
+  minSellingPriceCents?: number;
   taxRate: TaxRate;
   isPerishable: boolean;
   lowStockThreshold?: number;
