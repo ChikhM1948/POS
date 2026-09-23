@@ -11,6 +11,7 @@ function toDTO(t: any): TenantSettingsDTO {
       secondaryColor: t.branding?.secondaryColor,
     },
     phone: t.legal?.phone,
+    syncEnabled: t.syncEnabled ?? true,
   };
 }
 
@@ -29,6 +30,7 @@ export async function updateTenantSettings(
   if (input.branding?.logoUrl !== undefined) $set['branding.logoUrl'] = input.branding.logoUrl;
   if (input.branding?.primaryColor !== undefined) $set['branding.primaryColor'] = input.branding.primaryColor;
   if (input.branding?.secondaryColor !== undefined) $set['branding.secondaryColor'] = input.branding.secondaryColor;
+  if (input.syncEnabled !== undefined) $set.syncEnabled = input.syncEnabled;
 
   const tenant = await Tenant.findByIdAndUpdate(tenantId, { $set }, { new: true }).lean();
   return tenant ? toDTO(tenant) : null;

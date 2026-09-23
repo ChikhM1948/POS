@@ -9,6 +9,7 @@
     "start": "node dist/server.js",
     "seed": "tsx src/scripts/seed.ts",
     "dev:mongo": "tsx src/scripts/dev-mongo.ts",
+    "migrate:tenant": "tsx src/scripts/migrate-tenant-to-cloud.ts",
     "typecheck": "tsc -p . --noEmit"
   },
   "dependencies": {

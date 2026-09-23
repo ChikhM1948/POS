@@ -144,3 +144,34 @@ même si l'usage nominal reste connecté.
 **Si vous changez `RENDERER_PORT`** dans `apps/desktop/main.ts` (ex. conflit avec un autre
 logiciel sur les postes de caisse), mettez à jour `CORS_ORIGIN` côté API en conséquence — sinon
 l'app desktop packagée se retrouve bloquée par CORS sur chaque appel API.
+
+## Mode Local vs Synchronisé — et migration d'un commerce local vers le cloud
+
+Chaque commerce (Tenant) a un indicateur `syncEnabled`, choisi à la création (écran de premier
+lancement) et modifiable ensuite dans le back-office (`/admin/settings`) :
+- **Synchronisé** : la caisse pousse/tire ses données (`SyncEngine`) vers l'API configurée.
+- **Local** : le `SyncEngine` de la caisse ne tourne jamais — aucune donnée ne quitte le poste
+  tant que ce commerce reste sur ce mode.
+
+Ce commutateur ne change **pas** à quelle base de données `apps/api` est connecté — ça reste une
+seule connexion MongoDB pour tout le déploiement (`MONGODB_URI`), partagée par tous les tenants.
+Un commerce vraiment "local" (déploiement complet avec MongoDB local/LAN, pas Atlas — voir
+[Déploiement production](#déploiement-production--desktop-connecté-à-une-api-en-ligne) ci-dessus)
+qui veut ensuite devenir accessible depuis le web doit donc être **migré** vers Atlas, pas juste
+re-basculé côté UI :
+
+```bash
+cd apps/api
+npx tsx src/scripts/migrate-tenant-to-cloud.ts \
+  --tenant-id=<id du tenant à migrer> \
+  --source="mongodb://localhost:27017/pos-dz" \
+  --target="mongodb+srv://user:pass@cluster.mongodb.net/pos-dz?retryWrites=true&w=majority"
+```
+
+Copie (upsert par `_id`, donc rejouable sans risque si interrompu) toutes les données de ce tenant
+— boutique, utilisateurs, catalogue, clients, fournisseurs, ventes, mouvements de stock — de la
+source vers la cible, et force `syncEnabled: true` sur le tenant migré. **Étapes suivantes,
+manuelles** : reconfigurer `MONGODB_URI` de ce déploiement `apps/api` vers la cible, puis
+redémarrer — les caisses déjà configurées se resynchronisent automatiquement à leur prochaine
+connexion (idempotent : les ventes déjà migrées ne sont jamais dupliquées, voir
+[`SYNC_STRATEGY.md`](SYNC_STRATEGY.md#idempotence--la-clé-de-voûte)).

@@ -38,7 +38,7 @@ export default function PosPage() {
   const db = useMemo(() => (deviceId ? getOfflineDB(deviceId) : null), [deviceId]);
 
   useEffect(() => {
-    if (!db || !deviceId || !session) return;
+    if (!db || !deviceId || !session || !session.syncEnabled) return;
     const engine = new SyncEngine(db, session.tenantId, deviceId, session.token);
     engine.start();
     return () => engine.stop();
@@ -141,7 +141,7 @@ export default function PosPage() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-neutral-100">
-      <OfflineBanner />
+      <OfflineBanner localMode={!session.syncEnabled} />
       <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3 shadow-card">
         <div className="flex items-center gap-3">
           <BrandMark size={38} />

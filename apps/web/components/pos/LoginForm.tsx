@@ -14,6 +14,8 @@ export interface Session {
   storeId: string;
   cashierId: string;
   cashierName: string;
+  /** Mode du commerce (Tenant.syncEnabled) — gate le SyncEngine côté caisse, voir app/page.tsx. */
+  syncEnabled: boolean;
 }
 
 /**
@@ -72,7 +74,23 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
         throw new Error(errBody.error ?? t('login.errorDefault'));
       }
       const { token, user } = await res.json();
-      onLogin({ token, tenantId: config.tenantId, storeId: config.storeId, cashierId: user.id, cashierName: user.name });
+
+      // Lu séparément (plutôt que retourné par /auth/login-pin ou -cashier) : évite de dupliquer
+      // la lecture du Tenant dans les 3 fonctions de login pour un champ que seule la caisse utilise.
+      // Si l'appel échoue (réseau capricieux juste après la connexion), on suppose la synchro active
+      // par défaut plutôt que de bloquer la connexion du caissier.
+      let syncEnabled = true;
+      try {
+        const tenantRes = await fetch(`${API_BASE_URL}/tenant`, { headers: { Authorization: `Bearer ${token}` } });
+        if (tenantRes.ok) {
+          const { tenant } = await tenantRes.json();
+          syncEnabled = tenant?.syncEnabled ?? true;
+        }
+      } catch {
+        // hors-ligne juste après la connexion — voir commentaire ci-dessus
+      }
+
+      onLogin({ token, tenantId: config.tenantId, storeId: config.storeId, cashierId: user.id, cashierName: user.name, syncEnabled });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('login.errorGeneric'));
       setPinCode('');

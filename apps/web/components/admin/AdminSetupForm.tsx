@@ -26,6 +26,7 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [syncEnabled, setSyncEnabled] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AuthResult | null>(null);
@@ -39,7 +40,7 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
       const res = await fetch(`${API_BASE_URL}/auth/setup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessName, adminName, email, password, phone: phone || undefined }),
+        body: JSON.stringify({ businessName, adminName, email, password, phone: phone || undefined, syncEnabled }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -158,6 +159,33 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
             className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
           />
         </label>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-neutral-700">{t('adminSetup.modeLabel')}</span>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setSyncEnabled(true)}
+              aria-pressed={syncEnabled}
+              className={`rounded-lg border px-3 py-2 text-start text-sm transition ${
+                syncEnabled ? 'border-brand-600 bg-brand-50 text-brand-900' : 'border-neutral-300 text-neutral-600 hover:bg-neutral-50'
+              }`}
+            >
+              <span className="block font-semibold">{t('adminSetup.modeSyncTitle')}</span>
+              <span className="block text-xs text-neutral-500">{t('adminSetup.modeSyncDescription')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSyncEnabled(false)}
+              aria-pressed={!syncEnabled}
+              className={`rounded-lg border px-3 py-2 text-start text-sm transition ${
+                !syncEnabled ? 'border-brand-600 bg-brand-50 text-brand-900' : 'border-neutral-300 text-neutral-600 hover:bg-neutral-50'
+              }`}
+            >
+              <span className="block font-semibold">{t('adminSetup.modeLocalTitle')}</span>
+              <span className="block text-xs text-neutral-500">{t('adminSetup.modeLocalDescription')}</span>
+            </button>
+          </div>
+        </div>
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
           {t('adminSetup.passwordLabel')}
           <input

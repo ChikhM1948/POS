@@ -6,7 +6,7 @@ export const authRouter = Router();
 
 /** Premier lancement : crée le commerce (tenant) et son premier compte administrateur. */
 authRouter.post('/setup', asyncHandler(async (req: Request, res: Response) => {
-  const { businessName, adminName, email, password, phone } = req.body ?? {};
+  const { businessName, adminName, email, password, phone, syncEnabled } = req.body ?? {};
   if (!businessName || !adminName || !email || !password) {
     return res.status(400).json({ error: 'businessName, adminName, email et password sont requis.' });
   }
@@ -14,7 +14,7 @@ authRouter.post('/setup', asyncHandler(async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 6 caractères.' });
   }
 
-  const result = await signupTenant({ businessName, adminName, email, password, phone });
+  const result = await signupTenant({ businessName, adminName, email, password, phone, syncEnabled });
   res.status(201).json(result);
 }));
 

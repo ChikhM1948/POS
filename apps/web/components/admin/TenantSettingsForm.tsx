@@ -44,6 +44,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
   const [logoError, setLogoError] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState(initial.branding.primaryColor);
   const [secondaryColor, setSecondaryColor] = useState(initial.branding.secondaryColor);
+  const [syncEnabled, setSyncEnabled] = useState(initial.syncEnabled);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -74,6 +75,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
         name: name.trim(),
         phone: phone.trim() || undefined,
         branding: { logoUrl: logoUrl || undefined, primaryColor, secondaryColor },
+        syncEnabled,
       });
       setSaved(true);
     } catch (err) {
@@ -162,6 +164,19 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
           </div>
         </label>
       </div>
+
+      <label className="flex items-start gap-3 rounded-lg border border-neutral-200 p-3">
+        <input
+          type="checkbox"
+          checked={syncEnabled}
+          onChange={(e) => setSyncEnabled(e.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-brand-600 focus:ring-brand-500"
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium text-neutral-700">{t('tenantSettings.syncEnabled')}</span>
+          <span className="text-xs text-neutral-500">{t('tenantSettings.syncEnabledHint')}</span>
+        </span>
+      </label>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
       {saved && !error && <p className="text-sm text-emerald-600">{t('tenantSettings.saved')}</p>}

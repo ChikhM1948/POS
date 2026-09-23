@@ -24,6 +24,8 @@ export interface ITenant extends Document {
   };
   plan: 'starter' | 'pro' | 'enterprise';
   status: 'active' | 'suspended' | 'trial';
+  /** true = ce commerce synchronise ses données en ligne (accessible depuis le web) ; false = local uniquement — voir sync-engine.ts, gaté côté client sur ce champ. */
+  syncEnabled: boolean;
   createdAt: Date;
 }
 
@@ -52,6 +54,7 @@ const TenantSchema = new Schema<ITenant>(
     },
     plan: { type: String, enum: ['starter', 'pro', 'enterprise'], default: 'starter' },
     status: { type: String, enum: ['active', 'suspended', 'trial'], default: 'trial' },
+    syncEnabled: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

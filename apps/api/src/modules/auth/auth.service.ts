@@ -39,6 +39,7 @@ export async function signupTenant(input: SignupInput): Promise<AuthResult> {
     name: input.businessName.trim(),
     slug,
     legal: input.phone ? { phone: input.phone.trim() } : undefined,
+    syncEnabled: input.syncEnabled ?? true,
   });
 
   const store = await Store.create({

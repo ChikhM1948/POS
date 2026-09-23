@@ -117,6 +117,11 @@ export interface TranslationDict {
     emailPlaceholder: string;
     phoneLabel: string;
     phonePlaceholder: string;
+    modeLabel: string;
+    modeSyncTitle: string;
+    modeSyncDescription: string;
+    modeLocalTitle: string;
+    modeLocalDescription: string;
     passwordLabel: string;
     passwordPlaceholder: string;
     submit: string;
@@ -336,6 +341,8 @@ export interface TranslationDict {
     phonePlaceholder: string;
     primaryColor: string;
     secondaryColor: string;
+    syncEnabled: string;
+    syncEnabledHint: string;
     saved: string;
     errorImageType: string;
     errorImageLoad: string;
@@ -378,6 +385,7 @@ export interface TranslationDict {
   };
   offlineBanner: {
     text: string;
+    localModeText: string;
   };
   refundForm: {
     title: string;
@@ -590,6 +598,11 @@ const fr: TranslationDict = {
     emailPlaceholder: 'vous@commerce.dz',
     phoneLabel: 'Téléphone (optionnel)',
     phonePlaceholder: '0555 12 34 56',
+    modeLabel: 'Mode de fonctionnement',
+    modeSyncTitle: 'Synchronisé',
+    modeSyncDescription: 'Données en ligne, accessibles depuis le web.',
+    modeLocalTitle: 'Local',
+    modeLocalDescription: 'Hors ligne uniquement, aucune donnée envoyée en ligne.',
     passwordLabel: 'Mot de passe',
     passwordPlaceholder: '6 caractères minimum',
     submit: 'Créer le commerce',
@@ -810,6 +823,8 @@ const fr: TranslationDict = {
     phonePlaceholder: '0555 12 34 56',
     primaryColor: 'Couleur principale',
     secondaryColor: 'Couleur secondaire',
+    syncEnabled: 'Synchronisation en ligne',
+    syncEnabledHint: 'Activée : les données sont accessibles depuis le web. Désactivée : le commerce reste local, aucune donnée ne quitte le poste.',
     saved: 'Paramètres enregistrés.',
     errorImageType: 'Le fichier doit être une image.',
     errorImageLoad: "Impossible de charger l'image.",
@@ -852,6 +867,7 @@ const fr: TranslationDict = {
   },
   offlineBanner: {
     text: 'Mode hors-ligne — les ventes sont enregistrées localement et seront synchronisées automatiquement au retour de la connexion.',
+    localModeText: 'Mode local — ce commerce ne synchronise pas ses données en ligne.',
   },
   refundForm: {
     title: 'Faire un retour',
@@ -1064,6 +1080,11 @@ const ar: TranslationDict = {
     emailPlaceholder: 'vous@commerce.dz',
     phoneLabel: 'الهاتف (اختياري)',
     phonePlaceholder: '0555 12 34 56',
+    modeLabel: 'طريقة العمل',
+    modeSyncTitle: 'متزامن',
+    modeSyncDescription: 'بيانات عبر الإنترنت، يمكن الوصول إليها من الويب.',
+    modeLocalTitle: 'محلي',
+    modeLocalDescription: 'دون اتصال فقط، لا تُرسل أي بيانات عبر الإنترنت.',
     passwordLabel: 'كلمة المرور',
     passwordPlaceholder: '6 أحرف على الأقل',
     submit: 'إنشاء المتجر',
@@ -1284,6 +1305,8 @@ const ar: TranslationDict = {
     phonePlaceholder: '0555 12 34 56',
     primaryColor: 'اللون الأساسي',
     secondaryColor: 'اللون الثانوي',
+    syncEnabled: 'المزامنة عبر الإنترنت',
+    syncEnabledHint: 'مفعّلة: يمكن الوصول إلى البيانات من الويب. معطّلة: يبقى المتجر محليًا، لا تغادر أي بيانات الجهاز.',
     saved: 'تم حفظ الإعدادات.',
     errorImageType: 'يجب أن يكون الملف صورة.',
     errorImageLoad: 'تعذّر تحميل الصورة.',
@@ -1326,6 +1349,7 @@ const ar: TranslationDict = {
   },
   offlineBanner: {
     text: 'وضع عدم الاتصال — يتم تسجيل المبيعات محليًا وستتم مزامنتها تلقائيًا عند عودة الاتصال.',
+    localModeText: 'وضع محلي — هذا المتجر لا يزامن بياناته عبر الإنترنت.',
   },
   refundForm: {
     title: 'إجراء إرجاع',

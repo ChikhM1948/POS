@@ -333,6 +333,8 @@ export interface SignupInput {
   email: string;
   password: string;
   phone?: string;
+  /** Mode choisi à l'installation : true = synchronise en ligne (accessible depuis le web), false = local uniquement. Défaut : true. */
+  syncEnabled?: boolean;
 }
 
 export interface AuthResult {
@@ -382,6 +384,8 @@ export interface TenantSettingsDTO {
     secondaryColor: string;
   };
   phone?: string;
+  /** true = synchronise en ligne, le commerce est accessible depuis le web ; false = local uniquement, aucune donnée ne quitte le poste. */
+  syncEnabled: boolean;
 }
 
 export interface UpdateTenantSettingsInput {
@@ -392,4 +396,5 @@ export interface UpdateTenantSettingsInput {
     primaryColor?: string;
     secondaryColor?: string;
   };
+  syncEnabled?: boolean;
 }
