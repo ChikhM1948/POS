@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: pos-dz-api
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build --workspace @pos-dz/api
+    startCommand: npm run start --workspace @pos-dz/api
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 12h
+      - key: CORS_ORIGIN
+        sync: false
