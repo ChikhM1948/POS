@@ -37,7 +37,7 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
         throw new Error(body.error ?? t('adminLogin.errorDefault'));
       }
       const { token, user } = await res.json();
-      login({ token, tenantId, userId: user.id, name: user.name, role: user.role });
+      login({ token, tenantId, userId: user.id, name: user.name, role: user.role, canViewPurchasePrice: user.canViewPurchasePrice });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('adminLogin.errorGeneric'));
     } finally {

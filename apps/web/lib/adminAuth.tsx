@@ -9,6 +9,8 @@ export interface AdminSession {
   userId: string;
   name: string;
   role: UserRole;
+  /** Pertinent uniquement si role === 'cashier'. */
+  canViewPurchasePrice?: boolean;
 }
 
 const STORAGE_KEY = 'pos-admin-session';

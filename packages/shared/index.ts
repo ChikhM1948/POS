@@ -92,7 +92,12 @@ export interface JwtClaims {
   tenantId: string;
   storeId?: string;
   role: UserRole;
+  /** Uniquement pertinent pour role === 'cashier' — voir PERMISSION_VIEW_PURCHASE_PRICE. */
+  canViewPurchasePrice?: boolean;
 }
+
+/** Dérogation fine accordée à un caissier au-delà de son rôle : le droit de voir le prix d'achat des produits. */
+export const PERMISSION_VIEW_PURCHASE_PRICE = 'view_purchase_price';
 
 // --- Back-office produits / stock ---
 
@@ -341,7 +346,7 @@ export interface AuthResult {
   token: string;
   tenantId: string;
   storeId?: string;
-  user: { id: string; name: string; role: UserRole };
+  user: { id: string; name: string; role: UserRole; canViewPurchasePrice?: boolean };
 }
 
 // --- Back-office équipe (cashier / stock_manager créés par l'admin) ---
@@ -354,6 +359,8 @@ export interface UserDTO {
   storeId?: string;
   active: boolean;
   hasPinCode: boolean;
+  /** Un caissier peut-il voir le prix d'achat des produits ? Toujours false pour les autres rôles ici. */
+  canViewPurchasePrice: boolean;
 }
 
 export interface CreateUserInput {
@@ -363,6 +370,8 @@ export interface CreateUserInput {
   role: Extract<UserRole, 'cashier' | 'stock_manager'>;
   storeId?: string;
   pinCode?: string;
+  /** Pertinent uniquement si role === 'cashier'. */
+  canViewPurchasePrice?: boolean;
 }
 
 export interface UpdateUserInput {
@@ -371,6 +380,7 @@ export interface UpdateUserInput {
   active?: boolean;
   password?: string;
   pinCode?: string;
+  canViewPurchasePrice?: boolean;
 }
 
 // --- Back-office paramètres du commerce (branding) ---

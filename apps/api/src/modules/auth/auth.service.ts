@@ -4,7 +4,12 @@ import { User } from '../../models/User';
 import { Tenant } from '../../models/Tenant';
 import { Store } from '../../models/Store';
 import { env } from '../../config/env';
+import { PERMISSION_VIEW_PURCHASE_PRICE } from '@pos-dz/shared';
 import type { AuthResult, JwtClaims, SignupInput } from '@pos-dz/shared';
+
+function canViewPurchasePrice(user: { permissions?: string[] }): boolean {
+  return Boolean(user.permissions?.includes(PERMISSION_VIEW_PURCHASE_PRICE));
+}
 
 function signToken(claims: JwtClaims): string {
   const options: jwt.SignOptions = { expiresIn: env.jwtExpiresIn as jwt.SignOptions['expiresIn'] };
@@ -86,8 +91,9 @@ export async function loginWithPassword(tenantId: string, email: string, passwor
     tenantId: String(user.tenantId),
     storeId: user.storeId ? String(user.storeId) : undefined,
     role: user.role,
+    canViewPurchasePrice: canViewPurchasePrice(user),
   };
-  return { token: signToken(claims), user: { id: user._id, name: user.name, role: user.role } };
+  return { token: signToken(claims), user: { id: user._id, name: user.name, role: user.role, canViewPurchasePrice: canViewPurchasePrice(user) } };
 }
 
 /**
@@ -107,8 +113,9 @@ export async function loginCashierWithPassword(tenantId: string, email: string, 
     tenantId: String(user.tenantId),
     storeId: user.storeId ? String(user.storeId) : undefined,
     role: user.role,
+    canViewPurchasePrice: canViewPurchasePrice(user),
   };
-  return { token: signToken(claims), user: { id: user._id, name: user.name, role: user.role } };
+  return { token: signToken(claims), user: { id: user._id, name: user.name, role: user.role, canViewPurchasePrice: canViewPurchasePrice(user) } };
 }
 
 /**
@@ -122,8 +129,17 @@ export async function loginWithPin(tenantId: string, storeId: string, pinCode: s
   for (const user of candidates) {
     const valid = await bcrypt.compare(pinCode, user.pinCodeHash!);
     if (valid) {
-      const claims: JwtClaims = { sub: String(user._id), tenantId, storeId, role: user.role };
-      return { token: signToken(claims), user: { id: user._id, name: user.name, role: user.role } };
+      const claims: JwtClaims = {
+        sub: String(user._id),
+        tenantId,
+        storeId,
+        role: user.role,
+        canViewPurchasePrice: canViewPurchasePrice(user),
+      };
+      return {
+        token: signToken(claims),
+        user: { id: user._id, name: user.name, role: user.role, canViewPurchasePrice: canViewPurchasePrice(user) },
+      };
     }
   }
   return null;

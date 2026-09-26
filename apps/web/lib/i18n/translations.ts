@@ -311,6 +311,7 @@ export interface TranslationDict {
     tableEmail: string;
     tableRole: string;
     tablePin: string;
+    tablePurchasePrice: string;
     tableStatus: string;
     empty: string;
     confirmDeactivate: string;
@@ -325,6 +326,7 @@ export interface TranslationDict {
     pin: string;
     pinPlaceholder: string;
     pinHint: string;
+    canViewPurchasePrice: string;
     submit: string;
     errorSave: string;
   };
@@ -792,6 +794,7 @@ const fr: TranslationDict = {
     tableEmail: 'Email',
     tableRole: 'Rôle',
     tablePin: 'PIN caisse',
+    tablePurchasePrice: "Voit le prix d'achat",
     tableStatus: 'Statut',
     empty: "Aucun membre pour l'instant.",
     confirmDeactivate: 'Désactiver le compte de "{name}" ? Il ne pourra plus se connecter.',
@@ -807,6 +810,7 @@ const fr: TranslationDict = {
     pinPlaceholder: 'ex. 1234',
     pinHint:
       "Le PIN est l'identifiant utilisé par le caissier pour se connecter à la caisse (identifiant boutique + PIN, sans email ni mot de passe).",
+    canViewPurchasePrice: "Autoriser ce caissier à voir le prix d'achat des produits",
     submit: 'Créer le compte',
     errorSave: "Erreur lors de l'enregistrement.",
   },
@@ -1274,6 +1278,7 @@ const ar: TranslationDict = {
     tableEmail: 'البريد الإلكتروني',
     tableRole: 'الدور',
     tablePin: 'رمز الصندوق (PIN)',
+    tablePurchasePrice: 'يرى سعر الشراء',
     tableStatus: 'الحالة',
     empty: 'لا يوجد أي عضو حتى الآن.',
     confirmDeactivate: 'إلغاء تفعيل حساب "{name}"؟ لن يتمكن بعد ذلك من تسجيل الدخول.',
@@ -1289,6 +1294,7 @@ const ar: TranslationDict = {
     pinPlaceholder: 'مثال: 1234',
     pinHint:
       'رمز PIN هو المعرّف الذي يستخدمه الكاشير لتسجيل الدخول إلى الصندوق (معرّف المتجر + رمز PIN، دون الحاجة إلى بريد إلكتروني أو كلمة مرور).',
+    canViewPurchasePrice: 'السماح لهذا الكاشير برؤية سعر شراء المنتجات',
     submit: 'إنشاء الحساب',
     errorSave: 'خطأ أثناء الحفظ.',
   },

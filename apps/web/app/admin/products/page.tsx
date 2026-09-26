@@ -13,6 +13,7 @@ export default function ProductsPage() {
   const { t, locale } = useTranslation();
   const formatDZD = (cents: number) => formatCurrency(cents, locale);
   const { session } = useAdminAuth();
+  const canViewCostPrice = session ? session.role !== 'cashier' || Boolean(session.canViewPurchasePrice) : true;
   const [products, setProducts] = useState<ProductDTO[]>([]);
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<ProductDTO | 'new' | null>(null);
@@ -81,7 +82,14 @@ export default function ProductsPage() {
         />
       </div>
 
-      {editing && <ProductForm initial={editing === 'new' ? null : editing} onSubmit={handleSubmit} onCancel={() => setEditing(null)} />}
+      {editing && (
+        <ProductForm
+          initial={editing === 'new' ? null : editing}
+          onSubmit={handleSubmit}
+          onCancel={() => setEditing(null)}
+          canViewCostPrice={canViewCostPrice}
+        />
+      )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 

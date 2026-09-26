@@ -48,6 +48,21 @@ export default function TeamPage() {
     await load();
   }
 
+  async function handleTogglePurchasePrice(user: UserDTO, canViewPurchasePrice: boolean) {
+    if (!session) return;
+    // Optimiste : la case reflète immédiatement le clic, on revient en arrière si l'API refuse.
+    setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, canViewPurchasePrice } : u)));
+    try {
+      await adminFetch(session.token, `/users/${user.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ canViewPurchasePrice }),
+      });
+    } catch (err) {
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, canViewPurchasePrice: !canViewPurchasePrice } : u)));
+      setError(err instanceof Error ? err.message : t('common.errorGeneric'));
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -73,6 +88,7 @@ export default function TeamPage() {
               <th className="px-4 py-2">{t('team.tableEmail')}</th>
               <th className="px-4 py-2">{t('team.tableRole')}</th>
               <th className="px-4 py-2">{t('team.tablePin')}</th>
+              <th className="px-4 py-2">{t('team.tablePurchasePrice')}</th>
               <th className="px-4 py-2">{t('team.tableStatus')}</th>
               <th className="px-4 py-2"></th>
             </tr>
@@ -84,6 +100,19 @@ export default function TeamPage() {
                 <td className="px-4 py-2.5 text-neutral-600">{u.email}</td>
                 <td className="px-4 py-2.5 text-neutral-600">{t(`roles.${u.role}`)}</td>
                 <td className="px-4 py-2.5 text-neutral-600">{u.hasPinCode ? t('common.yes') : t('common.dash')}</td>
+                <td className="px-4 py-2.5 text-neutral-600">
+                  {u.role === 'cashier' ? (
+                    <input
+                      type="checkbox"
+                      checked={u.canViewPurchasePrice}
+                      onChange={(e) => handleTogglePurchasePrice(u, e.target.checked)}
+                      className="h-4 w-4 rounded border-neutral-300 text-brand-600 focus:ring-brand-500"
+                      aria-label={t('team.tablePurchasePrice')}
+                    />
+                  ) : (
+                    t('common.dash')
+                  )}
+                </td>
                 <td className="px-4 py-2.5">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${u.active ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-200 text-neutral-600'}`}>
                     {u.active ? t('common.active') : t('common.inactive')}
@@ -100,7 +129,7 @@ export default function TeamPage() {
             ))}
             {!loading && users.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-neutral-500">
+                <td colSpan={7} className="px-4 py-6 text-center text-neutral-500">
                   {t('team.empty')}
                 </td>
               </tr>

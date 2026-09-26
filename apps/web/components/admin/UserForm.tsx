@@ -19,6 +19,7 @@ export function UserForm({ onSubmit, onCancel }: Props) {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<Extract<UserRole, 'cashier' | 'stock_manager'>>('cashier');
   const [pinCode, setPinCode] = useState('');
+  const [canViewPurchasePrice, setCanViewPurchasePrice] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +34,7 @@ export function UserForm({ onSubmit, onCancel }: Props) {
         password,
         role,
         pinCode: pinCode.trim() || undefined,
+        canViewPurchasePrice: role === 'cashier' ? canViewPurchasePrice : undefined,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('userForm.errorSave'));
@@ -105,6 +107,17 @@ export function UserForm({ onSubmit, onCancel }: Props) {
         )}
       </div>
       {role === 'cashier' && <p className="text-xs text-neutral-500">{t('userForm.pinHint')}</p>}
+      {role === 'cashier' && (
+        <label className="flex items-center gap-2 text-sm text-neutral-700">
+          <input
+            type="checkbox"
+            checked={canViewPurchasePrice}
+            onChange={(e) => setCanViewPurchasePrice(e.target.checked)}
+            className="h-4 w-4 rounded border-neutral-300 text-brand-600 focus:ring-brand-500"
+          />
+          {t('userForm.canViewPurchasePrice')}
+        </label>
+      )}
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
         <button

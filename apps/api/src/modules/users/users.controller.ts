@@ -17,7 +17,7 @@ usersRouter.get('/', asyncHandler(async (req: AuthenticatedRequest, res: Respons
 }));
 
 usersRouter.post('/', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { name, email, password, role, storeId, pinCode } = (req.body ?? {}) as Partial<CreateUserInput>;
+  const { name, email, password, role, storeId, pinCode, canViewPurchasePrice } = (req.body ?? {}) as Partial<CreateUserInput>;
   if (!name || !email || !password || !role) {
     return res.status(400).json({ error: 'name, email, password et role sont requis.' });
   }
@@ -38,7 +38,7 @@ usersRouter.post('/', asyncHandler(async (req: AuthenticatedRequest, res: Respon
     return res.status(409).json({ error: 'Un utilisateur avec cet email existe déjà.' });
   }
 
-  const user = await createUser(req.auth!.tenantId, { name, email, password, role, storeId, pinCode });
+  const user = await createUser(req.auth!.tenantId, { name, email, password, role, storeId, pinCode, canViewPurchasePrice });
   res.status(201).json({ user });
 }));
 

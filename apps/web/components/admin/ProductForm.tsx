@@ -39,10 +39,12 @@ interface Props {
   initial?: ProductDTO | null;
   onSubmit: (input: ProductInput) => Promise<void>;
   onCancel: () => void;
+  /** false pour un caissier sans la permission "voir le prix d'achat" — masque le coût et la marge. */
+  canViewCostPrice?: boolean;
 }
 
 /** Formulaire création/édition — les montants sont saisis en DZD et convertis en centimes à la soumission. */
-export function ProductForm({ initial, onSubmit, onCancel }: Props) {
+export function ProductForm({ initial, onSubmit, onCancel, canViewCostPrice = true }: Props) {
   const { t } = useTranslation();
   const [sku, setSku] = useState(initial?.sku ?? '');
   const [barcode, setBarcode] = useState(initial?.barcode ?? '');
@@ -163,21 +165,23 @@ export function ProductForm({ initial, onSubmit, onCancel }: Props) {
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
           {t('productForm.price')}
           <input value={priceInput} onChange={(e) => setPriceInput(e.target.value)} inputMode="decimal" required className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500" />
-          {inputToCents(priceInput) > 0 && (
+          {canViewCostPrice && inputToCents(priceInput) > 0 && (
             <span className="text-xs text-neutral-500">
               {t('productForm.marginHint', { percent: marginPercent(inputToCents(priceInput), inputToCents(costPriceInput)) })}
             </span>
           )}
         </label>
-        <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-          {t('productForm.costPrice')}
-          <input
-            value={costPriceInput}
-            onChange={(e) => setCostPriceInput(e.target.value)}
-            inputMode="decimal"
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500"
-          />
-        </label>
+        {canViewCostPrice && (
+          <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+            {t('productForm.costPrice')}
+            <input
+              value={costPriceInput}
+              onChange={(e) => setCostPriceInput(e.target.value)}
+              inputMode="decimal"
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500"
+            />
+          </label>
+        )}
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
           {t('productForm.minSellingPrice')}
           <input

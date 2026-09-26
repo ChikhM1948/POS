@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
 import { User } from '../../models/User';
 import { Store } from '../../models/Store';
+import { PERMISSION_VIEW_PURCHASE_PRICE } from '@pos-dz/shared';
 import type { CreateUserInput, UpdateUserInput, UserDTO } from '@pos-dz/shared';
 
 const MANAGED_ROLES = ['cashier', 'stock_manager'] as const;
@@ -15,6 +16,7 @@ function toDTO(u: any): UserDTO {
     storeId: u.storeId ? String(u.storeId) : undefined,
     active: u.active,
     hasPinCode: Boolean(u.pinCodeHash),
+    canViewPurchasePrice: Boolean(u.permissions?.includes(PERMISSION_VIEW_PURCHASE_PRICE)),
   };
 }
 
@@ -46,6 +48,7 @@ export async function createUser(tenantId: string, input: CreateUserInput): Prom
     passwordHash,
     pinCodeHash,
     role: input.role,
+    permissions: input.canViewPurchasePrice ? [PERMISSION_VIEW_PURCHASE_PRICE] : [],
   });
   return toDTO(user);
 }
@@ -58,6 +61,9 @@ export async function updateUser(tenantId: string, id: string, input: UpdateUser
   if (input.active !== undefined) user.active = input.active;
   if (input.password) user.passwordHash = await bcrypt.hash(input.password, 10);
   if (input.pinCode) user.pinCodeHash = await bcrypt.hash(input.pinCode, 10);
+  if (input.canViewPurchasePrice !== undefined) {
+    user.permissions = input.canViewPurchasePrice ? [PERMISSION_VIEW_PURCHASE_PRICE] : [];
+  }
   await user.save();
   return toDTO(user);
 }

@@ -26,6 +26,30 @@ tar -xzf pos-dz.tar.gz
 
 **B. Initialiser git et pousser vers un remote**, puis `git clone` sur la machine cible.
 
+## Installation automatisée sur Windows
+
+Sur un poste Windows (serveur/back-office, pas un simple poste caisse qui ne fait tourner que
+l'installateur `.exe` desktop), `scripts\install.bat` automatise toute la section suivante :
+détection/installation de Node.js et de MongoDB (Docker ou MongoDB Community Server via
+`winget`), `npm install`, génération de `apps/api/.env` et `apps/web/.env.local`, et `npm run seed`.
+
+Double-cliquez sur `scripts\install.bat`, ou en ligne de commande :
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\windows-install.ps1
+```
+Le script demande le mode de base de données à utiliser :
+1. **Local uniquement** — MongoDB sur ce PC, rien dans le cloud.
+2. **Atlas uniquement** — l'API se connecte directement à un cluster Atlas (voir
+   [Déploiement production](#déploiement-production--desktop-connecté-à-une-api-en-ligne)).
+3. **Local + synchro Atlas** — MongoDB local pour l'usage courant, avec une tâche planifiée
+   Windows qui rejoue périodiquement `migrate-tenant-to-cloud.ts` (voir plus bas) pour tenir un
+   cluster Atlas à jour en copie/backup/reporting. Synchro manuelle immédiate :
+   `scripts\sync-now.bat`. Réglages (URI Atlas, ID tenant, intervalle) dans
+   `scripts\sync-config.env`, généré par le script.
+
+Pour tout le reste (lancer en dev, packager l'installateur `.exe`), suivez les sections
+ci-dessous comme sur les autres OS.
+
 ## Installation et configuration
 
 ```bash
