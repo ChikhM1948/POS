@@ -191,6 +191,7 @@ export interface TranslationDict {
     unitOther: string;
     unitCustomPlaceholder: string;
     initialQuantity: string;
+    addQuantity: string;
     initialQuantityHint: string;
     expiryDate: string;
     active: string;
@@ -718,6 +719,7 @@ const fr: TranslationDict = {
     unitOther: 'Autre…',
     unitCustomPlaceholder: 'Saisir une unité',
     initialQuantity: 'Quantité en stock (initiale)',
+    addQuantity: 'Quantité à ajouter au stock',
     initialQuantityHint: 'Enregistrée comme premier mouvement de stock.',
     expiryDate: 'Date de péremption',
     active: 'Actif',
@@ -731,7 +733,7 @@ const fr: TranslationDict = {
     tableThreshold: 'Seuil critique',
     lowStock: 'Stock faible',
     outOfStock: 'Rupture de stock',
-    movementHistory: 'Mouvement / historique',
+    movementHistory: 'Ajouter du stock / historique',
   },
   stockMovement: {
     currentStock: 'stock actuel : {qty} {unit}',
@@ -1246,6 +1248,7 @@ const ar: TranslationDict = {
     unitOther: 'أخرى…',
     unitCustomPlaceholder: 'أدخل الوحدة',
     initialQuantity: 'الكمية في المخزون (ابتدائية)',
+    addQuantity: 'الكمية المراد إضافتها للمخزون',
     initialQuantityHint: 'تُسجَّل كأول حركة مخزون.',
     expiryDate: 'تاريخ الصلاحية',
     active: 'نشط',
@@ -1259,7 +1262,7 @@ const ar: TranslationDict = {
     tableThreshold: 'الحد الحرج',
     lowStock: 'مخزون منخفض',
     outOfStock: 'نفاد المخزون',
-    movementHistory: 'الحركة / السجل',
+    movementHistory: 'إضافة مخزون / السجل',
   },
   stockMovement: {
     currentStock: 'المخزون الحالي: {qty} {unit}',

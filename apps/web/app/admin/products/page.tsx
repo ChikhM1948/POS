@@ -43,26 +43,30 @@ export default function ProductsPage() {
 
   async function handleSubmit(input: ProductInput, initialStock?: { quantity: number; expiryDate?: string }) {
     if (!session) return;
+    let productId: string | undefined;
     if (editing === 'new') {
       const { product } = await adminFetch<{ product: ProductDTO }>(session.token, '/products', { method: 'POST', body: JSON.stringify(input) });
-      if (initialStock && (initialStock.quantity > 0 || initialStock.expiryDate)) {
-        const { stores } = await adminFetch<{ stores: { id: string }[] }>(session.token, '/stores');
-        if (stores[0] && initialStock.quantity > 0) {
-          await adminFetch(session.token, '/stock/movements', {
-            method: 'POST',
-            body: JSON.stringify({
-              productId: product.id,
-              storeId: stores[0].id,
-              type: 'adjustment',
-              quantityDelta: initialStock.quantity,
-              expiryDate: initialStock.expiryDate,
-              note: 'Stock initial',
-            }),
-          });
-        }
-      }
+      productId = product.id;
     } else if (editing) {
       await adminFetch(session.token, `/products/${editing.id}`, { method: 'PATCH', body: JSON.stringify(input) });
+      productId = editing.id;
+    }
+    // Quantité saisie dans le formulaire : ajoutée au stock de la première boutique (stock initial à la création).
+    if (productId && initialStock && initialStock.quantity > 0) {
+      const { stores } = await adminFetch<{ stores: { id: string }[] }>(session.token, '/stores');
+      if (stores[0]) {
+        await adminFetch(session.token, '/stock/movements', {
+          method: 'POST',
+          body: JSON.stringify({
+            productId,
+            storeId: stores[0].id,
+            type: 'adjustment',
+            quantityDelta: initialStock.quantity,
+            expiryDate: initialStock.expiryDate,
+            note: editing === 'new' ? 'Stock initial' : 'Ajout de stock',
+          }),
+        });
+      }
     }
     setEditing(null);
     await load();

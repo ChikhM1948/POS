@@ -105,7 +105,7 @@ export function ProductForm({ initial, onSubmit, onCancel, canViewCostPrice = tr
         isPerishable,
         lowStockThreshold: threshold ? parseFloat(threshold.replace(',', '.')) : undefined,
         active,
-      }, !initial && (initialQty || expiryDate)
+      }, (initialQty || expiryDate)
         ? { quantity: parseFloat(initialQty.replace(',', '.')) || 0, expiryDate: expiryDate || undefined }
         : undefined);
     } catch (err) {
@@ -214,9 +214,9 @@ export function ProductForm({ initial, onSubmit, onCancel, canViewCostPrice = tr
             />
           )}
         </label>
-        {!initial && (
+        {(
           <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-            {t('productForm.initialQuantity')} ({unit || 'unité'})
+            {initial ? t('productForm.addQuantity') : t('productForm.initialQuantity')} ({unit || 'unité'})
             <input
               value={initialQty}
               onChange={(e) => setInitialQty(e.target.value)}
@@ -226,7 +226,7 @@ export function ProductForm({ initial, onSubmit, onCancel, canViewCostPrice = tr
             <span className="text-xs font-normal text-neutral-500">{t('productForm.initialQuantityHint')}</span>
           </label>
         )}
-        {!initial && (
+        {(
           <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
             {t('productForm.expiryDate')}
             <input
