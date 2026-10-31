@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { applyOperation, pullChangesSince } from './sync.service';
-import type { AuthenticatedRequest } from '../../middleware/auth';
+import { replicate } from './replicate.service';
+import { requireRole, type AuthenticatedRequest } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import type { SyncPushRequest, SyncPushResponse } from '@pos-dz/shared';
 
@@ -50,4 +51,13 @@ syncRouter.get('/pull', asyncHandler(async (req: AuthenticatedRequest, res: Resp
   const sinceDate = since ? new Date(since) : new Date(0);
   const changes = await pullChangesSince(tenantId, sinceDate);
   res.json(changes);
+}));
+
+/**
+ * POST /sync/replicate — réplication d'un poste installé (SQLite) vers le cloud : référentiels et
+ * journaux, déjà au format ObjectId. Voir replicate.service.ts. Le tenant est celui du JWT.
+ */
+syncRouter.post('/replicate', requireRole('store_admin', 'super_admin'), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const result = await replicate(req.auth!.tenantId, req.body?.records ?? {});
+  res.json({ result, serverTime: new Date().toISOString() });
 }));

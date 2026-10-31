@@ -10,3 +10,4 @@ apps/desktop/renderer/
 .DS_Store
 *.log
 *.tsbuildinfo
+apps/desktop/native/

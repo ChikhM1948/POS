@@ -59,6 +59,7 @@ export interface TranslationDict {
       decrease: string;
       increase: string;
       remove: string;
+      clear: string;
     };
   };
   login: {
@@ -70,6 +71,7 @@ export interface TranslationDict {
     storePlaceholder: string;
     setupSubmit: string;
     setupFooter: string;
+    localNotConfigured: string;
     title: string;
     subtitle: string;
     methodPin: string;
@@ -330,6 +332,24 @@ export interface TranslationDict {
     submit: string;
     errorSave: string;
   };
+  cloudSync: {
+    title: string;
+    intro: string;
+    serverUrl: string;
+    email: string;
+    password: string;
+    connect: string;
+    connecting: string;
+    connected: string;
+    syncNow: string;
+    syncing: string;
+    disconnect: string;
+    pending: string;
+    lastSync: string;
+    never: string;
+    errorPrefix: string;
+    passwordNote: string;
+  };
   settings: {
     title: string;
   };
@@ -542,6 +562,7 @@ const fr: TranslationDict = {
       decrease: 'Diminuer',
       increase: 'Augmenter',
       remove: 'Retirer',
+      clear: 'Vider',
     },
   },
   login: {
@@ -553,6 +574,7 @@ const fr: TranslationDict = {
     storePlaceholder: 'ex. store_alger_01',
     setupSubmit: 'Enregistrer ce poste',
     setupFooter: 'POS Algérie · Caisse hors-ligne, synchronisée automatiquement',
+    localNotConfigured: "Aucun commerce n'est encore enregistré sur ce poste. Ouvrez le back-office (Ctrl+2) pour créer votre compte administrateur.",
     title: 'Connexion caisse',
     subtitle: 'Identifiez-vous pour ouvrir la session de vente',
     methodPin: 'Code PIN',
@@ -814,6 +836,24 @@ const fr: TranslationDict = {
     submit: 'Créer le compte',
     errorSave: "Erreur lors de l'enregistrement.",
   },
+  cloudSync: {
+    title: 'Synchronisation en ligne',
+    intro: "Envoie automatiquement vos données (ventes, stock, produits, clients) vers la base en ligne avec le même compte. Fonctionne sans Internet : l'envoi reprend dès que la connexion revient.",
+    serverUrl: 'Adresse du serveur en ligne',
+    email: 'Email administrateur',
+    password: 'Mot de passe',
+    connect: 'Connecter et synchroniser',
+    connecting: 'Connexion…',
+    connected: 'Connecté à',
+    syncNow: 'Synchroniser maintenant',
+    syncing: 'Synchronisation…',
+    disconnect: 'Déconnecter',
+    pending: 'Éléments en attente',
+    lastSync: 'Dernière synchro',
+    never: 'jamais',
+    errorPrefix: 'Dernière erreur',
+    passwordNote: 'Le mot de passe est conservé sur ce poste pour reconnecter automatiquement le compte en ligne.',
+  },
   settings: {
     title: 'Paramètres du commerce',
   },
@@ -1026,6 +1066,7 @@ const ar: TranslationDict = {
       decrease: 'إنقاص',
       increase: 'زيادة',
       remove: 'إزالة',
+      clear: 'تفريغ',
     },
   },
   login: {
@@ -1037,6 +1078,7 @@ const ar: TranslationDict = {
     storePlaceholder: 'مثال: store_alger_01',
     setupSubmit: 'حفظ إعدادات الجهاز',
     setupFooter: 'POS الجزائر · صندوق يعمل دون اتصال، يُزامَن تلقائيًا',
+    localNotConfigured: 'لا يوجد أي متجر مسجَّل على هذا الجهاز بعد. افتح لوحة الإدارة (Ctrl+2) لإنشاء حساب المدير.',
     title: 'تسجيل الدخول إلى الصندوق',
     subtitle: 'سجّل الدخول لفتح جلسة البيع',
     methodPin: 'رمز PIN',
@@ -1297,6 +1339,24 @@ const ar: TranslationDict = {
     canViewPurchasePrice: 'السماح لهذا الكاشير برؤية سعر شراء المنتجات',
     submit: 'إنشاء الحساب',
     errorSave: 'خطأ أثناء الحفظ.',
+  },
+  cloudSync: {
+    title: 'المزامنة عبر الإنترنت',
+    intro: 'يرسل بياناتك (المبيعات، المخزون، المنتجات، الزبائن) تلقائيًا إلى قاعدة البيانات على الإنترنت بنفس الحساب. يعمل بدون إنترنت: يستأنف الإرسال عند عودة الاتصال.',
+    serverUrl: 'عنوان الخادم على الإنترنت',
+    email: 'البريد الإلكتروني للمسؤول',
+    password: 'كلمة المرور',
+    connect: 'اتصال ومزامنة',
+    connecting: 'جارٍ الاتصال…',
+    connected: 'متصل بـ',
+    syncNow: 'زامن الآن',
+    syncing: 'جارٍ المزامنة…',
+    disconnect: 'قطع الاتصال',
+    pending: 'عناصر قيد الانتظار',
+    lastSync: 'آخر مزامنة',
+    never: 'أبدًا',
+    errorPrefix: 'آخر خطأ',
+    passwordNote: 'تُحفظ كلمة المرور على هذا الجهاز لإعادة الاتصال بالحساب تلقائيًا.',
   },
   settings: {
     title: 'إعدادات المتجر',

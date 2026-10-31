@@ -48,10 +48,10 @@ export default function CustomersPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900">{t('customers.title')}</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-neutral-900">{t('customers.title')}</h1>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700"
+          className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
         >
           <IconPlus className="h-4 w-4" />
           {t('customers.newCustomer')}
@@ -62,14 +62,14 @@ export default function CustomersPage() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-card">
+      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
         <table className="w-full text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
             <tr>
-              <th className="px-4 py-2">{t('customers.tableName')}</th>
-              <th className="px-4 py-2">{t('customers.tablePhone')}</th>
-              <th className="px-4 py-2">{t('customers.tableBalance')}</th>
-              <th className="px-4 py-2"></th>
+              <th className="px-4 py-3">{t('customers.tableName')}</th>
+              <th className="px-4 py-3">{t('customers.tablePhone')}</th>
+              <th className="px-4 py-3">{t('customers.tableBalance')}</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>

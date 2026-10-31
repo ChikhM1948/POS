@@ -100,8 +100,8 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
   }
 
   return (
-    <div className="flex flex-col gap-3 p-4">
-      <div className="flex flex-col gap-1 border-t border-dashed border-neutral-200 pt-3">
+    <div className="flex flex-col gap-3 border-t border-neutral-200 bg-neutral-50 p-4">
+      <div className="flex flex-col gap-1">
         <div className="flex items-baseline justify-between text-sm text-neutral-500">
           <span>{t('common.subtotal')}</span>
           <span>{formatDZD(totals.subtotalCents)}</span>
@@ -110,9 +110,9 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
           <span>{t('common.tax')}</span>
           <span>{formatDZD(totals.taxTotalCents)}</span>
         </div>
-        <div className="flex items-baseline justify-between text-2xl font-bold text-neutral-900">
-          <span>{t('common.total')}</span>
-          <span>{formatDZD(totals.grandTotalCents)}</span>
+        <div className="flex items-baseline justify-between pt-2 text-3xl font-semibold tracking-tight text-neutral-900">
+          <span className="text-base font-medium text-neutral-500">{t('common.total')}</span>
+          <span className="tabular-nums">{formatDZD(totals.grandTotalCents)}</span>
         </div>
       </div>
 
@@ -122,31 +122,33 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
         </p>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="flex flex-col gap-2">
         <button
           disabled={isBusy || cartLines.length === 0}
           onClick={() => setShowCashModal(true)}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-2xl bg-neutral-900 py-5 text-sm font-semibold text-white shadow-card transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center justify-center gap-2 rounded-xl bg-brand-600 py-4 text-base font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-30"
         >
-          <IconBanknote className="h-6 w-6" />
+          <IconBanknote className="h-5 w-5" />
           {t('saleCheckout.cash')}
         </button>
+        <div className="grid grid-cols-2 gap-2">
         <button
           disabled={isBusy || cartLines.length === 0}
           onClick={handleCib}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-2xl bg-brand-600 py-5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white py-3 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <IconCreditCard className="h-6 w-6" />
+          <IconCreditCard className="h-4 w-4" />
           {processingMethod === 'cib' ? t('saleCheckout.processing') : 'CIB / Edahabia'}
         </button>
         <button
           disabled={isBusy || cartLines.length === 0}
           onClick={() => setShowCreditModal(true)}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-2xl bg-amber-600 py-5 text-sm font-semibold text-white shadow-card transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white py-3 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <IconWallet className="h-6 w-6" />
+          <IconWallet className="h-4 w-4" />
           {t('saleCheckout.credit')}
         </button>
+        </div>
       </div>
 
       {showCashModal && (

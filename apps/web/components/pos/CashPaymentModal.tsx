@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { IconBanknote, IconX } from '../icons';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
 import { formatCurrency } from '../../lib/format';
@@ -38,15 +38,28 @@ export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }
     setDigits(String(amountDZD));
   }
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (/^\d$/.test(e.key)) pressDigit(e.key);
+      else if (e.key === 'Backspace') backspace();
+      else if (e.key === 'Escape') onCancel();
+      else if (e.key === 'Enter' && isSufficient && !submitting) onConfirm(tenderedCents);
+      else return;
+      e.preventDefault();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/40 p-4 backdrop-blur-[2px]">
       <div className="flex w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-popover">
-        <div className="flex items-center justify-between bg-neutral-900 px-5 py-4 text-white">
+        <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4 text-neutral-900">
           <div className="flex items-center gap-2">
             <IconBanknote className="h-5 w-5" />
             <p className="text-sm font-semibold">{t('cashModal.title')}</p>
           </div>
-          <button onClick={onCancel} className="rounded-lg p-1 text-neutral-300 transition hover:bg-white/10 hover:text-white">
+          <button onClick={onCancel} className="rounded-lg p-1 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700">
             <IconX className="h-5 w-5" />
           </button>
         </div>
@@ -57,9 +70,9 @@ export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }
             <span className="text-xl font-bold text-neutral-900">{formatDZD(totalCents)}</span>
           </div>
 
-          <div className="flex flex-col items-end gap-1 rounded-xl border-2 border-brand-200 bg-brand-50 px-4 py-3">
-            <span className="text-xs font-medium uppercase tracking-wide text-brand-600">{t('cashModal.amountReceived')}</span>
-            <span className="text-3xl font-bold tabular-nums text-brand-900">{formatDZD(tenderedCents)}</span>
+          <div className="flex flex-col items-end gap-1 rounded-xl border border-neutral-300 bg-white px-4 py-3">
+            <span className="text-xs font-medium text-neutral-500">{t('cashModal.amountReceived')}</span>
+            <span className="text-3xl font-semibold tabular-nums text-neutral-900">{formatDZD(tenderedCents)}</span>
           </div>
 
           <div className="flex gap-2">
@@ -85,7 +98,7 @@ export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }
               <button
                 key={key}
                 onClick={() => (key === '⌫' ? backspace() : pressDigit(key))}
-                className="rounded-xl bg-neutral-100 py-3.5 text-lg font-semibold text-neutral-900 transition hover:bg-neutral-200 active:bg-neutral-300"
+                className="rounded-lg border border-neutral-200 bg-white py-3.5 text-lg font-medium text-neutral-900 transition hover:bg-neutral-100 active:bg-neutral-200"
               >
                 {key}
               </button>
@@ -114,7 +127,7 @@ export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }
           <button
             disabled={!isSufficient || submitting}
             onClick={() => onConfirm(tenderedCents)}
-            className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-card transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex-1 rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-30"
           >
             {submitting ? t('cashModal.confirming') : t('cashModal.confirm')}
           </button>

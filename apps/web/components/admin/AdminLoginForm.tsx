@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAdminAuth } from '../../lib/adminAuth';
 import { BrandMark } from '../BrandMark';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
+import { LOCAL_MODE, fetchLocalInfo } from '../../lib/localMode';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -21,6 +22,11 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!LOCAL_MODE) return;
+    fetchLocalInfo().then((info) => info.tenantId && setTenantId(info.tenantId));
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,13 +52,13 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-neutral-100 via-neutral-50 to-neutral-100 px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
       <div className="absolute top-4 end-4">
         <LanguageSwitcher />
       </div>
       <form
         onSubmit={handleSubmit}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-8 shadow-popover"
+        className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-8"
       >
         <div className="mb-1 flex flex-col items-center gap-3 text-center">
           <BrandMark size={44} />
@@ -62,6 +68,7 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
           </div>
         </div>
 
+        {!LOCAL_MODE && (
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
           {t('adminLogin.tenantLabel')}
           <input
@@ -72,6 +79,7 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
             required
           />
         </label>
+        )}
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
           {t('adminLogin.emailLabel')}
           <input
@@ -104,11 +112,12 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
         <button
           disabled={loading}
           type="submit"
-          className="mt-1 flex items-center justify-center rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-1 flex items-center justify-center rounded-lg bg-brand-600 py-2.5 text-sm font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? t('adminLogin.submitting') : t('adminLogin.submit')}
         </button>
 
+        {!LOCAL_MODE && (
         <button
           type="button"
           onClick={onSwitchToSetup}
@@ -116,6 +125,7 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
         >
           {t('adminLogin.switchToSetup')}
         </button>
+        )}
 
         <a href="/" className="text-center text-xs text-neutral-400 underline-offset-2 hover:text-neutral-600 hover:underline">
           {t('adminLogin.backToPos')}

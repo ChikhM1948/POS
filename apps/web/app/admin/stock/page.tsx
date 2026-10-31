@@ -48,7 +48,7 @@ export default function StockPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900">{t('stock.title')}</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-neutral-900">{t('stock.title')}</h1>
         <select
           value={storeId}
           onChange={(e) => {
@@ -76,14 +76,14 @@ export default function StockPage() {
         />
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-card">
+      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
         <table className="w-full text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
             <tr>
-              <th className="px-4 py-2">{t('products.tableProduct')}</th>
-              <th className="px-4 py-2">{t('stock.tableCurrent')}</th>
-              <th className="px-4 py-2">{t('stock.tableThreshold')}</th>
-              <th className="px-4 py-2"></th>
+              <th className="px-4 py-3">{t('products.tableProduct')}</th>
+              <th className="px-4 py-3">{t('stock.tableCurrent')}</th>
+              <th className="px-4 py-3">{t('stock.tableThreshold')}</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -97,7 +97,7 @@ export default function StockPage() {
                   </td>
                   <td className={`px-4 py-2.5 font-medium ${isLow ? 'text-red-600' : 'text-neutral-900'}`}>
                     {b.quantity} {b.unit}
-                    {isLow && <span className="ms-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{t('stock.lowStock')}</span>}
+                    {isLow && <span className="ms-2 rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{t('stock.lowStock')}</span>}
                   </td>
                   <td className="px-4 py-2.5 text-neutral-600">{b.lowStockThreshold ?? '—'}</td>
                   <td className="px-4 py-2.5 text-end">

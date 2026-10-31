@@ -75,7 +75,7 @@ export default function SalesPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-neutral-900">
+        <h1 className="text-lg font-semibold tracking-tight text-neutral-900">
           {t('sales.title')} {total > 0 && <span className="text-sm font-normal text-neutral-500">({total})</span>}
         </h1>
         <div className="flex flex-wrap items-center gap-2">
@@ -100,12 +100,12 @@ export default function SalesPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {selected && (
-        <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-card">
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="flex items-center gap-2 font-semibold text-neutral-900">
               {t('sales.ticket', { number: selected.number })}
               <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                className={`rounded-md px-2 py-0.5 text-xs font-medium ${
                   selected.type === 'refund' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
                 }`}
               >
@@ -120,7 +120,7 @@ export default function SalesPage() {
             {formatDateTime(selected.createdAtLocal, locale)} · {t('sales.cashier', { name: selected.cashierName })}
           </p>
           <table className="mb-3 w-full text-sm">
-            <thead className="border-b border-neutral-200 text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            <thead className="border-b border-neutral-200 text-start text-xs font-medium text-neutral-500">
               <tr>
                 <th className="py-1.5">{t('sales.tableItem')}</th>
                 <th className="py-1.5">{t('sales.tableQty')}</th>
@@ -192,14 +192,14 @@ export default function SalesPage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-card">
+      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
         <table className="w-full text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
             <tr>
-              <th className="px-4 py-2">{t('sales.tableTicket')}</th>
-              <th className="px-4 py-2">{t('sales.tableDate')}</th>
-              <th className="px-4 py-2">{t('sales.tableCashier')}</th>
-              <th className="px-4 py-2">{t('sales.tablePayment')}</th>
+              <th className="px-4 py-3">{t('sales.tableTicket')}</th>
+              <th className="px-4 py-3">{t('sales.tableDate')}</th>
+              <th className="px-4 py-3">{t('sales.tableCashier')}</th>
+              <th className="px-4 py-3">{t('sales.tablePayment')}</th>
               <th className="px-4 py-2 text-end">{t('common.total')}</th>
             </tr>
           </thead>
@@ -208,7 +208,7 @@ export default function SalesPage() {
               <tr key={s.id} onClick={() => openDetail(s.id)} className="cursor-pointer border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
                 <td className="px-4 py-2.5 font-medium text-neutral-900">
                   {s.number}
-                  {s.type === 'refund' && <span className="ms-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{t('sales.typeRefund')}</span>}
+                  {s.type === 'refund' && <span className="ms-2 rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{t('sales.typeRefund')}</span>}
                 </td>
                 <td className="px-4 py-2.5 text-neutral-600">{formatDateTime(s.createdAtLocal, locale)}</td>
                 <td className="px-4 py-2.5 text-neutral-600">{s.cashierName}</td>

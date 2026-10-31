@@ -8,7 +8,10 @@ export const productsRouter = Router();
 
 productsRouter.get('/', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const search = typeof req.query.search === 'string' ? req.query.search : undefined;
-  const products = await listProducts(req.auth!.tenantId, search);
+  // Tout rôle authentifié peut lister les produits (nécessaire au checkout caisse) — seul le prix
+  // d'achat est restreint, voir PERMISSION_VIEW_PURCHASE_PRICE et toDTO() dans products.service.ts.
+  const canViewPurchasePrice = req.auth!.role !== 'cashier' || Boolean(req.auth!.canViewPurchasePrice);
+  const products = await listProducts(req.auth!.tenantId, search, canViewPurchasePrice);
   res.json({ products });
 }));
 

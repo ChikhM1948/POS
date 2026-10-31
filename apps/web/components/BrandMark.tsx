@@ -1,7 +1,7 @@
 export function BrandMark({ size = 36 }: { size?: number }) {
   return (
     <div
-      className="flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-card"
+      className="flex shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white"
       style={{ width: size, height: size }}
     >
       <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

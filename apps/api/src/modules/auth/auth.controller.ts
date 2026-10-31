@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../../middleware/asyncHandler';
+import { bootstrapTenant } from '../sync/replicate.service';
 import { loginCashierWithPassword, loginWithPassword, loginWithPin, signupTenant } from './auth.service';
 
 export const authRouter = Router();
@@ -16,6 +17,15 @@ authRouter.post('/setup', asyncHandler(async (req: Request, res: Response) => {
 
   const result = await signupTenant({ businessName, adminName, email, password, phone, syncEnabled });
   res.status(201).json(result);
+}));
+
+/** Enregistrement d'un poste installé dans le cloud (voir replicate.service.ts) : sans effet si le commerce existe déjà. */
+authRouter.post('/replicate-bootstrap', asyncHandler(async (req: Request, res: Response) => {
+  const { tenant, store, user } = req.body ?? {};
+  if (!tenant?._id || !tenant?.slug || !store?._id || !user?._id || !user?.email || !user?.passwordHash) {
+    return res.status(400).json({ error: 'tenant, store et user sont requis.' });
+  }
+  res.json(await bootstrapTenant({ tenant, store, user }));
 }));
 
 authRouter.post('/login', asyncHandler(async (req: Request, res: Response) => {

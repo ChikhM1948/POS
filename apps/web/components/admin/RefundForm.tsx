@@ -78,7 +78,7 @@ export function RefundForm({ sale, onClose, onRefundCreated }: Props) {
       </div>
 
       <table className="w-full text-sm">
-        <thead className="text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        <thead className="text-start text-xs font-medium text-neutral-500">
           <tr>
             <th className="py-1.5">{t('sales.tableItem')}</th>
             <th className="py-1.5">{t('refundForm.tableSold')}</th>
@@ -139,7 +139,7 @@ export function RefundForm({ sale, onClose, onRefundCreated }: Props) {
 
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-neutral-900">{t('refundForm.amount', { amount: formatDZD(previewCents) })}</p>
-        <button disabled={submitting || previewCents === 0} type="submit" className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+        <button disabled={submitting || previewCents === 0} type="submit" className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
           {submitting ? t('common.saving') : t('refundForm.confirm')}
         </button>
       </div>

@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useDeviceId } from '../hooks/useDeviceId';
 import { getOfflineDB, type LocalProduct } from '../lib/db/offline-db';
 import { SyncEngine } from '../lib/sync/sync-engine';
+import { LOCAL_MODE } from '../lib/localMode';
 import { LoginForm, type Session } from '../components/pos/LoginForm';
 import { OfflineBanner } from '../components/pos/OfflineBanner';
 import { SaleCheckout } from '../components/pos/SaleCheckout';
@@ -38,7 +39,7 @@ export default function PosPage() {
   const db = useMemo(() => (deviceId ? getOfflineDB(deviceId) : null), [deviceId]);
 
   useEffect(() => {
-    if (!db || !deviceId || !session || !session.syncEnabled) return;
+    if (!db || !deviceId || !session || !(session.syncEnabled || LOCAL_MODE)) return;
     const engine = new SyncEngine(db, session.tenantId, deviceId, session.token);
     engine.start();
     return () => engine.stop();
@@ -51,6 +52,31 @@ export default function PosPage() {
     for (const p of products) set.add(p.category?.trim() || UNCATEGORIZED);
     return [ALL_CATEGORIES, ...Array.from(set).sort((a, b) => a.localeCompare(b, locale))];
   }, [products]);
+
+  // Douchette code-barres (émulation clavier) : les chiffres sont lus via `event.code` (touche physique)
+  // car sur un clavier AZERTY/arabe `event.key` donne « &é"' » ou des lettres arabes ; et si le
+  // champ a perdu le focus (clic sur un produit, fermeture d'un modal) la saisie est redirigée vers lui.
+  useEffect(() => {
+    if (!session) return;
+    function onKeyDown(e: KeyboardEvent) {
+      const input = scanInputRef.current;
+      if (!input || e.ctrlKey || e.altKey || e.metaKey) return;
+      const target = e.target as HTMLElement | null;
+      const typingElsewhere = target && target !== input && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+      if (typingElsewhere || document.querySelector('.fixed.inset-0.z-50')) return;
+      const digit = /^(?:Digit|Numpad)(\d)$/.exec(e.code)?.[1];
+      if (!digit && !(e.key.length === 1 && target !== input)) return;
+      if (digit) {
+        e.preventDefault();
+        input.focus();
+        setQuery((q) => q + digit);
+      } else {
+        input.focus(); // la touche est alors tapée normalement dans le champ
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [session]);
 
   const filteredProducts = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -140,13 +166,13 @@ export default function PosPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-neutral-100">
-      <OfflineBanner localMode={!session.syncEnabled} />
-      <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3 shadow-card">
+    <div className="flex h-screen flex-col overflow-hidden bg-neutral-50">
+      <OfflineBanner localMode={LOCAL_MODE || !session.syncEnabled} />
+      <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3">
         <div className="flex items-center gap-3">
           <BrandMark size={38} />
           <div>
-            <h1 className="text-base font-bold leading-tight text-neutral-900">{t('pos.title')}</h1>
+            <h1 className="text-sm font-semibold leading-tight text-neutral-900">{t('pos.title')}</h1>
             <p className="text-xs text-neutral-500">{session.cashierName}</p>
           </div>
         </div>
@@ -179,7 +205,7 @@ export default function PosPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t('pos.searchPlaceholder')}
-                className="w-full rounded-xl border border-neutral-300 bg-neutral-50 py-3.5 ps-12 pe-4 text-base text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white"
+                className="w-full rounded-lg border border-neutral-200 bg-neutral-50 py-3 ps-12 pe-4 text-base text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white"
               />
             </form>
             {scanFeedback && <p className="text-sm font-medium text-red-600">{scanFeedback}</p>}
@@ -188,10 +214,10 @@ export default function PosPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  className={`shrink-0 rounded-md px-3.5 py-1.5 text-sm font-medium transition ${
                     selectedCategory === cat
-                      ? 'bg-brand-600 text-white shadow-card'
-                      : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                      ? 'bg-brand-600 text-white'
+                      : 'text-neutral-600 hover:bg-neutral-100'
                   }`}
                 >
                   {cat === ALL_CATEGORIES ? t('pos.categoryAll') : cat === UNCATEGORIZED ? t('pos.categoryOther') : cat}
@@ -206,29 +232,29 @@ export default function PosPage() {
                 <button
                   key={product.id}
                   onClick={() => addToCart(product)}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-start shadow-card transition duration-150 hover:-translate-y-1 hover:border-brand-300 hover:shadow-popover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.97]"
+                  className="group flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white text-start transition duration-150 hover:border-neutral-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:bg-neutral-50"
                 >
                   <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-neutral-100">
                     {product.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={product.imageUrl} alt="" className="h-full w-full object-cover transition duration-150 group-hover:scale-105" />
+                      <img src={product.imageUrl} alt="" className="h-full w-full object-cover transition duration-150 " />
                     ) : (
                       <IconImageOff className="h-8 w-8 text-neutral-300" />
                     )}
                   </div>
                   <div className="flex flex-1 flex-col gap-1 p-3">
                     {product.category && (
-                      <span className="w-fit rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                      <span className="w-fit text-[10px] font-medium uppercase tracking-wider text-neutral-400">
                         {product.category}
                       </span>
                     )}
-                    <p className="font-semibold leading-tight text-neutral-900">{product.nameFr}</p>
+                    <p className="text-sm font-medium leading-tight text-neutral-900">{product.nameFr}</p>
                     {product.nameAr && (
                       <p dir="rtl" className="text-sm text-neutral-500">
                         {product.nameAr}
                       </p>
                     )}
-                    <p className="mt-auto pt-1 text-lg font-bold text-brand-700">{formatDZD(product.sellingPriceCents)}</p>
+                    <p className="mt-auto pt-1 text-base font-semibold tabular-nums text-neutral-900">{formatDZD(product.sellingPriceCents)}</p>
                   </div>
                 </button>
               ))}
@@ -242,19 +268,30 @@ export default function PosPage() {
         </section>
 
         <section className="flex flex-col overflow-hidden border-s border-neutral-200 bg-white">
-          <h2 className="flex items-center gap-2 border-b border-neutral-200 bg-neutral-50 px-4 py-3.5 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <h2 className="flex items-center gap-2 border-b border-neutral-200 bg-white px-4 py-3.5 text-xs font-medium uppercase tracking-wider text-neutral-500">
             <IconCart className="h-4 w-4" />
             {t('pos.cart.title')}
             {cart.length > 0 && (
-              <span className="ms-auto rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700">
+              <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium tabular-nums text-neutral-700">
                 {cart.reduce((sum, l) => sum + l.quantity, 0)}
               </span>
+            )}
+            {cart.length > 0 && (
+              <button
+                onClick={() => setCart([])}
+                className="ms-auto rounded-md px-2 py-1 text-xs font-medium normal-case tracking-normal text-neutral-500 transition hover:bg-red-50 hover:text-red-600"
+              >
+                {t('pos.cart.clear')}
+              </button>
             )}
           </h2>
 
           <div className="flex-1 overflow-y-auto scrollbar-thin">
             {cart.length === 0 ? (
-              <p className="p-6 text-center text-sm text-neutral-400">{t('pos.cart.empty')}</p>
+              <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
+                <IconCart className="h-8 w-8 text-neutral-300" />
+                <p className="max-w-[16rem] text-sm text-neutral-400">{t('pos.cart.empty')}</p>
+              </div>
             ) : (
               <ul className="divide-y divide-neutral-100">
                 {cart.map((line) => {
@@ -277,7 +314,7 @@ export default function PosPage() {
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => changeQuantity(line.productId, -1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 transition hover:bg-neutral-200"
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-200 text-neutral-600 transition hover:bg-neutral-100"
                         aria-label={t('pos.cart.decrease')}
                       >
                         <IconMinus className="h-3.5 w-3.5" />
@@ -285,16 +322,16 @@ export default function PosPage() {
                       <span className="w-6 text-center text-sm font-semibold tabular-nums text-neutral-900">{line.quantity}</span>
                       <button
                         onClick={() => changeQuantity(line.productId, 1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 transition hover:bg-neutral-200"
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-200 text-neutral-600 transition hover:bg-neutral-100"
                         aria-label={t('pos.cart.increase')}
                       >
                         <IconPlus className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                    <span className="w-20 shrink-0 text-end text-sm font-semibold text-neutral-900">{formatDZD(line.lineTotalCents)}</span>
+                    <span className="w-24 shrink-0 text-end text-sm font-semibold tabular-nums text-neutral-900">{formatDZD(line.lineTotalCents)}</span>
                     <button
                       onClick={() => removeLine(line.productId)}
-                      className="text-neutral-300 transition hover:text-red-600"
+                      className="rounded-md p-1 text-neutral-300 transition hover:bg-red-50 hover:text-red-600"
                       aria-label={t('pos.cart.remove')}
                     >
                       <IconTrash className="h-4 w-4" />

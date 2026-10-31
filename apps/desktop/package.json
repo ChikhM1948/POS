@@ -4,18 +4,25 @@
   "private": true,
   "main": "dist/main.js",
   "scripts": {
-    "dev": "tsc -p . && electron dist/main.js",
-    "build": "tsc -p . && node scripts/copy-renderer.js && electron-builder",
+    "dev": "node scripts/bundle.js && electron dist/main.js",
+    "build": "tsc -p . --noEmit && node scripts/fetch-native.js && node scripts/bundle.js && node scripts/copy-renderer.js && electron-builder",
     "typecheck": "tsc -p . --noEmit"
   },
   "dependencies": {
+    "better-sqlite3": "11.10.0",
     "escpos": "^3.0.0-alpha.6",
     "escpos-usb": "^3.0.0-alpha.4"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.25",
+    "@types/jsonwebtoken": "^9.0.10",
     "7zip-bin": "^5.2.0",
     "electron": "^31.0.0",
     "electron-builder": "^24.13.0",
+    "esbuild": "^0.28.2",
     "typescript": "^5.5.0"
   },
   "build": {
@@ -25,7 +32,8 @@
     "npmRebuild": false,
     "files": [
       "dist/**/*",
-      "renderer/**/*"
+      "renderer/**/*",
+      "!**/node_modules/better-sqlite3/{deps,src,build}/**"
     ],
     "directories": {
       "output": "release"
@@ -37,13 +45,35 @@
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "signAndEditExecutable": false
     },
+    "extraResources": [
+      {
+        "from": "native/win32-x64/better_sqlite3.node",
+        "to": "native/better_sqlite3.node"
+      }
+    ],
+    "asarUnpack": [
+      "**/@node-usb/**/*.node"
+    ],
+    "portable": {
+      "artifactName": "POS-Algerie-Portable-${version}.exe"
+    },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "POS-Algerie-Setup-${version}.exe"
     }
+  },
+  "optionalDependencies": {
+    "@node-usb/usb-win32-x64-msvc": "3.1.0"
   }
 }

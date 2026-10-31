@@ -1,73 +1,59 @@
-import { app, BrowserWindow, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron';
 import path from 'node:path';
-import http from 'node:http';
 import fs from 'node:fs';
 // `escpos` + `escpos-usb` gèrent la découverte/écriture sur le port USB de l'imprimante.
 // Alternative Windows/partagée réseau : passer par le spouleur (node-thermal-printer, driver "raw").
-import escpos from 'escpos';
-import EscposUSB from 'escpos-usb';
+import { startLocalServer } from './server';
+
+/**
+ * Chargés à la demande : si le module USB natif est indisponible, l'application démarre quand
+ * même (seule l'impression thermique échoue, avec un message clair).
+ */
+function loadPrinterLibs(): { escpos: any; EscposUSB: any } {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return { escpos: require('escpos'), EscposUSB: require('escpos-usb') };
+  } catch (err) {
+    throw new Error(`Imprimante USB indisponible : ${err instanceof Error ? err.message : err}`);
+  }
+}
 
 let mainWindow: BrowserWindow | null = null;
 let baseUrl = '';
+let localServer: { close: () => Promise<void> } | null = null;
 
 /**
- * Port fixe (plutôt que 0/aléatoire) : l'origine `http://127.0.0.1:RENDERER_PORT` doit être stable
- * d'un lancement à l'autre pour figurer telle quelle dans `CORS_ORIGIN` côté API (voir
- * apps/api/src/config/env.ts). Un port aléatoire casserait CORS à chaque redémarrage de l'app.
+ * Port fixe : l'origine `http://127.0.0.1:RENDERER_PORT` doit rester identique d'un lancement à
+ * l'autre, car le localStorage / IndexedDB du renderer (session, cache hors-ligne Dexie) y sont
+ * rattachés. Le même serveur local expose aussi l'API (`/api`) — aucun accès Internet requis.
  */
 const RENDERER_PORT = 47623;
 
-const MIME_TYPES: Record<string, string> = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-};
-
 /**
- * Le export statique Next.js émet des chemins d'assets absolus (`/_next/...`) qui ne résolvent
- * pas sous le protocole `file://`. On sert donc le dossier exporté via un petit serveur HTTP
- * local plutôt que de charger `index.html` directement.
+ * Dossier de données. Version portable : à côté de l'exécutable (`PORTABLE_EXECUTABLE_DIR`, défini
+ * par electron-builder) pour que la base SQLite suive l'application (clé USB, copie de dossier) ;
+ * repli sur le dossier utilisateur si l'emplacement n'est pas inscriptible.
  */
-function serveRenderer(rootDir: string): Promise<number> {
-  const server = http.createServer((req, res) => {
-    const requestPath = decodeURIComponent((req.url ?? '/').split('?')[0]);
-    let filePath = path.join(rootDir, requestPath);
-    if (filePath.endsWith(path.sep)) filePath = path.join(filePath, 'index.html');
-
-    fs.readFile(filePath, (err, data) => {
-      if (!err) {
-        res.writeHead(200, { 'Content-Type': MIME_TYPES[path.extname(filePath)] ?? 'application/octet-stream' });
-        res.end(data);
-        return;
-      }
-      // Next export : les routes sans extension correspondent à `<route>.html`.
-      fs.readFile(`${filePath}.html`, (err2, data2) => {
-        if (err2) {
-          res.writeHead(404);
-          res.end('Not found');
-          return;
-        }
-        res.writeHead(200, { 'Content-Type': MIME_TYPES['.html'] });
-        res.end(data2);
-      });
-    });
-  });
-
-  return new Promise((resolve, reject) => {
-    server.on('error', reject);
-    server.listen(RENDERER_PORT, '127.0.0.1', () => {
-      const address = server.address();
-      resolve(typeof address === 'object' && address ? address.port : 0);
-    });
-  });
+function resolveDataDir(): string {
+  const candidates = [
+    process.env.PORTABLE_EXECUTABLE_DIR && path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'POS-Data'),
+    path.join(app.getPath('appData'), 'POS Algerie'),
+  ].filter((p): p is string => Boolean(p));
+  for (const dir of candidates) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.accessSync(dir, fs.constants.W_OK);
+      return dir;
+    } catch {
+      /* essaie l'emplacement suivant */
+    }
+  }
+  throw new Error("Aucun dossier de données inscriptible.");
 }
+
+// Doit être fixé avant `ready` : le profil Chromium (localStorage, IndexedDB) rejoint les données.
+const dataDir = resolveDataDir();
+app.setPath('userData', path.join(dataDir, 'electron'));
 
 /**
  * Menu "Navigation" — la caisse (route `/`) et le back-office admin (route `/admin`) sont deux
@@ -113,12 +99,17 @@ async function createWindow() {
 
   // En prod, on sert l'app Next.js exportée statiquement (packagée dans dist/../renderer) ;
   // en dev on pointe vers le serveur `next dev`.
-  baseUrl = process.env.NEXT_DEV_URL ?? '';
-  if (!baseUrl) {
-    const rendererDir = path.join(__dirname, '../renderer');
-    const port = await serveRenderer(rendererDir);
-    baseUrl = `http://127.0.0.1:${port}`;
-  }
+  const devUrl = process.env.NEXT_DEV_URL ?? '';
+  // Binaire natif SQLite : hors de l'asar en production (voir extraResources dans package.json).
+  const nativeBinding = app.isPackaged ? path.join(process.resourcesPath, 'native', 'better_sqlite3.node') : process.env.POS_NATIVE_BINDING;
+  localServer = await startLocalServer({
+    dataDir: path.join(dataDir, 'db'),
+    rendererDir: devUrl ? undefined : path.join(__dirname, '../renderer'),
+    port: RENDERER_PORT,
+    nativeBinding: nativeBinding && fs.existsSync(nativeBinding) ? nativeBinding : undefined,
+    devOrigin: devUrl || undefined,
+  });
+  baseUrl = devUrl || `http://127.0.0.1:${RENDERER_PORT}`;
   buildMenu();
   mainWindow.loadURL(baseUrl);
 }
@@ -136,7 +127,19 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.whenReady().then(() => {
-    void createWindow();
+    createWindow().catch((err) => {
+      try {
+        fs.appendFileSync(path.join(dataDir, 'startup-error.log'), `[${new Date().toISOString()}] ${err instanceof Error ? err.stack : err}\n`);
+      } catch {
+        /* journal indisponible */
+      }
+      dialog.showErrorBox('POS Algérie', `Démarrage impossible : ${err instanceof Error ? err.message : err}`);
+      app.quit();
+    });
+  });
+
+  app.on('will-quit', () => {
+    void localServer?.close();
   });
 
   app.on('window-all-closed', () => {
@@ -150,6 +153,7 @@ if (!app.requestSingleInstanceLock()) {
  * côté renderer pour garantir que ce qui est prévisualisé == ce qui est imprimé.
  */
 ipcMain.handle('print:thermal', async (_event, jobBytes: Uint8Array) => {
+  const { escpos, EscposUSB } = loadPrinterLibs();
   const device = new EscposUSB(); // sélectionne la première imprimante USB détectée
   const printer = new escpos.Printer(device);
 
@@ -163,6 +167,7 @@ ipcMain.handle('print:thermal', async (_event, jobBytes: Uint8Array) => {
 
 /** Ouverture du tiroir-caisse — commande ESC/POS standard "pulse" (ESC p 0 25 250). */
 ipcMain.handle('cashdrawer:open', async () => {
+  const { escpos, EscposUSB } = loadPrinterLibs();
   const device = new EscposUSB();
   const printer = new escpos.Printer(device);
   return new Promise<void>((resolve, reject) => {

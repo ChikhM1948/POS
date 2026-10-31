@@ -119,7 +119,7 @@ export function StockMovementPanel({ storeId, product, onClose, onMovementCreate
   }
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white shadow-card p-4">
+    <div className="rounded-xl border border-neutral-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-base font-semibold text-neutral-900">
           {product.name.fr}{' '}
@@ -194,7 +194,7 @@ export function StockMovementPanel({ storeId, product, onClose, onMovementCreate
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('stockMovement.notePlaceholder')} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500" />
         </label>
         {error && <p className="col-span-full text-sm text-red-600">{error}</p>}
-        <button disabled={submitting} type="submit" className="col-span-full w-fit rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
+        <button disabled={submitting} type="submit" className="col-span-full w-fit rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
           {submitting ? t('common.saving') : t('stockMovement.save')}
         </button>
       </form>
@@ -202,7 +202,7 @@ export function StockMovementPanel({ storeId, product, onClose, onMovementCreate
       <h4 className="mb-2 text-sm font-semibold text-neutral-700">{t('stockMovement.historyTitle')}</h4>
       <div className="max-h-64 overflow-y-auto rounded-lg border border-neutral-200">
         <table className="w-full text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
             <tr>
               <th className="px-3 py-1.5">{t('stockMovement.tableDate')}</th>
               <th className="px-3 py-1.5">{t('stockMovement.tableType')}</th>

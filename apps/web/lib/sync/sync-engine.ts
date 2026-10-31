@@ -1,4 +1,5 @@
 import type { OfflineDB } from '../db/offline-db';
+import { LOCAL_MODE } from '../localMode';
 import type { SyncPushRequest, SyncPushResponse } from '@pos-dz/shared';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -11,7 +12,8 @@ const PUSH_BATCH_SIZE = 50;
  * voir docs/SYNC_STRATEGY.md#détection-de-létat-réseau. On confirme toujours par un health-check.
  */
 async function isApiReachable(): Promise<boolean> {
-  if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
+  // En poste local l'API est sur la boucle locale : navigator.onLine (état d'Internet) n'a aucun sens.
+  if (!LOCAL_MODE && typeof navigator !== 'undefined' && !navigator.onLine) return false;
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), HEALTHCHECK_TIMEOUT_MS);

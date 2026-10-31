@@ -5,6 +5,7 @@ import { useAdminAuth } from '../../lib/adminAuth';
 import { BrandMark } from '../BrandMark';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
+import { LOCAL_MODE } from '../../lib/localMode';
 import type { AuthResult } from '@pos-dz/shared';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -26,7 +27,7 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
-  const [syncEnabled, setSyncEnabled] = useState(true);
+  const [syncEnabled, setSyncEnabled] = useState(!LOCAL_MODE);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AuthResult | null>(null);
@@ -46,7 +47,13 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? t('adminSetup.errorDefault'));
       }
-      setResult(await res.json());
+      const created: AuthResult = await res.json();
+      if (LOCAL_MODE) {
+        // Poste local : l'identifiant du commerce est géré automatiquement, on entre directement.
+        login({ token: created.token, tenantId: created.tenantId, userId: created.user.id, name: created.user.name, role: created.user.role });
+        return;
+      }
+      setResult(created);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('adminSetup.errorGeneric'));
     } finally {
@@ -66,16 +73,23 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
 
   function handleContinue() {
     if (!result) return;
-    login({ token: result.token, tenantId: result.tenantId, userId: result.user.id, name: result.user.name, role: result.user.role });
+    login({
+      token: result.token,
+      tenantId: result.tenantId,
+      userId: result.user.id,
+      name: result.user.name,
+      role: result.user.role,
+      canViewPurchasePrice: result.user.canViewPurchasePrice,
+    });
   }
 
   if (result) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-neutral-100 via-neutral-50 to-neutral-100 px-4 py-12">
+      <div className="relative flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
         <div className="absolute top-4 end-4">
           <LanguageSwitcher />
         </div>
-        <div className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-8 shadow-popover">
+        <div className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-8">
           <div className="flex flex-col items-center gap-3 text-center">
             <BrandMark size={44} />
             <div>
@@ -92,7 +106,7 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
           <button
             type="button"
             onClick={handleContinue}
-            className="mt-1 flex items-center justify-center rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700"
+            className="mt-1 flex items-center justify-center rounded-lg bg-brand-600 py-2.5 text-sm font-medium text-white transition hover:bg-brand-700"
           >
             {t('adminSetup.continueToBackoffice')}
           </button>
@@ -102,13 +116,13 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-neutral-100 via-neutral-50 to-neutral-100 px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
       <div className="absolute top-4 end-4">
         <LanguageSwitcher />
       </div>
       <form
         onSubmit={handleSubmit}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-8 shadow-popover"
+        className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-8"
       >
         <div className="mb-1 flex flex-col items-center gap-3 text-center">
           <BrandMark size={44} />
@@ -159,6 +173,7 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
             className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
           />
         </label>
+        {!LOCAL_MODE && (
         <div className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-neutral-700">{t('adminSetup.modeLabel')}</span>
           <div className="grid grid-cols-2 gap-2">
@@ -186,6 +201,7 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
             </button>
           </div>
         </div>
+        )}
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
           {t('adminSetup.passwordLabel')}
           <input
@@ -208,7 +224,7 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
         <button
           disabled={loading}
           type="submit"
-          className="mt-1 flex items-center justify-center rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-1 flex items-center justify-center rounded-lg bg-brand-600 py-2.5 text-sm font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? t('adminSetup.submitting') : t('adminSetup.submit')}
         </button>

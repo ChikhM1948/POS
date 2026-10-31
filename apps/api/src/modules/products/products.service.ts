@@ -2,7 +2,10 @@ import { Types } from 'mongoose';
 import { Product } from '../../models/Product';
 import type { ProductDTO, ProductInput } from '@pos-dz/shared';
 
-function toDTO(doc: any): ProductDTO {
+// canViewPurchasePrice=false (caissier sans PERMISSION_VIEW_PURCHASE_PRICE, voir products.controller.ts)
+// redige le prix d'achat côté serveur : masquer le champ seulement dans le formulaire admin
+// (ProductForm) ne suffit pas, la réponse JSON brute reste inspectable (devtools/network).
+function toDTO(doc: any, canViewPurchasePrice = true): ProductDTO {
   return {
     id: String(doc._id),
     sku: doc.sku,
@@ -13,7 +16,7 @@ function toDTO(doc: any): ProductDTO {
     unit: doc.unit,
     variants: doc.variants ?? [],
     sellingPriceCents: doc.sellingPriceCents,
-    costPriceCents: doc.costPriceCents ?? 0,
+    costPriceCents: canViewPurchasePrice ? doc.costPriceCents ?? 0 : 0,
     minSellingPriceCents: doc.minSellingPriceCents,
     taxRate: doc.taxRate,
     isPerishable: doc.isPerishable,
@@ -22,14 +25,14 @@ function toDTO(doc: any): ProductDTO {
   };
 }
 
-export async function listProducts(tenantId: string, search?: string): Promise<ProductDTO[]> {
+export async function listProducts(tenantId: string, search?: string, canViewPurchasePrice = true): Promise<ProductDTO[]> {
   const filter: Record<string, unknown> = { tenantId: new Types.ObjectId(tenantId) };
   if (search) {
     const regex = new RegExp(search.trim(), 'i');
     filter.$or = [{ 'name.fr': regex }, { 'name.ar': regex }, { sku: regex }, { barcode: regex }];
   }
   const docs = await Product.find(filter).sort({ 'name.fr': 1 }).lean();
-  return docs.map(toDTO);
+  return docs.map((doc) => toDTO(doc, canViewPurchasePrice));
 }
 
 export async function createProduct(tenantId: string, input: ProductInput): Promise<ProductDTO> {

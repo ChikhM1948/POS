@@ -66,10 +66,10 @@ export default function TeamPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900">{t('team.title')}</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-neutral-900">{t('team.title')}</h1>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700"
+          className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
         >
           <IconPlus className="h-4 w-4" />
           {t('team.newMember')}
@@ -80,17 +80,17 @@ export default function TeamPage() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-card">
+      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
         <table className="w-full text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
             <tr>
-              <th className="px-4 py-2">{t('team.tableName')}</th>
-              <th className="px-4 py-2">{t('team.tableEmail')}</th>
-              <th className="px-4 py-2">{t('team.tableRole')}</th>
-              <th className="px-4 py-2">{t('team.tablePin')}</th>
-              <th className="px-4 py-2">{t('team.tablePurchasePrice')}</th>
-              <th className="px-4 py-2">{t('team.tableStatus')}</th>
-              <th className="px-4 py-2"></th>
+              <th className="px-4 py-3">{t('team.tableName')}</th>
+              <th className="px-4 py-3">{t('team.tableEmail')}</th>
+              <th className="px-4 py-3">{t('team.tableRole')}</th>
+              <th className="px-4 py-3">{t('team.tablePin')}</th>
+              <th className="px-4 py-3">{t('team.tablePurchasePrice')}</th>
+              <th className="px-4 py-3">{t('team.tableStatus')}</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -114,7 +114,7 @@ export default function TeamPage() {
                   )}
                 </td>
                 <td className="px-4 py-2.5">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${u.active ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-200 text-neutral-600'}`}>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600"><span className={`h-1.5 w-1.5 rounded-full ${u.active ? 'bg-emerald-500' : 'bg-neutral-300'}`} />
                     {u.active ? t('common.active') : t('common.inactive')}
                   </span>
                 </td>

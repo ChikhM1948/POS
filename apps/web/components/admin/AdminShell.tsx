@@ -45,7 +45,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <div className="mb-6 flex items-center gap-2.5 px-1">
           <BrandMark size={32} />
           <div>
-            <p className="text-sm font-semibold leading-tight text-neutral-900">POS Algérie</p>
+            <p className="text-sm font-semibold leading-tight tracking-tight text-neutral-900">POS Algérie</p>
             <p className="text-xs text-neutral-400">{t('adminShell.subtitle')}</p>
           </div>
         </div>
@@ -57,8 +57,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  isActive ? 'bg-brand-600 text-white shadow-card' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition ${
+                  isActive ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
                 }`}
               >
                 <Icon className="h-[18px] w-[18px] shrink-0" />

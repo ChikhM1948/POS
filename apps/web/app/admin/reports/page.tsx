@@ -64,7 +64,7 @@ export default function ReportsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-neutral-900">{t('reports.title')}</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-neutral-900">{t('reports.title')}</h1>
         <div className="flex flex-wrap items-center gap-2">
           <select value={storeId} onChange={(e) => setStoreId(e.target.value)} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500">
             <option value="">{t('sales.allStores')}</option>
@@ -104,20 +104,20 @@ export default function ReportsPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="rounded-xl border border-neutral-200 bg-white shadow-card p-4 lg:col-span-2">
+            <div className="rounded-xl border border-neutral-200 bg-white p-4 lg:col-span-2">
               <h2 className="mb-4 text-sm font-semibold text-neutral-700">{t('reports.revenueByDay')}</h2>
               <RevenueBarChart data={summary.revenueByDay} />
             </div>
-            <div className="rounded-xl border border-neutral-200 bg-white shadow-card p-4">
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
               <h2 className="mb-4 text-sm font-semibold text-neutral-700">{t('reports.byPaymentMethod')}</h2>
               <PaymentBreakdown data={summary.revenueByPaymentMethod} />
             </div>
           </div>
 
-          <div className="rounded-xl border border-neutral-200 bg-white shadow-card p-4">
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
             <h2 className="mb-3 text-sm font-semibold text-neutral-700">{t('reports.topProducts')}</h2>
             <table className="w-full text-sm">
-              <thead className="border-b border-neutral-200 text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              <thead className="border-b border-neutral-200 text-start text-xs font-medium text-neutral-500">
                 <tr>
                   <th className="py-1.5">{t('products.tableProduct')}</th>
                   <th className="py-1.5">{t('reports.tableQuantitySold')}</th>
@@ -148,11 +148,11 @@ export default function ReportsPage() {
 
           {debts && (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <div className="rounded-xl border border-neutral-200 bg-white shadow-card p-4">
+              <div className="rounded-xl border border-neutral-200 bg-white p-4">
                 <h2 className="mb-3 text-sm font-semibold text-neutral-700">{t('reports.topSuppliers')}</h2>
                 <DebtorTable rows={debts.topSuppliers} formatDZD={formatDZD} t={t} />
               </div>
-              <div className="rounded-xl border border-neutral-200 bg-white shadow-card p-4">
+              <div className="rounded-xl border border-neutral-200 bg-white p-4">
                 <h2 className="mb-3 text-sm font-semibold text-neutral-700">{t('reports.topCustomers')}</h2>
                 <DebtorTable rows={debts.topCustomers} formatDZD={formatDZD} t={t} />
               </div>
@@ -169,7 +169,7 @@ export default function ReportsPage() {
 function DebtorTable({ rows, formatDZD, t }: { rows: DebtorDTO[]; formatDZD: (cents: number) => string; t: ReturnType<typeof useTranslation>['t'] }) {
   return (
     <table className="w-full text-sm">
-      <thead className="border-b border-neutral-200 text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
+      <thead className="border-b border-neutral-200 text-start text-xs font-medium text-neutral-500">
         <tr>
           <th className="py-1.5">{t('reports.debtTableName')}</th>
           <th className="py-1.5 text-end">{t('reports.debtTableBalance')}</th>

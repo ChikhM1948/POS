@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAdminAuth } from '../../../lib/adminAuth';
 import { adminFetch } from '../../../lib/adminApi';
 import { TenantSettingsForm } from '../../../components/admin/TenantSettingsForm';
+import { CloudSyncPanel } from '../../../components/admin/CloudSyncPanel';
+import { LOCAL_MODE } from '../../../lib/localMode';
 import { useTranslation } from '../../../lib/i18n/LanguageContext';
 import type { TenantSettingsDTO, UpdateTenantSettingsInput } from '@pos-dz/shared';
 
@@ -39,9 +41,10 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-neutral-900">{t('settings.title')}</h1>
+      <h1 className="text-lg font-semibold tracking-tight text-neutral-900">{t('settings.title')}</h1>
       {error && <p className="text-sm text-red-600">{error}</p>}
       {tenant && <TenantSettingsForm initial={tenant} onSubmit={handleSubmit} />}
+      {LOCAL_MODE && <CloudSyncPanel />}
     </div>
   );
 }

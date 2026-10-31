@@ -86,7 +86,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex max-w-xl flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-5 shadow-card">
+    <form onSubmit={handleSubmit} className="flex max-w-xl flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-5">
       <div className="flex items-center gap-4">
         <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-neutral-300 bg-neutral-50">
           {logoUrl ? (
@@ -185,7 +185,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
         <button
           disabled={submitting}
           type="submit"
-          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? t('common.saving') : t('common.save')}
         </button>

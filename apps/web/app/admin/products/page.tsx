@@ -62,10 +62,10 @@ export default function ProductsPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900">{t('products.title')}</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-neutral-900">{t('products.title')}</h1>
         <button
           onClick={() => setEditing('new')}
-          className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700"
+          className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
         >
           <IconPlus className="h-4 w-4" />
           {t('products.newProduct')}
@@ -95,17 +95,17 @@ export default function ProductsPage() {
 
       <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-card">
         <table className="w-full text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
             <tr>
-              <th className="px-4 py-2"></th>
-              <th className="px-4 py-2">{t('products.tableProduct')}</th>
-              <th className="px-4 py-2">{t('products.tableSku')}</th>
-              <th className="px-4 py-2">{t('products.tableBarcode')}</th>
-              <th className="px-4 py-2">{t('products.tableCategory')}</th>
-              <th className="px-4 py-2">{t('products.tablePrice')}</th>
-              <th className="px-4 py-2">{t('products.tableTax')}</th>
-              <th className="px-4 py-2">{t('products.tableStatus')}</th>
-              <th className="px-4 py-2"></th>
+              <th className="px-4 py-3"></th>
+              <th className="px-4 py-3">{t('products.tableProduct')}</th>
+              <th className="px-4 py-3">{t('products.tableSku')}</th>
+              <th className="px-4 py-3">{t('products.tableBarcode')}</th>
+              <th className="px-4 py-3">{t('products.tableCategory')}</th>
+              <th className="px-4 py-3">{t('products.tablePrice')}</th>
+              <th className="px-4 py-3">{t('products.tableTax')}</th>
+              <th className="px-4 py-3">{t('products.tableStatus')}</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -135,7 +135,8 @@ export default function ProductsPage() {
                 <td className="px-4 py-2.5 font-medium text-neutral-900">{formatDZD(p.sellingPriceCents)}</td>
                 <td className="px-4 py-2.5 text-neutral-600">{p.taxRate}%</td>
                 <td className="px-4 py-2.5">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${p.active ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-200 text-neutral-600'}`}>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600">
+                    <span className={`h-1.5 w-1.5 rounded-full ${p.active ? 'bg-emerald-500' : 'bg-neutral-300'}`} />
                     {p.active ? t('common.active') : t('common.inactive')}
                   </span>
                 </td>
@@ -151,6 +152,13 @@ export default function ProductsPage() {
                 </td>
               </tr>
             ))}
+            {loading && products.length === 0 && (
+              <tr>
+                <td colSpan={9} className="px-4 py-6 text-center text-neutral-400">
+                  {t('common.loading')}
+                </td>
+              </tr>
+            )}
             {!loading && products.length === 0 && (
               <tr>
                 <td colSpan={9} className="px-4 py-6 text-center text-neutral-500">

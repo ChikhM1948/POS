@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { BrandMark } from '../BrandMark';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
+import { LOCAL_MODE, fetchLocalInfo } from '../../lib/localMode';
 import { clearRegisterConfig, loadRegisterConfig, saveRegisterConfig, type RegisterConfig } from '../../lib/registerConfig';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -39,8 +40,27 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [localMissing, setLocalMissing] = useState(false);
+
   useEffect(() => {
-    setConfig(loadRegisterConfig());
+    const saved = loadRegisterConfig();
+    if (!LOCAL_MODE) {
+      setConfig(saved);
+      return;
+    }
+    // Poste local : le commerce et sa boutique principale sont connus du serveur embarqué — la
+    // configuration du poste se fait seule, sans saisie d'identifiants techniques.
+    fetchLocalInfo().then((info) => {
+      if (info.configured && info.tenantId && info.storeId) {
+        const next = { tenantId: info.tenantId, storeId: info.storeId };
+        saveRegisterConfig(next);
+        setConfig(next);
+      } else {
+        clearRegisterConfig();
+        setLocalMissing(true);
+        setConfig(null);
+      }
+    });
   }, []);
 
   function handleSetupSubmit(e: React.FormEvent) {
@@ -101,6 +121,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
   }
 
   function handleChangeStore() {
+    if (LOCAL_MODE) return; // poste local : un seul commerce, pas de reconfiguration
     clearRegisterConfig();
     setConfig(null);
     setTenantId('');
@@ -122,21 +143,35 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
   // indicateur de chargement évite un flash de l'écran de configuration.
   if (config === undefined) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-brand-950 via-brand-900 to-neutral-950">
-        <p className="text-sm text-white/50">{t('common.loading')}</p>
+      <div className="flex min-h-screen items-center justify-center bg-neutral-50">
+        <p className="text-sm text-neutral-400">{t('common.loading')}</p>
+      </div>
+    );
+  }
+
+  if (!config && LOCAL_MODE) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
+        <div className="absolute top-4 end-4">
+          <LanguageSwitcher />
+        </div>
+        <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-8 text-center shadow-card">
+          <BrandMark size={44} />
+          <p className="text-sm text-neutral-600">{localMissing ? t('login.localNotConfigured') : t('common.loading')}</p>
+        </div>
       </div>
     );
   }
 
   if (!config) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-brand-950 via-brand-900 to-neutral-950 px-4 py-12">
+      <div className="relative flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
         <div className="absolute top-4 end-4">
           <LanguageSwitcher />
         </div>
         <form
           onSubmit={handleSetupSubmit}
-          className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-white/10 bg-white p-8 shadow-popover"
+          className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-8 shadow-card"
         >
           <div className="mb-1 flex flex-col items-center gap-3 text-center">
             <BrandMark size={44} />
@@ -181,13 +216,13 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-b from-brand-950 via-brand-900 to-neutral-950 px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
       <div className="absolute top-4 end-4">
         <LanguageSwitcher />
       </div>
       <form
         onSubmit={handleLoginSubmit}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-white/10 bg-white p-8 shadow-popover"
+        className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-8 shadow-card"
       >
         <div className="mb-1 flex flex-col items-center gap-3 text-center">
           <BrandMark size={44} />
@@ -275,13 +310,15 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
           {loading ? t('login.submitting') : t('login.submit')}
         </button>
 
-        <button
-          type="button"
-          onClick={handleChangeStore}
-          className="text-center text-xs text-neutral-400 underline-offset-2 hover:text-neutral-600 hover:underline"
-        >
-          {t('login.changeStore')}
-        </button>
+        {!LOCAL_MODE && (
+          <button
+            type="button"
+            onClick={handleChangeStore}
+            className="text-center text-xs text-neutral-400 underline-offset-2 hover:text-neutral-600 hover:underline"
+          >
+            {t('login.changeStore')}
+          </button>
+        )}
       </form>
     </div>
   );

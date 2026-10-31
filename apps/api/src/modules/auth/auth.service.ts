@@ -12,6 +12,8 @@ function canViewPurchasePrice(user: { permissions?: string[] }): boolean {
 }
 
 function signToken(claims: JwtClaims): string {
+  // JWT_EXPIRES_IN=never : token sans expiration (postes installés).
+  if (env.jwtExpiresIn === 'never') return jwt.sign(claims, env.jwtSecret);
   const options: jwt.SignOptions = { expiresIn: env.jwtExpiresIn as jwt.SignOptions['expiresIn'] };
   return jwt.sign(claims, env.jwtSecret, options);
 }

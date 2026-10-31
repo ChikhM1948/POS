@@ -60,7 +60,7 @@ export function LedgerPanel({ title, ledgerPath, paymentPath, onClose, onPayment
   }
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white shadow-card p-4">
+    <div className="rounded-xl border border-neutral-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-base font-semibold text-neutral-900">{title}</h3>
         <button onClick={onClose} className="text-sm font-medium text-neutral-500 hover:text-neutral-700">
@@ -77,7 +77,7 @@ export function LedgerPanel({ title, ledgerPath, paymentPath, onClose, onPayment
           {t('ledger.paymentNote')}
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('ledger.paymentNotePlaceholder')} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500" />
         </label>
-        <button disabled={submitting} type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
+        <button disabled={submitting} type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
           {submitting ? t('common.saving') : t('ledger.paymentSubmit')}
         </button>
       </form>
@@ -86,7 +86,7 @@ export function LedgerPanel({ title, ledgerPath, paymentPath, onClose, onPayment
       <h4 className="mb-2 text-sm font-semibold text-neutral-700">{t('ledger.historyTitle')}</h4>
       <div className="max-h-64 overflow-y-auto rounded-lg border border-neutral-200">
         <table className="w-full text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
             <tr>
               <th className="px-3 py-1.5">{t('ledger.tableDate')}</th>
               <th className="px-3 py-1.5">{t('ledger.tableType')}</th>
