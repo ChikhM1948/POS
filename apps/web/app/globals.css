@@ -51,8 +51,10 @@
     top: 0;
     inset-inline-start: 0;
   }
-  .label-roll .label {
+  .label-roll .label-page {
     break-after: page;
+  }
+  .label-roll .label {
     border: none !important;
   }
   .label {
@@ -74,6 +76,10 @@
 }
 .label-sheet {
   display: grid;
+}
+.label-page {
+  position: relative;
+  overflow: hidden;
 }
 .label {
   box-sizing: border-box;

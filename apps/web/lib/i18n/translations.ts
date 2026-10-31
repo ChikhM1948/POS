@@ -179,6 +179,7 @@ export interface TranslationDict {
     showName: string;
     showPrice: string;
     showCode: string;
+    rotate: string;
     usesSku: string;
     hint: string;
     preview: string;
@@ -421,6 +422,7 @@ export interface TranslationDict {
     changeGiven: string;
     print: string;
     newSale: string;
+    openDrawer: string;
     payment: {
       cash: string;
       cib: string;
@@ -725,6 +727,7 @@ const fr: TranslationDict = {
     showName: 'Nom du produit',
     showPrice: 'Prix',
     showCode: 'Numéro sous le code',
+    rotate: 'Pivoter de 90° (si l’impression sort à la verticale)',
     usesSku: '{count} produit(s) sans code-barres : le SKU sera utilisé.',
     hint: 'Dans la fenêtre d\'impression, choisissez votre imprimante d\'étiquettes, marges « Aucune » et échelle 100 %.',
     preview: 'Aperçu',
@@ -968,6 +971,7 @@ const fr: TranslationDict = {
     changeGiven: 'Monnaie rendue',
     print: 'Imprimer',
     newSale: 'Nouvelle vente',
+    openDrawer: 'Ouvrir le tiroir-caisse',
     payment: {
       cash: 'Espèces',
       cib: 'CIB / Edahabia',
@@ -1272,6 +1276,7 @@ const ar: TranslationDict = {
     showName: 'اسم المنتج',
     showPrice: 'السعر',
     showCode: 'الرقم تحت الباركود',
+    rotate: 'تدوير 90° (إذا خرجت الطباعة عمودية)',
     usesSku: '{count} منتج بدون باركود: سيتم استعمال SKU.',
     hint: 'في نافذة الطباعة اختر طابعة الملصقات، الهوامش «بدون» والمقياس 100%.',
     preview: 'معاينة',
@@ -1515,6 +1520,7 @@ const ar: TranslationDict = {
     changeGiven: 'الباقي المُعاد',
     print: 'طباعة',
     newSale: 'عملية بيع جديدة',
+    openDrawer: 'فتح درج النقود',
     payment: {
       cash: 'نقدًا',
       cib: 'CIB / Edahabia',

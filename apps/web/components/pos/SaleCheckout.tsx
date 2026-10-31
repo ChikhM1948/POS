@@ -185,6 +185,7 @@ declare global {
   interface Window {
     posBridge?: {
       printThermal: (job: Uint8Array) => Promise<void>;
+      openCashDrawer?: () => Promise<void>;
     };
   }
 }

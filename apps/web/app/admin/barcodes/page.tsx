@@ -34,6 +34,7 @@ export default function BarcodesPage() {
   const [showName, setShowName] = useState(true);
   const [showPrice, setShowPrice] = useState(true);
   const [showCode, setShowCode] = useState(true);
+  const [rotate, setRotate] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -92,9 +93,13 @@ export default function BarcodesPage() {
   const missing = products.filter((p) => !p.barcode);
   const selectedMissing = selected.filter((p) => !p.barcode);
 
+  // Rotation : la page est tournée (h × w) et le contenu de l'étiquette pivoté de 90°.
+  const rot = rotate && !preset.sheet;
+  const pageW = rot ? preset.h : preset.w;
+  const pageH = rot ? preset.w : preset.h;
   const pageCss = preset.sheet
     ? '@page { size: A4; margin: 10.7mm 7.2mm; }'
-    : `@page { size: ${preset.w}mm ${preset.h}mm; margin: 0; }`;
+    : `@page { size: ${pageW}mm ${pageH}mm; margin: 0; }`;
 
   return (
     <div className="flex flex-col gap-4">
@@ -209,6 +214,7 @@ export default function BarcodesPage() {
             [showName, setShowName, t('barcodes.showName')] as const,
             [showPrice, setShowPrice, t('barcodes.showPrice')] as const,
             [showCode, setShowCode, t('barcodes.showCode')] as const,
+            [rotate, setRotate, t('barcodes.rotate')] as const,
           ].map(([val, set, label]) => (
             <label key={label} className="flex items-center gap-2 text-sm text-neutral-700">
               <input type="checkbox" checked={val} onChange={(e) => set(e.target.checked)} />
@@ -227,13 +233,22 @@ export default function BarcodesPage() {
         <h2 className="no-print mb-2 text-sm font-medium text-neutral-500">{t('barcodes.preview')}</h2>
         <div className={`label-print ${preset.sheet ? 'label-sheet' : 'label-roll'}`} style={preset.sheet ? { gridTemplateColumns: `repeat(3, ${preset.w}mm)` } : undefined}>
           {labels.map(({ p, key }) => (
-            <div key={key} className="label" style={{ width: `${preset.w}mm`, height: `${preset.h}mm` }}>
-              {showName && <div className="label-name">{p.name.fr}</div>}
-              <div className="label-bars">
-                <BarcodeSvg value={codeOf(p)} />
+            <div key={key} className="label-page" style={{ width: `${pageW}mm`, height: `${pageH}mm` }}>
+              <div
+                className="label"
+                style={
+                  rot
+                    ? { position: 'absolute', top: 0, left: `${pageW}mm`, width: `${preset.w}mm`, height: `${preset.h}mm`, transformOrigin: 'top left', transform: 'rotate(90deg)' }
+                    : { width: `${preset.w}mm`, height: `${preset.h}mm` }
+                }
+              >
+                {showName && <div className="label-name">{p.name.fr}</div>}
+                <div className="label-bars">
+                  <BarcodeSvg value={codeOf(p)} />
+                </div>
+                {showCode && <div className="label-code">{codeOf(p)}</div>}
+                {showPrice && <div className="label-price">{formatCurrency(p.sellingPriceCents, locale)}</div>}
               </div>
-              {showCode && <div className="label-code">{codeOf(p)}</div>}
-              {showPrice && <div className="label-price">{formatCurrency(p.sellingPriceCents, locale)}</div>}
             </div>
           ))}
         </div>

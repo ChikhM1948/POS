@@ -136,6 +136,14 @@ export function Receipt({ sale, tenantBranding, onClose }: Props) {
             <IconPrinter className="h-4 w-4" />
             {t('receipt.print')}
           </button>
+          {typeof window !== 'undefined' && window.posBridge?.openCashDrawer && (
+            <button
+              onClick={() => window.posBridge?.openCashDrawer?.().catch((e: unknown) => console.error('Tiroir-caisse :', e))}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-neutral-300 py-3 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
+            >
+              {t('receipt.openDrawer')}
+            </button>
+          )}
           <button
             onClick={onClose}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-neutral-900 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800"
