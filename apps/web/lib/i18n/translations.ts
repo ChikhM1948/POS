@@ -140,6 +140,7 @@ export interface TranslationDict {
       sales: string;
       reports: string;
       suppliers: string;
+      barcodes: string;
       customers: string;
       team: string;
       settings: string;
@@ -164,6 +165,23 @@ export interface TranslationDict {
     tableStatus: string;
     empty: string;
     confirmDeactivate: string;
+  };
+  barcodes: {
+    title: string;
+    print: string;
+    selectAll: string;
+    clear: string;
+    generate: string;
+    generateMissing: string;
+    copies: string;
+    labelSize: string;
+    a4Sheet: string;
+    showName: string;
+    showPrice: string;
+    showCode: string;
+    usesSku: string;
+    hint: string;
+    preview: string;
   };
   productForm: {
     titleEdit: string;
@@ -668,6 +686,7 @@ const fr: TranslationDict = {
       sales: 'Ventes',
       reports: 'Rapports',
       suppliers: 'Fournisseurs',
+      barcodes: 'Étiquettes',
       customers: 'Clients',
       team: 'Équipe',
       settings: 'Paramètres',
@@ -692,6 +711,23 @@ const fr: TranslationDict = {
     tableStatus: 'Statut',
     empty: 'Aucun produit.',
     confirmDeactivate: 'Désactiver "{name}" ? Il restera visible dans l\'historique mais plus disponible à la vente.',
+  },
+  barcodes: {
+    title: 'Étiquettes code-barres',
+    print: 'Imprimer',
+    selectAll: 'Tout sélectionner',
+    clear: 'Désélectionner',
+    generate: 'Générer',
+    generateMissing: 'Générer les {count} codes manquants',
+    copies: 'Copies',
+    labelSize: 'Format d\'étiquette',
+    a4Sheet: 'Planche A4 (3 × 7)',
+    showName: 'Nom du produit',
+    showPrice: 'Prix',
+    showCode: 'Numéro sous le code',
+    usesSku: '{count} produit(s) sans code-barres : le SKU sera utilisé.',
+    hint: 'Dans la fenêtre d\'impression, choisissez votre imprimante d\'étiquettes, marges « Aucune » et échelle 100 %.',
+    preview: 'Aperçu',
   },
   productForm: {
     titleEdit: 'Modifier le produit',
@@ -1197,6 +1233,7 @@ const ar: TranslationDict = {
       sales: 'المبيعات',
       reports: 'التقارير',
       suppliers: 'الموردون',
+      barcodes: 'الملصقات',
       customers: 'الزبائن',
       team: 'الفريق',
       settings: 'الإعدادات',
@@ -1221,6 +1258,23 @@ const ar: TranslationDict = {
     tableStatus: 'الحالة',
     empty: 'لا يوجد منتج.',
     confirmDeactivate: 'إلغاء تفعيل "{name}"؟ سيبقى ظاهرًا في السجل لكن لن يكون متاحًا للبيع.',
+  },
+  barcodes: {
+    title: 'ملصقات الباركود',
+    print: 'طباعة',
+    selectAll: 'تحديد الكل',
+    clear: 'إلغاء التحديد',
+    generate: 'توليد',
+    generateMissing: 'توليد {count} باركود ناقص',
+    copies: 'النسخ',
+    labelSize: 'حجم الملصق',
+    a4Sheet: 'ورقة A4 (3 × 7)',
+    showName: 'اسم المنتج',
+    showPrice: 'السعر',
+    showCode: 'الرقم تحت الباركود',
+    usesSku: '{count} منتج بدون باركود: سيتم استعمال SKU.',
+    hint: 'في نافذة الطباعة اختر طابعة الملصقات، الهوامش «بدون» والمقياس 100%.',
+    preview: 'معاينة',
   },
   productForm: {
     titleEdit: 'تعديل المنتج',

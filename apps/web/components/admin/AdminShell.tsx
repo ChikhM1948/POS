@@ -7,12 +7,12 @@ import { useAdminAuth } from '../../lib/adminAuth';
 import { BrandMark } from '../BrandMark';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
-import { IconBox, IconChart, IconLayers, IconLogout, IconReceipt, IconSettings, IconTruck, IconUsers, IconWallet } from '../icons';
+import { IconBarcode, IconBox, IconChart, IconLayers, IconLogout, IconReceipt, IconSettings, IconTruck, IconUsers, IconWallet } from '../icons';
 import type { UserRole } from '@pos-dz/shared';
 
 interface NavItem {
   href: string;
-  labelKey: 'products' | 'stock' | 'sales' | 'reports' | 'suppliers' | 'customers' | 'team' | 'settings';
+  labelKey: 'products' | 'stock' | 'sales' | 'reports' | 'suppliers' | 'barcodes' | 'customers' | 'team' | 'settings';
   icon: (props: { className?: string }) => JSX.Element;
   roles?: UserRole[]; // omis = visible pour tous les rôles admis en back-office
 }
@@ -20,6 +20,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: '/admin/products', labelKey: 'products', icon: IconBox },
   { href: '/admin/stock', labelKey: 'stock', icon: IconLayers },
+  { href: '/admin/barcodes', labelKey: 'barcodes', icon: IconBarcode, roles: ['store_admin', 'stock_manager', 'super_admin'] },
   // Ventes/Rapports exposent des données financières — réservés aux mêmes rôles que côté API
   // (voir server.ts), pour ne pas afficher un lien qui renverrait systématiquement un 403.
   { href: '/admin/sales', labelKey: 'sales', icon: IconReceipt, roles: ['store_admin', 'super_admin'] },
