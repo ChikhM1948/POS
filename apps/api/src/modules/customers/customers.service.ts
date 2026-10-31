@@ -69,6 +69,21 @@ export async function getCustomerLedger(tenantId: string, customerId: string): P
   return docs.map(toLedgerDTO);
 }
 
+/** Ajoute manuellement une créance — écriture positive de type 'adjustment'. */
+export async function recordCustomerDebt(tenantId: string, customerId: string, input: CreateLedgerPaymentInput): Promise<LedgerEntryDTO> {
+  const doc = await CustomerLedgerEntry.create({
+    tenantId: new Types.ObjectId(tenantId),
+    customerId: new Types.ObjectId(customerId),
+    type: 'adjustment' as const,
+    amountCents: Math.abs(input.amountCents),
+    note: input.note,
+    reference: undefined,
+    clientGeneratedId: randomUUID(),
+    createdAtLocal: new Date(),
+  });
+  return toLedgerDTO(doc);
+}
+
 /** Encaisse un paiement d'un client — réduit sa dette (amountCents négatif dans le ledger). */
 export async function recordCustomerPayment(tenantId: string, customerId: string, input: CreateLedgerPaymentInput): Promise<LedgerEntryDTO> {
   const doc = await CustomerLedgerEntry.create({

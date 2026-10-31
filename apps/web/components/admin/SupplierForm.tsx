@@ -5,14 +5,20 @@ import { useTranslation } from '../../lib/i18n/LanguageContext';
 import type { SupplierInput } from '@pos-dz/shared';
 
 interface Props {
-  onSubmit: (input: SupplierInput) => Promise<void>;
+  onSubmit: (input: SupplierInput, openingBalanceCents?: number) => Promise<void>;
   onCancel: () => void;
 }
+
+const toCents = (v: string) => {
+  const n = parseFloat(v.replace(',', '.'));
+  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : undefined;
+};
 
 export function SupplierForm({ onSubmit, onCancel }: Props) {
   const { t } = useTranslation();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [openingBalance, setOpeningBalance] = useState('');
   const [address, setAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +28,7 @@ export function SupplierForm({ onSubmit, onCancel }: Props) {
     setError(null);
     setSubmitting(true);
     try {
-      await onSubmit({ name: name.trim(), phone: phone.trim() || undefined, address: address.trim() || undefined });
+      await onSubmit({ name: name.trim(), phone: phone.trim() || undefined, address: address.trim() || undefined }, toCents(openingBalance));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('supplierForm.errorSave'));
     } finally {
@@ -47,6 +53,10 @@ export function SupplierForm({ onSubmit, onCancel }: Props) {
           <input value={address} onChange={(e) => setAddress(e.target.value)} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500" />
         </label>
       </div>
+      <label className="flex max-w-sm flex-col gap-1 text-sm font-medium text-neutral-700">
+        {t('supplierForm.openingBalance')}
+        <input value={openingBalance} onChange={(e) => setOpeningBalance(e.target.value)} inputMode="decimal" className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 focus:border-brand-500" />
+      </label>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
         <button disabled={submitting} type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">

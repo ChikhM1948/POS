@@ -88,15 +88,17 @@ export default function StockPage() {
           </thead>
           <tbody>
             {balances.map((b) => {
-              const isLow = b.lowStockThreshold !== undefined && b.quantity <= b.lowStockThreshold;
+              const isOut = b.quantity <= 0;
+              const isLow = !isOut && b.lowStockThreshold !== undefined && b.lowStockThreshold > 0 && b.quantity <= b.lowStockThreshold;
               return (
                 <tr key={b.productId} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
                   <td className="px-4 py-2.5">
                     <p className="font-medium text-neutral-900">{b.name.fr}</p>
                     <p className="font-mono text-xs text-neutral-500">{b.sku}</p>
                   </td>
-                  <td className={`px-4 py-2.5 font-medium ${isLow ? 'text-red-600' : 'text-neutral-900'}`}>
+                  <td className={`px-4 py-2.5 font-medium ${isOut || isLow ? 'text-red-600' : 'text-neutral-900'}`}>
                     {b.quantity} {b.unit}
+                    {isOut && <span className="ms-2 rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{t('stock.outOfStock')}</span>}
                     {isLow && <span className="ms-2 rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{t('stock.lowStock')}</span>}
                   </td>
                   <td className="px-4 py-2.5 text-neutral-600">{b.lowStockThreshold ?? '—'}</td>

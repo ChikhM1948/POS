@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import type { AuthenticatedRequest } from '../../middleware/auth';
 import { requireRole } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/asyncHandler';
-import { listCustomers, createCustomer, updateCustomer, getCustomerLedger, recordCustomerPayment } from './customers.service';
+import { listCustomers, createCustomer, updateCustomer, getCustomerLedger, recordCustomerPayment, recordCustomerDebt } from './customers.service';
 import type { CreateCustomerInput, CreateLedgerPaymentInput, UpdateCustomerInput } from '@pos-dz/shared';
 
 export const customersRouter = Router();
@@ -54,6 +54,19 @@ customersRouter.post(
       return res.status(400).json({ error: 'amountCents doit être un montant positif.' });
     }
     const entry = await recordCustomerPayment(req.auth!.tenantId, req.params.id, req.body);
+    res.status(201).json({ entry });
+  }),
+);
+
+customersRouter.post(
+  '/:id/debts',
+  requireRole('store_admin', 'super_admin'),
+  asyncHandler(async (req: AuthenticatedRequest & { body: CreateLedgerPaymentInput }, res: Response) => {
+    const { amountCents } = req.body ?? {};
+    if (typeof amountCents !== 'number' || amountCents <= 0) {
+      return res.status(400).json({ error: 'amountCents doit être un montant positif.' });
+    }
+    const entry = await recordCustomerDebt(req.auth!.tenantId, req.params.id, req.body);
     res.status(201).json({ entry });
   }),
 );

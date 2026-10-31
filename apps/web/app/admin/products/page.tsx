@@ -41,10 +41,26 @@ export default function ProductsPage() {
     load();
   }, [load]);
 
-  async function handleSubmit(input: ProductInput) {
+  async function handleSubmit(input: ProductInput, initialStock?: { quantity: number; expiryDate?: string }) {
     if (!session) return;
     if (editing === 'new') {
-      await adminFetch(session.token, '/products', { method: 'POST', body: JSON.stringify(input) });
+      const { product } = await adminFetch<{ product: ProductDTO }>(session.token, '/products', { method: 'POST', body: JSON.stringify(input) });
+      if (initialStock && (initialStock.quantity > 0 || initialStock.expiryDate)) {
+        const { stores } = await adminFetch<{ stores: { id: string }[] }>(session.token, '/stores');
+        if (stores[0] && initialStock.quantity > 0) {
+          await adminFetch(session.token, '/stock/movements', {
+            method: 'POST',
+            body: JSON.stringify({
+              productId: product.id,
+              storeId: stores[0].id,
+              type: 'adjustment',
+              quantityDelta: initialStock.quantity,
+              expiryDate: initialStock.expiryDate,
+              note: 'Stock initial',
+            }),
+          });
+        }
+      }
     } else if (editing) {
       await adminFetch(session.token, `/products/${editing.id}`, { method: 'PATCH', body: JSON.stringify(input) });
     }

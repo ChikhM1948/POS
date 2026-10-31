@@ -11,17 +11,22 @@ interface Props {
   title: string;
   ledgerPath: string; // ex. /suppliers/:id/ledger
   paymentPath: string; // ex. /suppliers/:id/payments
+  debtPath: string; // ex. /suppliers/:id/debts — ajout manuel d'une créance/dette
+  addDebtLabel: string;
+  paymentLabel: string;
+  initialMode?: 'payment' | 'debt';
   onClose: () => void;
   onPaymentRecorded: () => void;
 }
 
 /** Historique + encaissement de paiement pour un fournisseur ou un client — même ledger append-only
  * des deux côtés (voir SupplierLedgerEntry/CustomerLedgerEntry), seuls les endpoints diffèrent. */
-export function LedgerPanel({ title, ledgerPath, paymentPath, onClose, onPaymentRecorded }: Props) {
+export function LedgerPanel({ title, ledgerPath, paymentPath, debtPath, addDebtLabel, paymentLabel, initialMode = 'payment', onClose, onPaymentRecorded }: Props) {
   const { t, locale } = useTranslation();
   const formatDZD = (cents: number) => formatCurrency(cents, locale);
   const { session } = useAdminAuth();
   const [entries, setEntries] = useState<LedgerEntryDTO[]>([]);
+  const [mode, setMode] = useState<'payment' | 'debt'>(initialMode);
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -44,7 +49,7 @@ export function LedgerPanel({ title, ledgerPath, paymentPath, onClose, onPayment
     setError(null);
     setSubmitting(true);
     try {
-      await adminFetch(session.token, paymentPath, {
+      await adminFetch(session.token, mode === 'debt' ? debtPath : paymentPath, {
         method: 'POST',
         body: JSON.stringify({ amountCents: Math.round(parseFloat(amount.replace(',', '.') || '0') * 100), note: note || undefined }),
       });
@@ -68,17 +73,30 @@ export function LedgerPanel({ title, ledgerPath, paymentPath, onClose, onPayment
         </button>
       </div>
 
+      <div className="mb-3 grid max-w-md grid-cols-2 gap-1 rounded-lg bg-neutral-100 p-1">
+        {(['payment', 'debt'] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={`rounded-md py-1.5 text-sm font-medium transition ${mode === m ? 'bg-white text-neutral-900' : 'text-neutral-500 hover:text-neutral-700'}`}
+          >
+            {m === 'payment' ? paymentLabel : addDebtLabel}
+          </button>
+        ))}
+      </div>
+
       <form onSubmit={handleSubmit} className="mb-4 flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-          {t('ledger.paymentAmount')}
+          {mode === 'debt' ? t('ledger.debtAmount') : t('ledger.paymentAmount')}
           <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" required className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500" />
         </label>
         <label className="flex flex-1 min-w-40 flex-col gap-1 text-sm font-medium text-neutral-700">
           {t('ledger.paymentNote')}
-          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('ledger.paymentNotePlaceholder')} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500" />
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={mode === 'debt' ? t('ledger.debtNotePlaceholder') : t('ledger.paymentNotePlaceholder')} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500" />
         </label>
         <button disabled={submitting} type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
-          {submitting ? t('common.saving') : t('ledger.paymentSubmit')}
+          {submitting ? t('common.saving') : mode === 'debt' ? t('ledger.debtSubmit') : t('ledger.paymentSubmit')}
         </button>
       </form>
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}

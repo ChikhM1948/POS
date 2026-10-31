@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import type { AuthenticatedRequest } from '../../middleware/auth';
 import { requireRole } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/asyncHandler';
-import { listSuppliers, createSupplier, updateSupplier, getSupplierLedger, recordSupplierPayment } from './suppliers.service';
+import { listSuppliers, createSupplier, updateSupplier, getSupplierLedger, recordSupplierPayment, recordSupplierDebt } from './suppliers.service';
 import type { CreateLedgerPaymentInput, SupplierInput } from '@pos-dz/shared';
 
 export const suppliersRouter = Router();
@@ -40,3 +40,16 @@ suppliersRouter.post('/:id/payments', asyncHandler(async (req: AuthenticatedRequ
   const entry = await recordSupplierPayment(req.auth!.tenantId, req.params.id, req.body);
   res.status(201).json({ entry });
 }));
+
+suppliersRouter.post(
+  '/:id/debts',
+  
+  asyncHandler(async (req: AuthenticatedRequest & { body: CreateLedgerPaymentInput }, res: Response) => {
+    const { amountCents } = req.body ?? {};
+    if (typeof amountCents !== 'number' || amountCents <= 0) {
+      return res.status(400).json({ error: 'amountCents doit être un montant positif.' });
+    }
+    const entry = await recordSupplierDebt(req.auth!.tenantId, req.params.id, req.body);
+    res.status(201).json({ entry });
+  }),
+);

@@ -188,6 +188,11 @@ export interface TranslationDict {
     threshold: string;
     thresholdPlaceholder: string;
     perishable: string;
+    unitOther: string;
+    unitCustomPlaceholder: string;
+    initialQuantity: string;
+    initialQuantityHint: string;
+    expiryDate: string;
     active: string;
     errorImageType: string;
     errorImageLoad: string;
@@ -198,6 +203,7 @@ export interface TranslationDict {
     tableCurrent: string;
     tableThreshold: string;
     lowStock: string;
+    outOfStock: string;
     movementHistory: string;
   };
   stockMovement: {
@@ -445,6 +451,10 @@ export interface TranslationDict {
     };
     empty: string;
     recordPayment: string;
+    modePayment: string;
+    debtAmount: string;
+    debtNotePlaceholder: string;
+    debtSubmit: string;
     paymentAmount: string;
     paymentNote: string;
     paymentNotePlaceholder: string;
@@ -459,6 +469,12 @@ export interface TranslationDict {
     tableBalance: string;
     balanceOwed: string;
     empty: string;
+    totalLabel: string;
+    countLabel: string;
+    onlyWithBalance: string;
+    searchPlaceholder: string;
+    settle: string;
+    addDebt: string;
   };
   supplierForm: {
     title: string;
@@ -467,6 +483,7 @@ export interface TranslationDict {
     address: string;
     submit: string;
     errorSave: string;
+    openingBalance: string;
   };
   customers: {
     title: string;
@@ -476,6 +493,12 @@ export interface TranslationDict {
     tableBalance: string;
     balanceOwed: string;
     empty: string;
+    totalLabel: string;
+    countLabel: string;
+    onlyWithBalance: string;
+    searchPlaceholder: string;
+    settle: string;
+    addDebt: string;
   };
   customerForm: {
     title: string;
@@ -483,6 +506,7 @@ export interface TranslationDict {
     phone: string;
     submit: string;
     errorSave: string;
+    openingBalance: string;
   };
   discountEditor: {
     button: string;
@@ -691,6 +715,11 @@ const fr: TranslationDict = {
     threshold: 'Seuil critique de stock',
     thresholdPlaceholder: 'ex. 5',
     perishable: 'Produit périssable (lot / date de péremption suivis au mouvement de stock)',
+    unitOther: 'Autre…',
+    unitCustomPlaceholder: 'Saisir une unité',
+    initialQuantity: 'Quantité en stock (initiale)',
+    initialQuantityHint: 'Enregistrée comme premier mouvement de stock.',
+    expiryDate: 'Date de péremption',
     active: 'Actif',
     errorImageType: 'Le fichier doit être une image.',
     errorImageLoad: "Impossible de charger l'image.",
@@ -701,6 +730,7 @@ const fr: TranslationDict = {
     tableCurrent: 'Stock actuel',
     tableThreshold: 'Seuil critique',
     lowStock: 'Stock faible',
+    outOfStock: 'Rupture de stock',
     movementHistory: 'Mouvement / historique',
   },
   stockMovement: {
@@ -949,6 +979,10 @@ const fr: TranslationDict = {
     },
     empty: 'Aucune écriture.',
     recordPayment: 'Enregistrer un paiement',
+    modePayment: 'Paiement',
+    debtAmount: 'Montant à ajouter (DZD)',
+    debtNotePlaceholder: 'ex. ancien solde, marchandise du 05/10',
+    debtSubmit: 'Ajouter au solde',
     paymentAmount: 'Montant (DZD)',
     paymentNote: 'Note (optionnel)',
     paymentNotePlaceholder: 'ex. paiement partiel du 12/09',
@@ -960,15 +994,22 @@ const fr: TranslationDict = {
     newSupplier: 'Nouveau fournisseur',
     tableName: 'Nom',
     tablePhone: 'Téléphone',
-    tableBalance: 'Dette',
+    tableBalance: 'Dette (on doit)',
     balanceOwed: 'On doit {amount}',
     empty: 'Aucun fournisseur.',
+    totalLabel: 'Total des dettes fournisseurs',
+    countLabel: '{count} fournisseur(s) à payer',
+    onlyWithBalance: 'Avec dette uniquement',
+    searchPlaceholder: 'Rechercher un fournisseur…',
+    settle: 'Payer',
+    addDebt: 'Ajouter une dette',
   },
   supplierForm: {
     title: 'Nouveau fournisseur',
     name: 'Nom',
     phone: 'Téléphone',
     address: 'Adresse',
+    openingBalance: 'Dette initiale envers ce fournisseur (DZD, optionnel)',
     submit: 'Créer le fournisseur',
     errorSave: "Erreur lors de l'enregistrement.",
   },
@@ -977,14 +1018,21 @@ const fr: TranslationDict = {
     newCustomer: 'Nouveau client',
     tableName: 'Nom',
     tablePhone: 'Téléphone',
-    tableBalance: 'Doit',
+    tableBalance: 'Créance (nous doit)',
     balanceOwed: 'Nous doit {amount}',
     empty: 'Aucun client.',
+    totalLabel: 'Total des créances clients',
+    countLabel: '{count} client(s) débiteur(s)',
+    onlyWithBalance: 'Avec créance uniquement',
+    searchPlaceholder: 'Rechercher un client…',
+    settle: 'Encaisser',
+    addDebt: 'Ajouter une créance',
   },
   customerForm: {
     title: 'Nouveau client',
     name: 'Nom',
     phone: 'Téléphone',
+    openingBalance: 'Créance initiale — ce client nous doit (DZD, optionnel)',
     submit: 'Créer le client',
     errorSave: "Erreur lors de l'enregistrement.",
   },
@@ -1195,6 +1243,11 @@ const ar: TranslationDict = {
     threshold: 'حد المخزون الحرج',
     thresholdPlaceholder: 'مثال: 5',
     perishable: 'منتج قابل للتلف (يُتبع رقم الدفعة/تاريخ الصلاحية عند حركة المخزون)',
+    unitOther: 'أخرى…',
+    unitCustomPlaceholder: 'أدخل الوحدة',
+    initialQuantity: 'الكمية في المخزون (ابتدائية)',
+    initialQuantityHint: 'تُسجَّل كأول حركة مخزون.',
+    expiryDate: 'تاريخ الصلاحية',
     active: 'نشط',
     errorImageType: 'يجب أن يكون الملف صورة.',
     errorImageLoad: 'تعذّر تحميل الصورة.',
@@ -1205,6 +1258,7 @@ const ar: TranslationDict = {
     tableCurrent: 'المخزون الحالي',
     tableThreshold: 'الحد الحرج',
     lowStock: 'مخزون منخفض',
+    outOfStock: 'نفاد المخزون',
     movementHistory: 'الحركة / السجل',
   },
   stockMovement: {
@@ -1453,6 +1507,10 @@ const ar: TranslationDict = {
     },
     empty: 'لا توجد أي حركة.',
     recordPayment: 'تسجيل دفعة',
+    modePayment: 'دفعة',
+    debtAmount: 'المبلغ المراد إضافته (دج)',
+    debtNotePlaceholder: 'مثال: رصيد قديم، بضاعة بتاريخ 05/10',
+    debtSubmit: 'إضافة إلى الرصيد',
     paymentAmount: 'المبلغ (دج)',
     paymentNote: 'ملاحظة (اختياري)',
     paymentNotePlaceholder: 'مثال: دفعة جزئية بتاريخ 12/09',
@@ -1467,12 +1525,19 @@ const ar: TranslationDict = {
     tableBalance: 'الدين',
     balanceOwed: 'نحن مدينون بـ {amount}',
     empty: 'لا يوجد أي مورد.',
+    totalLabel: 'إجمالي ديون الموردين',
+    countLabel: '{count} مورد(ين) للدفع',
+    onlyWithBalance: 'الذين عليهم دين فقط',
+    searchPlaceholder: 'ابحث عن مورد…',
+    settle: 'دفع',
+    addDebt: 'إضافة دين',
   },
   supplierForm: {
     title: 'مورد جديد',
     name: 'الاسم',
     phone: 'الهاتف',
     address: 'العنوان',
+    openingBalance: 'دين ابتدائي للمورد (دج، اختياري)',
     submit: 'إنشاء المورد',
     errorSave: 'خطأ أثناء الحفظ.',
   },
@@ -1484,11 +1549,18 @@ const ar: TranslationDict = {
     tableBalance: 'مدين لنا',
     balanceOwed: 'مدين لنا بـ {amount}',
     empty: 'لا يوجد أي زبون.',
+    totalLabel: 'إجمالي ديون الزبائن',
+    countLabel: '{count} زبون(ين) مدينون',
+    onlyWithBalance: 'المدينون فقط',
+    searchPlaceholder: 'ابحث عن زبون…',
+    settle: 'تحصيل',
+    addDebt: 'إضافة دين زبون',
   },
   customerForm: {
     title: 'زبون جديد',
     name: 'الاسم',
     phone: 'الهاتف',
+    openingBalance: 'دين ابتدائي على الزبون (دج، اختياري)',
     submit: 'إنشاء الزبون',
     errorSave: 'خطأ أثناء الحفظ.',
   },

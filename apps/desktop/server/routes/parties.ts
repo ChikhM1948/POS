@@ -57,7 +57,23 @@ export function customersRouter({ db }: Ctx) {
   router.post('/:id/payments', admins, handler((req, res) => {
     res.status(201).json({ entry: recordPayment(db, req.auth!.tenantId, 'customer', req.params.id, req.body) });
   }));
+
+  router.post('/:id/debts', admins, handler((req, res) => {
+    res.status(201).json({ entry: recordDebt(db, req.auth!.tenantId, 'customer', req.params.id, req.body) });
+  }));
   return router;
+}
+
+/** Ajoute manuellement une créance (client) ou une dette (fournisseur) : écriture positive de type 'adjustment'. */
+function recordDebt(db: Ctx['db'], tenantId: string, kind: 'customer' | 'supplier', partyId: string, input: CreateLedgerPaymentInput) {
+  if (typeof input?.amountCents !== 'number' || input.amountCents <= 0) throw new HttpError(400, 'amountCents doit être un montant positif.');
+  const table = kind === 'customer' ? 'customers' : 'suppliers';
+  if (!db.prepare(`SELECT 1 FROM ${table} WHERE tenant_id = ? AND id = ?`).get(tenantId, partyId)) throw new HttpError(404, 'Introuvable.');
+  const id = newId();
+  const now = nowIso();
+  db.prepare(`INSERT INTO ledger_entries (id, tenant_id, party_kind, party_id, type, amount_cents, note, client_generated_id, created_at_local, created_at)
+    VALUES (?,?,?,?,'adjustment',?,?,?,?,?)`).run(id, tenantId, kind, partyId, Math.abs(input.amountCents), input.note ?? null, newId(), now, now);
+  return ledgerDTO(db.prepare('SELECT * FROM ledger_entries WHERE id = ?').get(id));
 }
 
 function recordPayment(db: Ctx['db'], tenantId: string, kind: 'customer' | 'supplier', partyId: string, input: CreateLedgerPaymentInput) {
@@ -111,6 +127,10 @@ export function suppliersRouter({ db }: Ctx) {
 
   router.post('/:id/payments', handler((req, res) => {
     res.status(201).json({ entry: recordPayment(db, req.auth!.tenantId, 'supplier', req.params.id, req.body) });
+  }));
+
+  router.post('/:id/debts', handler((req, res) => {
+    res.status(201).json({ entry: recordDebt(db, req.auth!.tenantId, 'supplier', req.params.id, req.body) });
   }));
   return router;
 }

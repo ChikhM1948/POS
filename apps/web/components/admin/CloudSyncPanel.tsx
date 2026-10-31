@@ -15,12 +15,15 @@ interface CloudStatus {
   lastError?: string;
 }
 
+/** Adresse du serveur en ligne figée à la construction (NEXT_PUBLIC_CLOUD_URL) : si définie, l'utilisateur ne la saisit pas. */
+const DEFAULT_CLOUD_URL = process.env.NEXT_PUBLIC_CLOUD_URL ?? '';
+
 /** Poste installé uniquement : relie la base locale à la base en ligne avec le même compte administrateur. */
 export function CloudSyncPanel() {
   const { t } = useTranslation();
   const { session } = useAdminAuth();
   const [status, setStatus] = useState<CloudStatus | null>(null);
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(DEFAULT_CLOUD_URL);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -84,9 +87,11 @@ export function CloudSyncPanel() {
         </div>
       ) : (
         <form onSubmit={handleConnect} className="flex flex-col gap-3 text-sm">
-          <label className="flex flex-col gap-1 text-neutral-700">{t('cloudSync.serverUrl')}
-            <input required type="url" dir="ltr" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…onrender.com" className={input} />
-          </label>
+          {!DEFAULT_CLOUD_URL && (
+            <label className="flex flex-col gap-1 text-neutral-700">{t('cloudSync.serverUrl')}
+              <input required type="url" dir="ltr" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…onrender.com" className={input} />
+            </label>
+          )}
           <label className="flex flex-col gap-1 text-neutral-700">{t('cloudSync.email')}
             <input required type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
           </label>

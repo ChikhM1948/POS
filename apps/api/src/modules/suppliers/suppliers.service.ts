@@ -66,6 +66,21 @@ export async function getSupplierLedger(tenantId: string, supplierId: string): P
   return docs.map(toLedgerDTO);
 }
 
+/** Ajoute manuellement une dette — écriture positive de type 'adjustment'. */
+export async function recordSupplierDebt(tenantId: string, supplierId: string, input: CreateLedgerPaymentInput): Promise<LedgerEntryDTO> {
+  const doc = await SupplierLedgerEntry.create({
+    tenantId: new Types.ObjectId(tenantId),
+    supplierId: new Types.ObjectId(supplierId),
+    type: 'adjustment' as const,
+    amountCents: Math.abs(input.amountCents),
+    note: input.note,
+    reference: undefined,
+    clientGeneratedId: randomUUID(),
+    createdAtLocal: new Date(),
+  });
+  return toLedgerDTO(doc);
+}
+
 /** Encaisse un paiement fait à un fournisseur — réduit sa dette (amountCents négatif dans le ledger). */
 export async function recordSupplierPayment(tenantId: string, supplierId: string, input: CreateLedgerPaymentInput): Promise<LedgerEntryDTO> {
   const doc = await SupplierLedgerEntry.create({

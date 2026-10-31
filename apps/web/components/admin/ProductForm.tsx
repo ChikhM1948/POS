@@ -37,15 +37,30 @@ function resizeImageToDataUrl(file: File): Promise<string> {
 
 interface Props {
   initial?: ProductDTO | null;
-  onSubmit: (input: ProductInput) => Promise<void>;
+  onSubmit: (input: ProductInput, initialStock?: { quantity: number; expiryDate?: string }) => Promise<void>;
   onCancel: () => void;
   /** false pour un caissier sans la permission "voir le prix d'achat" — masque le coût et la marge. */
   canViewCostPrice?: boolean;
 }
 
+const UNITS = [
+  { value: 'unité', ar: 'وحدة' },
+  { value: 'pièce', ar: 'قطعة' },
+  { value: 'kg', ar: 'كغ' },
+  { value: 'g', ar: 'غ' },
+  { value: 'litre', ar: 'لتر' },
+  { value: 'ml', ar: 'مل' },
+  { value: 'boîte', ar: 'علبة' },
+  { value: 'carton', ar: 'كرتون' },
+  { value: 'paquet', ar: 'علبة صغيرة' },
+  { value: 'sachet', ar: 'كيس صغير' },
+  { value: 'bouteille', ar: 'قارورة' },
+  { value: 'mètre', ar: 'متر' },
+];
+
 /** Formulaire création/édition — les montants sont saisis en DZD et convertis en centimes à la soumission. */
 export function ProductForm({ initial, onSubmit, onCancel, canViewCostPrice = true }: Props) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [sku, setSku] = useState(initial?.sku ?? '');
   const [barcode, setBarcode] = useState(initial?.barcode ?? '');
   const [nameFr, setNameFr] = useState(initial?.name.fr ?? '');
@@ -53,7 +68,11 @@ export function ProductForm({ initial, onSubmit, onCancel, canViewCostPrice = tr
   const [category, setCategory] = useState(initial?.category ?? '');
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? '');
   const [imageError, setImageError] = useState<string | null>(null);
-  const [unit, setUnit] = useState(initial?.unit ?? 'unité');
+  const initialUnit = initial?.unit ?? 'unité';
+  const [unit, setUnit] = useState(initialUnit);
+  const [customUnit, setCustomUnit] = useState(false);
+  const [initialQty, setInitialQty] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
   const [priceInput, setPriceInput] = useState(centsToInput(initial?.sellingPriceCents));
   const [costPriceInput, setCostPriceInput] = useState(centsToInput(initial?.costPriceCents));
   const [minSellingPriceInput, setMinSellingPriceInput] = useState(
@@ -84,9 +103,11 @@ export function ProductForm({ initial, onSubmit, onCancel, canViewCostPrice = tr
         minSellingPriceCents: minSellingPriceInput ? inputToCents(minSellingPriceInput) : undefined,
         taxRate,
         isPerishable,
-        lowStockThreshold: threshold ? parseInt(threshold, 10) : undefined,
+        lowStockThreshold: threshold ? parseFloat(threshold.replace(',', '.')) : undefined,
         active,
-      });
+      }, !initial && (initialQty || expiryDate)
+        ? { quantity: parseFloat(initialQty.replace(',', '.')) || 0, expiryDate: expiryDate || undefined }
+        : undefined);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('productForm.errorSave'));
     } finally {
@@ -164,8 +185,61 @@ export function ProductForm({ initial, onSubmit, onCancel, canViewCostPrice = tr
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
           {t('productForm.unit')}
-          <input value={unit} onChange={(e) => setUnit(e.target.value)} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500" />
+          <select
+            value={customUnit || !UNITS.some((u) => u.value === unit) ? '__other__' : unit}
+            onChange={(e) => {
+              if (e.target.value === '__other__') {
+                setCustomUnit(true);
+                setUnit('');
+              } else {
+                setCustomUnit(false);
+                setUnit(e.target.value);
+              }
+            }}
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 focus:border-brand-500"
+          >
+            {UNITS.map((u) => (
+              <option key={u.value} value={u.value}>
+                {locale === 'ar' ? u.ar : u.value}
+              </option>
+            ))}
+            <option value="__other__">{t('productForm.unitOther')}</option>
+          </select>
+          {(customUnit || !UNITS.some((u) => u.value === unit)) && (
+            <input
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              placeholder={t('productForm.unitCustomPlaceholder')}
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500"
+            />
+          )}
         </label>
+        {!initial && (
+          <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+            {t('productForm.initialQuantity')} ({unit || 'unité'})
+            <input
+              value={initialQty}
+              onChange={(e) => setInitialQty(e.target.value)}
+              inputMode="decimal"
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 focus:border-brand-500"
+            />
+            <span className="text-xs font-normal text-neutral-500">{t('productForm.initialQuantityHint')}</span>
+          </label>
+        )}
+        {!initial && (
+          <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+            {t('productForm.expiryDate')}
+            <input
+              type="date"
+              value={expiryDate}
+              onChange={(e) => {
+                setExpiryDate(e.target.value);
+                if (e.target.value) setIsPerishable(true);
+              }}
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 focus:border-brand-500"
+            />
+          </label>
+        )}
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
           {t('productForm.price')}
           <input value={priceInput} onChange={(e) => setPriceInput(e.target.value)} inputMode="decimal" required className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500" />

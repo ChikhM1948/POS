@@ -7,7 +7,8 @@ import { SupplierForm } from '../../../components/admin/SupplierForm';
 import { LedgerPanel } from '../../../components/admin/LedgerPanel';
 import { useTranslation } from '../../../lib/i18n/LanguageContext';
 import { formatCurrency } from '../../../lib/format';
-import { IconPlus } from '../../../components/icons';
+import { StatTile } from '../../../components/admin/reports/StatTile';
+import { IconPlus, IconSearch } from '../../../components/icons';
 import type { SupplierDTO, SupplierInput } from '@pos-dz/shared';
 
 export default function SuppliersPage() {
@@ -16,7 +17,10 @@ export default function SuppliersPage() {
   const { session } = useAdminAuth();
   const [suppliers, setSuppliers] = useState<SupplierDTO[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState('');
+  const [onlyWithBalance, setOnlyWithBalance] = useState(false);
   const [openLedgerId, setOpenLedgerId] = useState<string | null>(null);
+  const [ledgerMode, setLedgerMode] = useState<'payment' | 'debt'>('payment');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,9 +42,22 @@ export default function SuppliersPage() {
     load();
   }, [load]);
 
-  async function handleSubmit(input: SupplierInput) {
+  const withBalance = suppliers.filter((x) => x.balanceCents > 0);
+  const totalCents = withBalance.reduce((sum, x) => sum + x.balanceCents, 0);
+  const visible = suppliers
+    .filter((x) => !onlyWithBalance || x.balanceCents > 0)
+    .filter((x) => !search.trim() || x.name.toLowerCase().includes(search.trim().toLowerCase()) || (x.phone ?? '').includes(search.trim()))
+    .sort((a, b) => b.balanceCents - a.balanceCents);
+
+  async function handleSubmit(input: SupplierInput, openingBalanceCents?: number) {
     if (!session) return;
-    await adminFetch(session.token, '/suppliers', { method: 'POST', body: JSON.stringify(input) });
+    const { supplier } = await adminFetch<{ supplier: { id: string } }>(session.token, '/suppliers', { method: 'POST', body: JSON.stringify(input) });
+    if (openingBalanceCents) {
+      await adminFetch(session.token, `/suppliers/${supplier.id}/debts`, {
+        method: 'POST',
+        body: JSON.stringify({ amountCents: openingBalanceCents, note: 'Solde initial' }),
+      });
+    }
     setShowForm(false);
     await load();
   }
@@ -62,6 +79,26 @@ export default function SuppliersPage() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
+      <div className="grid gap-3 sm:grid-cols-2">
+        <StatTile label={t('suppliers.totalLabel')} value={formatDZD(totalCents)} hint={t('suppliers.countLabel', { count: String(withBalance.length) })} />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-full max-w-sm">
+          <IconSearch className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('suppliers.searchPlaceholder')}
+            className="w-full rounded-lg border border-neutral-300 py-2 ps-9 pe-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500"
+          />
+        </div>
+        <label className="flex items-center gap-2 text-sm text-neutral-700">
+          <input type="checkbox" checked={onlyWithBalance} onChange={(e) => setOnlyWithBalance(e.target.checked)} className="h-4 w-4 rounded border-neutral-300" />
+          {t('suppliers.onlyWithBalance')}
+        </label>
+      </div>
+
       <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
         <table className="w-full text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
@@ -73,14 +110,17 @@ export default function SuppliersPage() {
             </tr>
           </thead>
           <tbody>
-            {suppliers.map((s) => (
+            {visible.map((s) => (
               <tr key={s.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
                 <td className="px-4 py-2.5 font-medium text-neutral-900">{s.name}</td>
                 <td className="px-4 py-2.5 text-neutral-600">{s.phone ?? t('common.dash')}</td>
                 <td className={`px-4 py-2.5 font-medium ${s.balanceCents > 0 ? 'text-red-600' : 'text-neutral-600'}`}>{formatDZD(s.balanceCents)}</td>
                 <td className="px-4 py-2.5 text-end">
-                  <button onClick={() => setOpenLedgerId(s.id)} className="text-sm font-medium text-brand-700 hover:underline">
-                    {t('ledger.historyTitle')}
+                  <button onClick={() => { setLedgerMode('payment'); setOpenLedgerId(s.id); }} className="me-3 text-sm font-medium text-brand-700 hover:underline">
+                    {s.balanceCents > 0 ? t('suppliers.settle') : t('ledger.historyTitle')}
+                  </button>
+                  <button onClick={() => { setLedgerMode('debt'); setOpenLedgerId(s.id); }} className="text-sm font-medium text-neutral-600 hover:underline">
+                    + {t('suppliers.addDebt')}
                   </button>
                 </td>
               </tr>
@@ -98,6 +138,11 @@ export default function SuppliersPage() {
 
       {openLedgerId && (
         <LedgerPanel
+          key={`${openLedgerId}-${ledgerMode}`}
+          initialMode={ledgerMode}
+          debtPath={`/suppliers/${openLedgerId}/debts`}
+          addDebtLabel={t('suppliers.addDebt')}
+          paymentLabel={t('ledger.modePayment')}
           title={suppliers.find((s) => s.id === openLedgerId)?.name ?? ''}
           ledgerPath={`/suppliers/${openLedgerId}/ledger`}
           paymentPath={`/suppliers/${openLedgerId}/payments`}
