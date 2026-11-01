@@ -4,7 +4,7 @@ import { SupplierLedgerEntry } from '../../models/SupplierLedgerEntry';
 import { CustomerLedgerEntry } from '../../models/CustomerLedgerEntry';
 import { Supplier } from '../../models/Supplier';
 import { Customer } from '../../models/Customer';
-import type { SalesSummaryDTO, TopProductDTO, ProfitSummaryDTO, DebtsSummaryDTO, DebtorDTO } from '@pos-dz/shared';
+import type { TaxReturnDTO, TaxRateBucketDTO, TaxMonthPointDTO, SalesSummaryDTO, TopProductDTO, ProfitSummaryDTO, DebtsSummaryDTO, DebtorDTO } from '@pos-dz/shared';
 
 /** Fuseau du marché algérien — les journées commerciales sont regroupées sur cette base, pas UTC. */
 const TIMEZONE = 'Africa/Algiers';
@@ -197,5 +197,70 @@ export async function getDebtsSummary(tenantId: string): Promise<DebtsSummaryDTO
     totalCustomerDebtCents: customers.totalCents,
     topSuppliers: suppliers.top,
     topCustomers: customers.top,
+  };
+}
+
+/**
+ * Base des déclarations G50 (réel) et G12 (IFU) : ventes moins retours, ventilées par taux de TVA et
+ * par mois. `lineTotalCents` est TTC ; la TVA est extraite ligne par ligne (TTC × taux / (100 + taux))
+ * — même formule que getProfitSummary — puis arrondie une seule fois par agrégat.
+ */
+export async function getTaxReturn(tenantId: string, filters: RangeFilters): Promise<TaxReturnDTO> {
+  const base = baseMatch(tenantId, filters);
+  const sign = { $cond: [{ $eq: ['$type', 'refund'] }, -1, 1] };
+  const taxOf = { $divide: [{ $multiply: ['$lines.lineTotalCents', '$lines.taxRate'] }, { $add: [100, '$lines.taxRate'] }] };
+
+  const [rateRows, monthRows, [headers], [cash]] = await Promise.all([
+    Sale.aggregate([
+      { $match: { ...base, status: 'completed' } },
+      { $unwind: '$lines' },
+      { $group: { _id: '$lines.taxRate', ttc: { $sum: { $multiply: ['$lines.lineTotalCents', sign] } }, tax: { $sum: { $multiply: [taxOf, sign] } } } },
+      { $sort: { _id: -1 } },
+    ]),
+    Sale.aggregate([
+      { $match: { ...base, status: 'completed' } },
+      { $unwind: '$lines' },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAtLocal', timezone: TIMEZONE } },
+          ttc: { $sum: { $multiply: ['$lines.lineTotalCents', sign] } },
+          tax: { $sum: { $multiply: [taxOf, sign] } },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+    Sale.aggregate([
+      { $match: { ...base, status: 'completed' } },
+      {
+        $group: {
+          _id: null,
+          stamp: { $sum: { $multiply: ['$totals.stampDutyCents', sign] } },
+          sales: { $sum: { $cond: [{ $eq: ['$type', 'sale'] }, 1, 0] } },
+          refunds: { $sum: { $cond: [{ $eq: ['$type', 'refund'] }, 1, 0] } },
+        },
+      },
+    ]),
+    Sale.aggregate([
+      { $match: { ...base, status: 'completed' } },
+      { $unwind: '$payments' },
+      { $match: { 'payments.method': 'cash' } },
+      { $group: { _id: null, cash: { $sum: { $multiply: ['$payments.amountCents', sign] } } } },
+    ]),
+  ]);
+
+  const bucket = (ttc: number, tax: number) => ({ ttcCents: Math.round(ttc), taxCents: Math.round(tax), baseHtCents: Math.round(ttc) - Math.round(tax) });
+  const byRate: TaxRateBucketDTO[] = rateRows.map((r: any) => ({ taxRate: r._id, ...bucket(r.ttc, r.tax) }));
+  const byMonth: TaxMonthPointDTO[] = monthRows.map((r: any) => ({ month: r._id, ...bucket(r.ttc, r.tax) }));
+
+  return {
+    byRate,
+    byMonth,
+    totalHtCents: byRate.reduce((a, b) => a + b.baseHtCents, 0),
+    totalTaxCents: byRate.reduce((a, b) => a + b.taxCents, 0),
+    totalTtcCents: byRate.reduce((a, b) => a + b.ttcCents, 0),
+    stampDutyCents: Math.round(headers?.stamp ?? 0),
+    cashCents: Math.round(cash?.cash ?? 0),
+    salesCount: headers?.sales ?? 0,
+    refundsCount: headers?.refunds ?? 0,
   };
 }

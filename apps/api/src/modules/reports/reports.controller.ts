@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import type { AuthenticatedRequest } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/asyncHandler';
-import { getSalesSummary, getTopProducts, getProfitSummary, getDebtsSummary } from './reports.service';
+import { getSalesSummary, getTopProducts, getProfitSummary, getDebtsSummary, getTaxReturn } from './reports.service';
 
 export const reportsRouter = Router();
 
@@ -33,4 +33,10 @@ reportsRouter.get('/profit', asyncHandler(async (req: AuthenticatedRequest, res:
 reportsRouter.get('/debts', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const debts = await getDebtsSummary(req.auth!.tenantId);
   res.json({ debts });
+}));
+
+reportsRouter.get('/tax-return', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const range = parseRange(req.query as Record<string, string | undefined>);
+  const taxReturn = await getTaxReturn(req.auth!.tenantId, range);
+  res.json({ taxReturn });
 }));

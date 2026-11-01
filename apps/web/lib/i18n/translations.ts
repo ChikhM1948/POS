@@ -139,6 +139,7 @@ export interface TranslationDict {
       stock: string;
       sales: string;
       reports: string;
+      taxes: string;
       suppliers: string;
       barcodes: string;
       customers: string;
@@ -429,6 +430,48 @@ export interface TranslationDict {
     nis: string;
     rc: string;
     ai: string;
+    taxRegime: string;
+    taxRegimeReal: string;
+    taxRegimeIfu: string;
+    taxRegimeHint: string;
+  };
+  taxes: {
+    title: string;
+    titleG50: string;
+    titleG12: string;
+    print: string;
+    regimeLabel: string;
+    regimeIfu: string;
+    regimeReal: string;
+    hintG50: string;
+    hintG12: string;
+    turnoverHt: string;
+    turnoverTtc: string;
+    tvaCollected: string;
+    stampDuty: string;
+    cashPart: string;
+    refundsShort: string;
+    g50Table: string;
+    rate: string;
+    baseHt: string;
+    tva: string;
+    ttc: string;
+    exempt: string;
+    total: string;
+    empty: string;
+    annualTurnover: string;
+    ifuEstimate: string;
+    ifuMin: string;
+    ceiling: string;
+    ceilingNear: string;
+    ceilingExceeded: string;
+    activityType: string;
+    activityGoods: string;
+    activityServices: string;
+    monthly: string;
+    month: string;
+    turnover: string;
+    disclaimer: string;
   };
   hold: {
     button: string;
@@ -840,6 +883,7 @@ const fr: TranslationDict = {
       stock: 'Stock',
       sales: 'Ventes',
       reports: 'Rapports',
+      taxes: 'Déclarations',
       suppliers: 'Fournisseurs',
       barcodes: 'Étiquettes',
       customers: 'Clients',
@@ -1131,6 +1175,48 @@ const fr: TranslationDict = {
     nis: 'NIS',
     rc: 'RC (registre de commerce)',
     ai: 'AI (article d’imposition)',
+    taxRegime: 'Régime fiscal',
+    taxRegimeReal: 'Réel (déclaration G50)',
+    taxRegimeIfu: 'IFU forfaitaire (déclaration G12)',
+    taxRegimeHint: 'Détermine la déclaration proposée dans Déclarations.',
+  },
+  taxes: {
+    title: "Déclarations fiscales",
+    titleG50: "Déclaration G50 (régime du réel)",
+    titleG12: "Déclaration G12 (IFU)",
+    print: "Imprimer",
+    regimeLabel: "Régime fiscal",
+    regimeIfu: "IFU (forfaitaire)",
+    regimeReal: "Réel",
+    hintG50: "à déposer avant le 20 du mois suivant (vérifiez la périodicité auprès de votre inspection).",
+    hintG12: "G12 : déclaration prévisionnelle ; G12 bis : chiffre d’affaires réalisé, en début d’année suivante.",
+    turnoverHt: "Chiffre d’affaires HT",
+    turnoverTtc: "Chiffre d’affaires TTC",
+    tvaCollected: "TVA collectée",
+    stampDuty: "Droit de timbre",
+    cashPart: "Part espèces",
+    refundsShort: "retour(s)",
+    g50Table: "TVA par taux (ventes moins retours)",
+    rate: "Taux",
+    baseHt: "Base HT",
+    tva: "TVA",
+    ttc: "TTC",
+    exempt: "Exonéré",
+    total: "Total",
+    empty: "Aucune vente sur la période.",
+    annualTurnover: "Chiffre d’affaires annuel",
+    ifuEstimate: "IFU estimé",
+    ifuMin: "minimum",
+    ceiling: "Seuil du régime IFU",
+    ceilingNear: "Le chiffre d’affaires approche du seuil du régime IFU : anticipez un passage au régime du réel.",
+    ceilingExceeded: "Le chiffre d’affaires dépasse le seuil du régime IFU : le passage au régime du réel est probablement obligatoire.",
+    activityType: "Nature de l’activité",
+    activityGoods: "Vente / production de biens",
+    activityServices: "Prestations de services",
+    monthly: "Chiffre d’affaires par mois",
+    month: "Mois",
+    turnover: "Chiffre d’affaires",
+    disclaimer: "Document de préparation calculé depuis vos ventes : il ne remplace pas la déclaration officielle. Taux et seuils (voir lib/taxDeclarations.ts) à confirmer avec votre comptable ou l’inspection des impôts.",
   },
   hold: {
     button: 'Mettre en attente',
@@ -1542,6 +1628,7 @@ const ar: TranslationDict = {
       stock: 'المخزون',
       sales: 'المبيعات',
       reports: 'التقارير',
+      taxes: 'التصريحات',
       suppliers: 'الموردون',
       barcodes: 'الملصقات',
       customers: 'الزبائن',
@@ -1833,6 +1920,48 @@ const ar: TranslationDict = {
     nis: 'NIS (رقم التعريف الإحصائي)',
     rc: 'RC (السجل التجاري)',
     ai: 'AI (مادة الإخضاع)',
+    taxRegime: 'النظام الجبائي',
+    taxRegimeReal: 'النظام الحقيقي (التصريح G50)',
+    taxRegimeIfu: 'الضريبة الجزافية الوحيدة (التصريح G12)',
+    taxRegimeHint: 'يحدد التصريح المعروض في صفحة التصريحات.',
+  },
+  taxes: {
+    title: "التصريحات الجبائية",
+    titleG50: "التصريح G50 (النظام الحقيقي)",
+    titleG12: "التصريح G12 (الضريبة الجزافية الوحيدة)",
+    print: "طباعة",
+    regimeLabel: "النظام الجبائي",
+    regimeIfu: "الضريبة الجزافية الوحيدة (IFU)",
+    regimeReal: "النظام الحقيقي",
+    hintG50: "يودع قبل 20 من الشهر الموالي (تحقق من دورية التصريح لدى مفتشيتك).",
+    hintG12: "G12: تصريح تقديري؛ G12 مكرر: رقم الأعمال المحقق في بداية السنة الموالية.",
+    turnoverHt: "رقم الأعمال خارج الرسم",
+    turnoverTtc: "رقم الأعمال بالرسم",
+    tvaCollected: "الرسم على القيمة المضافة المحصّل",
+    stampDuty: "حق الطابع",
+    cashPart: "الحصة النقدية",
+    refundsShort: "مرتجع",
+    g50Table: "الرسم حسب المعدل (المبيعات ناقص المرتجعات)",
+    rate: "المعدل",
+    baseHt: "الأساس خارج الرسم",
+    tva: "الرسم",
+    ttc: "بالرسم",
+    exempt: "معفى",
+    total: "المجموع",
+    empty: "لا توجد مبيعات في هذه الفترة.",
+    annualTurnover: "رقم الأعمال السنوي",
+    ifuEstimate: "الضريبة الجزافية المقدّرة",
+    ifuMin: "الحد الأدنى",
+    ceiling: "سقف نظام IFU",
+    ceilingNear: "رقم الأعمال يقترب من سقف نظام IFU: استعد للانتقال إلى النظام الحقيقي.",
+    ceilingExceeded: "رقم الأعمال تجاوز سقف نظام IFU: الانتقال إلى النظام الحقيقي مرجّح أن يكون إلزاميًا.",
+    activityType: "طبيعة النشاط",
+    activityGoods: "بيع / إنتاج السلع",
+    activityServices: "تقديم الخدمات",
+    monthly: "رقم الأعمال حسب الشهر",
+    month: "الشهر",
+    turnover: "رقم الأعمال",
+    disclaimer: "وثيقة تحضيرية محسوبة من مبيعاتك ولا تغني عن التصريح الرسمي. المعدلات والسقوف (lib/taxDeclarations.ts) يجب تأكيدها مع المحاسب أو مفتشية الضرائب.",
   },
   hold: {
     button: 'تعليق السلة',

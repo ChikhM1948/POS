@@ -29,6 +29,7 @@ function tenantDTO(t: any): TenantSettingsDTO {
     },
     phone: legal.phone,
     legal: { address: legal.address, rc: legal.rc, nif: legal.nif, nis: legal.nis, ai: legal.ai },
+    taxRegime: legal.taxRegime === 'ifu' ? 'ifu' : 'real',
     syncEnabled: Boolean(t.sync_enabled),
   };
 }
@@ -50,6 +51,7 @@ export function tenantRouter({ db }: Ctx) {
     for (const k of ['address', 'rc', 'nif', 'nis', 'ai'] as const) {
       if (input.legal?.[k] !== undefined) legal[k] = input.legal[k]!.trim();
     }
+    if (input.taxRegime === 'ifu' || input.taxRegime === 'real') legal.taxRegime = input.taxRegime;
     for (const k of ['logoUrl', 'primaryColor', 'secondaryColor'] as const) {
       if (input.branding?.[k] !== undefined) branding[k] = input.branding[k];
     }

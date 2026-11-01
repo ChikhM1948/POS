@@ -12,6 +12,7 @@ function toDTO(t: any): TenantSettingsDTO {
     },
     phone: t.legal?.phone,
     legal: { address: t.legal?.address, rc: t.legal?.rc, nif: t.legal?.nif, nis: t.legal?.nis, ai: t.legal?.ai },
+    taxRegime: t.legal?.taxRegime === 'ifu' ? 'ifu' : 'real',
     syncEnabled: t.syncEnabled ?? true,
   };
 }
@@ -34,6 +35,7 @@ export async function updateTenantSettings(
   if (input.branding?.logoUrl !== undefined) $set['branding.logoUrl'] = input.branding.logoUrl;
   if (input.branding?.primaryColor !== undefined) $set['branding.primaryColor'] = input.branding.primaryColor;
   if (input.branding?.secondaryColor !== undefined) $set['branding.secondaryColor'] = input.branding.secondaryColor;
+  if (input.taxRegime === 'ifu' || input.taxRegime === 'real') $set['legal.taxRegime'] = input.taxRegime;
   if (input.syncEnabled !== undefined) $set.syncEnabled = input.syncEnabled;
 
   const tenant = await Tenant.findByIdAndUpdate(tenantId, { $set }, { new: true }).lean();

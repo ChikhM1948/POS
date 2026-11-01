@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { DebtorDTO, DebtsSummaryDTO, ProfitSummaryDTO, SalesSummaryDTO, TopProductDTO } from '@pos-dz/shared';
+import type { TaxReturnDTO, DebtorDTO, DebtsSummaryDTO, ProfitSummaryDTO, SalesSummaryDTO, TopProductDTO } from '@pos-dz/shared';
 import { Ctx, handler, toIso } from '../util';
 
 /** Algérie = UTC+1 toute l'année (pas d'heure d'été) — les journées commerciales se regroupent sur ce décalage. */
@@ -100,6 +100,43 @@ export function reportsRouter({ db }: Ctx) {
       topSuppliers: suppliers.top, topCustomers: customers.top,
     };
     res.json({ debts });
+  }));
+
+  /** Base G50 / G12 : ventes moins retours par taux de TVA et par mois. Même formule que /profit (TVA extraite d'un TTC). */
+  router.get('/tax-return', handler((req, res) => {
+    const range = parseRange(req.query as any);
+    const tid = req.auth!.tenantId;
+    const where = "s.tenant_id = ? AND s.created_at_local >= ? AND s.created_at_local <= ? AND s.status = 'completed'" + (range.storeId ? ' AND s.store_id = ?' : '');
+    const args: unknown[] = [tid, range.from, range.to, ...(range.storeId ? [range.storeId] : [])];
+    const sign = "(CASE s.type WHEN 'refund' THEN -1 ELSE 1 END)";
+    const ttc = "json_extract(l.value,'$.lineTotalCents')";
+    const rate = "json_extract(l.value,'$.taxRate')";
+    const tax = `(${ttc} * ${rate} * 1.0 / (100 + ${rate}))`;
+
+    const rateRows = db.prepare(`SELECT ${rate} r, SUM(${ttc} * ${sign}) ttc, SUM(${tax} * ${sign}) tax
+      FROM sales s, json_each(s.lines) l WHERE ${where} GROUP BY r ORDER BY r DESC`).all(...args) as any[];
+    const monthRows = db.prepare(`SELECT strftime('%Y-%m', s.created_at_local, '${DAY_OFFSET}') m, SUM(${ttc} * ${sign}) ttc, SUM(${tax} * ${sign}) tax
+      FROM sales s, json_each(s.lines) l WHERE ${where} GROUP BY m ORDER BY m`).all(...args) as any[];
+    const head: any = db.prepare(`SELECT COALESCE(SUM(s.stamp_duty_cents * ${sign}),0) stamp,
+      COALESCE(SUM(CASE s.type WHEN 'sale' THEN 1 ELSE 0 END),0) sales, COALESCE(SUM(CASE s.type WHEN 'refund' THEN 1 ELSE 0 END),0) refunds
+      FROM sales s WHERE ${where}`).get(...args);
+    const cash: any = db.prepare(`SELECT COALESCE(SUM(json_extract(p.value,'$.amountCents') * ${sign}),0) cash
+      FROM sales s, json_each(s.payments) p WHERE ${where} AND json_extract(p.value,'$.method') = 'cash'`).get(...args);
+
+    const bucket = (t: number, x: number) => ({ ttcCents: Math.round(t), taxCents: Math.round(x), baseHtCents: Math.round(t) - Math.round(x) });
+    const byRate = rateRows.map((r) => ({ taxRate: r.r, ...bucket(r.ttc, r.tax) }));
+    const taxReturn: TaxReturnDTO = {
+      byRate,
+      byMonth: monthRows.map((r) => ({ month: r.m, ...bucket(r.ttc, r.tax) })),
+      totalHtCents: byRate.reduce((a, b) => a + b.baseHtCents, 0),
+      totalTaxCents: byRate.reduce((a, b) => a + b.taxCents, 0),
+      totalTtcCents: byRate.reduce((a, b) => a + b.ttcCents, 0),
+      stampDutyCents: Math.round(head.stamp),
+      cashCents: Math.round(cash.cash),
+      salesCount: head.sales,
+      refundsCount: head.refunds,
+    };
+    res.json({ taxReturn });
   }));
 
   return router;

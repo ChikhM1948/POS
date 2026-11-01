@@ -47,8 +47,8 @@ authRouter.post('/login', asyncHandler(async (req: Request, res: Response) => {
 /** Login caisse par email + mot de passe — alternative au PIN, réservée aux comptes cashier. */
 authRouter.post('/login-cashier', asyncHandler(async (req: Request, res: Response) => {
   const { tenantId, email, password } = req.body ?? {};
-  if (!tenantId || !email || !password) {
-    return res.status(400).json({ error: 'tenantId, email et password sont requis.' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'email et password sont requis.' });
   }
 
   const result = await loginCashierWithPassword(tenantId, email, password);

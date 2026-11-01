@@ -436,9 +436,14 @@ export interface TenantSettingsDTO {
   phone?: string;
   /** Identité légale imprimée sur les documents fiscaux (facture, bon de livraison, proforma). */
   legal: TenantLegalInfo;
+  /** Régime fiscal : détermine quelle déclaration s'applique (G12 pour l'IFU, G50 pour le réel). */
+  taxRegime: TaxRegime;
   /** true = synchronise en ligne, le commerce est accessible depuis le web ; false = local uniquement, aucune donnée ne quitte le poste. */
   syncEnabled: boolean;
 }
+
+/** `ifu` = impôt forfaitaire unique (déclaration G12) ; `real` = régime du réel (déclaration G50 mensuelle/trimestrielle). */
+export type TaxRegime = 'ifu' | 'real';
 
 export interface TenantLegalInfo {
   address?: string;
@@ -452,6 +457,7 @@ export interface UpdateTenantSettingsInput {
   name?: string;
   phone?: string;
   legal?: TenantLegalInfo;
+  taxRegime?: TaxRegime;
   branding?: {
     logoUrl?: string;
     primaryColor?: string;
@@ -521,4 +527,36 @@ export function buildSupplierPriceHistory(rows: PurchaseCostRow[]): SupplierPric
   }
   products.sort((a, b) => Number(b.alert) - Number(a.alert) || (b.changePct ?? -Infinity) - (a.changePct ?? -Infinity) || a.productName.localeCompare(b.productName));
   return { products, alertCount: products.filter((p) => p.alert).length };
+}
+
+// --- Déclarations fiscales (G50 / G12) ---
+
+/** Une ligne par taux de TVA, net des retours de la période. Montants TTC en base, HT/TVA dérivés ligne par ligne. */
+export interface TaxRateBucketDTO {
+  taxRate: number;
+  baseHtCents: number;
+  taxCents: number;
+  ttcCents: number;
+}
+
+export interface TaxMonthPointDTO {
+  /** AAAA-MM */
+  month: string;
+  ttcCents: number;
+  baseHtCents: number;
+  taxCents: number;
+}
+
+export interface TaxReturnDTO {
+  byRate: TaxRateBucketDTO[];
+  byMonth: TaxMonthPointDTO[];
+  totalHtCents: number;
+  totalTaxCents: number;
+  totalTtcCents: number;
+  /** Droit de timbre perçu (paiements espèces), net des retours. */
+  stampDutyCents: number;
+  /** Part encaissée en espèces (assiette du timbre). */
+  cashCents: number;
+  salesCount: number;
+  refundsCount: number;
 }

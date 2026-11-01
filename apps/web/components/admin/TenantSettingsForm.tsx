@@ -2,7 +2,7 @@
 
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
-import type { TenantSettingsDTO, UpdateTenantSettingsInput } from '@pos-dz/shared';
+import type { TaxRegime, TenantSettingsDTO, UpdateTenantSettingsInput } from '@pos-dz/shared';
 
 const MAX_LOGO_DIMENSION = 320;
 
@@ -45,6 +45,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
   const [logoError, setLogoError] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState(initial.branding.primaryColor);
   const [secondaryColor, setSecondaryColor] = useState(initial.branding.secondaryColor);
+  const [taxRegime, setTaxRegime] = useState<TaxRegime>(initial.taxRegime ?? 'real');
   const [syncEnabled, setSyncEnabled] = useState(initial.syncEnabled);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +78,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
         phone: phone.trim() || undefined,
         legal: { address: legal.address.trim(), rc: legal.rc.trim(), nif: legal.nif.trim(), nis: legal.nis.trim(), ai: legal.ai.trim() },
         branding: { logoUrl: logoUrl || undefined, primaryColor, secondaryColor },
+        taxRegime,
         syncEnabled,
       });
       setSaved(true);
@@ -144,6 +146,14 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
             />
           </label>
         ))}
+        <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+          {t('tenantSettings.taxRegime')}
+          <select value={taxRegime} onChange={(e) => setTaxRegime(e.target.value as TaxRegime)} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 focus:border-brand-500">
+            <option value="real">{t('tenantSettings.taxRegimeReal')}</option>
+            <option value="ifu">{t('tenantSettings.taxRegimeIfu')}</option>
+          </select>
+          <span className="text-xs font-normal text-neutral-500">{t('tenantSettings.taxRegimeHint')}</span>
+        </label>
       </fieldset>
 
       <div className="grid grid-cols-2 gap-3">

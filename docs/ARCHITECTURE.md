@@ -81,6 +81,7 @@ compteur local persiste dans Dexie et n'est jamais remis à zéro automatiquemen
 | TVA 19% / 9% / exonéré | `Product.taxRate` (enum), calculé ligne par ligne dans `Sale.lines[].taxRate`, jamais recalculé a posteriori |
 | Timbre fiscal (paiement espèces) | `Sale.totals.stampDuty`, calculé côté caisse selon barème, appliqué uniquement si `payments` inclut `cash` |
 | RC / NIF / NIS / AI | `Tenant.legal.{rc, nif, nis, ai}`, imprimés en pied de ticket et sur facture |
+| Régime fiscal (IFU / réel) | `Tenant.legal.taxRegime` (`ifu` → déclaration G12, `real` → G50) ; page `/admin/taxes`, données via `GET /reports/tax-return` (ventes − retours par taux de TVA et par mois) ; taux/seuils IFU dans `apps/web/lib/taxDeclarations.ts` |
 | Crédit client ("Karna") et dettes fournisseurs | `Sale.payments[]` accepte `method: 'credit'` avec `customerId` obligatoire ; suivi de solde via `CustomerLedgerEntry` / `SupplierLedgerEntry` — voir [`DATA_MODEL.md`](./DATA_MODEL.md#supplier--supplierledgerentry-customer--customerledgerentry), même pattern que `StockMovement` (ledger de transactions, pas de solde mutable) |
 
 ## 6. Ce qui est fourni dans ce dépôt vs. à construire

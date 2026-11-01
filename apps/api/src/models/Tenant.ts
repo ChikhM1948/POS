@@ -17,6 +17,8 @@ export interface ITenant extends Document {
     ai?: string; // Article d'imposition
     address?: string;
     phone?: string;
+    /** 'ifu' = forfaitaire (G12), 'real' = régime du réel (G50). Dans `legal` pour suivre le même JSON que le poste local. */
+    taxRegime?: 'ifu' | 'real';
   };
   locale: {
     defaultLanguage: 'fr' | 'ar';
@@ -47,6 +49,7 @@ const TenantSchema = new Schema<ITenant>(
       ai: String,
       address: String,
       phone: String,
+      taxRegime: { type: String, enum: ['ifu', 'real'], default: 'real' },
     },
     locale: {
       defaultLanguage: { type: String, enum: ['fr', 'ar'], default: 'fr' },

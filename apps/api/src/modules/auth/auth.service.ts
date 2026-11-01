@@ -115,9 +115,13 @@ export async function loginWithPassword(tenantId: string | undefined, email: str
  * côté POS). Comme loginWithPin, restreint au rôle `cashier` : un store_admin/stock_manager doit
  * passer par le back-office (/auth/login), pas par la caisse.
  */
-export async function loginCashierWithPassword(tenantId: string, email: string, password: string) {
-  const user = await User.findOne({ tenantId, email: email.toLowerCase(), role: 'cashier', active: true });
-  if (!user) return null;
+export async function loginCashierWithPassword(tenantId: string | undefined, email: string, password: string) {
+  // tenantId optionnel : l'email est unique (voir signup), comme pour loginWithPassword.
+  const filter: Record<string, unknown> = { email: email.toLowerCase(), role: 'cashier', active: true };
+  if (tenantId) filter.tenantId = tenantId;
+  const matches = await User.find(filter).limit(2);
+  if (matches.length !== 1) return null;
+  const user = matches[0];
 
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) return null;
