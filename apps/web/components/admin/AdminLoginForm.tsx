@@ -36,14 +36,14 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId, email, password }),
+        body: JSON.stringify({ tenantId: tenantId || undefined, email, password }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? t('adminLogin.errorDefault'));
       }
-      const { token, user } = await res.json();
-      login({ token, tenantId, userId: user.id, name: user.name, role: user.role, canViewPurchasePrice: user.canViewPurchasePrice });
+      const { token, user, tenantId: resolvedTenantId } = await res.json();
+      login({ token, tenantId: resolvedTenantId ?? tenantId, userId: user.id, name: user.name, role: user.role, canViewPurchasePrice: user.canViewPurchasePrice });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('adminLogin.errorGeneric'));
     } finally {
@@ -68,18 +68,6 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
           </div>
         </div>
 
-        {!LOCAL_MODE && (
-        <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-          {t('adminLogin.tenantLabel')}
-          <input
-            value={tenantId}
-            onChange={(e) => setTenantId(e.target.value)}
-            placeholder={t('adminLogin.tenantPlaceholder')}
-            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
-            required
-          />
-        </label>
-        )}
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
           {t('adminLogin.emailLabel')}
           <input

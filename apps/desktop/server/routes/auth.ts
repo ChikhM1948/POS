@@ -27,7 +27,7 @@ export function authRouter({ db, jwtSecret }: Ctx) {
       role: user.role,
       canViewPurchasePrice,
     };
-    return { token: sign(claims), user: { id: user.id, name: user.name, role: user.role, canViewPurchasePrice } };
+    return { token: sign(claims), tenantId: user.tenant_id, user: { id: user.id, name: user.name, role: user.role, canViewPurchasePrice } };
   }
 
   /** Poste local : un seul commerce par installation — permet à l'UI de se pré-configurer sans saisie d'identifiants techniques. */
@@ -40,9 +40,7 @@ export function authRouter({ db, jwtSecret }: Ctx) {
 
   router.post('/setup', handler(async (req, res) => {
     const { businessName, adminName, email, password, phone } = (req.body ?? {}) as Partial<SignupInput>;
-    if (!businessName || !adminName || !email || !password) {
-      throw new HttpError(400, 'businessName, adminName, email et password sont requis.');
-    }
+    if (!email || !password) throw new HttpError(400, 'email et password sont requis.');
     if (String(password).length < 6) throw new HttpError(400, 'Le mot de passe doit contenir au moins 6 caractères.');
     if (db.prepare('SELECT 1 FROM tenants LIMIT 1').get()) {
       throw new HttpError(409, 'Un commerce est déjà enregistré sur ce poste. Connectez-vous.');
@@ -53,10 +51,12 @@ export function authRouter({ db, jwtSecret }: Ctx) {
     const tenantId = newId();
     const storeId = newId();
     const userId = newId();
-    const name = adminName.trim();
+    const localPart = String(email).trim().toLowerCase().split('@')[0] || 'commerce';
+    const bizName = businessName?.trim() || localPart;
+    const name = adminName?.trim() || localPart;
     db.transaction(() => {
       db.prepare('INSERT INTO tenants (id, name, slug, legal, sync_enabled, created_at, updated_at) VALUES (?,?,?,?,0,?,?)').run(
-        tenantId, businessName.trim(), slugify(businessName), JSON.stringify(phone ? { phone: phone.trim() } : {}), now, now,
+        tenantId, bizName, slugify(bizName), JSON.stringify(phone ? { phone: phone.trim() } : {}), now, now,
       );
       db.prepare('INSERT INTO stores (id, tenant_id, name, code, is_main_store, created_at, updated_at) VALUES (?,?,?,?,1,?,?)').run(
         storeId, tenantId, 'Boutique principale', 'MAIN', now, now,
@@ -77,10 +77,13 @@ export function authRouter({ db, jwtSecret }: Ctx) {
 
   async function passwordLogin(req: any, res: any, cashierOnly: boolean) {
     const { tenantId, email, password } = req.body ?? {};
-    if (!tenantId || !email || !password) throw new HttpError(400, 'tenantId, email et password sont requis.');
+    if (!email || !password) throw new HttpError(400, 'email et password sont requis.');
+    // Poste local : un seul commerce, donc tenantId facultatif.
+    const tid = tenantId ?? (db.prepare('SELECT id FROM tenants LIMIT 1').get() as { id: string } | undefined)?.id;
+    if (!tid) throw new HttpError(401, 'Identifiants invalides.');
     const user: any = db
       .prepare(`SELECT * FROM users WHERE tenant_id = ? AND email = ? AND active = 1 ${cashierOnly ? "AND role = 'cashier'" : ''}`)
-      .get(tenantId, String(email).trim().toLowerCase());
+      .get(tid, String(email).trim().toLowerCase());
     if (!user || !(await bcrypt.compare(password, user.password_hash))) throw new HttpError(401, 'Identifiants invalides.');
     res.json(session(user));
   }

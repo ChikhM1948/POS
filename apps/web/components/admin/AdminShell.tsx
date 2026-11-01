@@ -74,8 +74,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const visibleNav = NAV.filter((item) => !item.roles || (session && item.roles.includes(session.role)));
 
   return (
-    <div className="flex min-h-screen bg-neutral-50">
-      <aside className="flex w-60 shrink-0 flex-col border-e border-neutral-200 bg-white p-4">
+    <div className="flex min-h-screen bg-neutral-50 print:block print:min-h-0">
+      <aside className="flex w-60 print:hidden shrink-0 flex-col border-e border-neutral-200 bg-white p-4">
         <div className="mb-6 flex items-center gap-2.5 px-1">
           <BrandMark size={32} />
           <div>
@@ -113,8 +113,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <LanguageSwitcher />
         </div>
       </aside>
-      <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3">
+      <div className="flex flex-1 flex-col print:block">
+        <header className="flex items-center justify-between print:hidden border-b border-neutral-200 bg-white px-6 py-3">
           <div className="text-sm">
             <p className="font-medium text-neutral-900">{session?.name}</p>
             <p className="text-xs text-neutral-400">{session ? t(`roles.${session.role}`) : ''}</p>
@@ -127,7 +127,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             {t('common.logout')}
           </button>
         </header>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6 print:p-0">{children}</main>
       </div>
     </div>
   );

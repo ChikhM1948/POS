@@ -36,14 +36,23 @@ function slugify(input: string): string {
  * compte qui pourra ensuite provisionner les caissiers/gestionnaires de stock via /users.
  */
 export async function signupTenant(input: SignupInput): Promise<AuthResult> {
-  const baseSlug = slugify(input.businessName);
+  const email = input.email.trim().toLowerCase();
+  // Le login se fait par email seul (sans identifiant de commerce) : l'email doit donc être unique.
+  if (await User.exists({ email })) {
+    throw Object.assign(new Error('Un compte existe déjà avec cet email.'), { status: 409 });
+  }
+  const localPart = email.split('@')[0] || 'commerce';
+  const businessName = input.businessName?.trim() || localPart;
+  const adminName = input.adminName?.trim() || localPart;
+
+  const baseSlug = slugify(businessName);
   let slug = baseSlug;
   for (let i = 2; await Tenant.exists({ slug }); i++) {
     slug = `${baseSlug}-${i}`;
   }
 
   const tenant = await Tenant.create({
-    name: input.businessName.trim(),
+    name: businessName,
     slug,
     legal: input.phone ? { phone: input.phone.trim() } : undefined,
     syncEnabled: input.syncEnabled ?? true,
@@ -60,8 +69,8 @@ export async function signupTenant(input: SignupInput): Promise<AuthResult> {
   const user = await User.create({
     tenantId: tenant._id,
     storeId: store._id,
-    name: input.adminName.trim(),
-    email: input.email.trim().toLowerCase(),
+    name: adminName,
+    email,
     passwordHash,
     role: 'store_admin',
   });
@@ -81,9 +90,12 @@ export async function signupTenant(input: SignupInput): Promise<AuthResult> {
 }
 
 /** Login back-office standard : email + mot de passe, tous rôles. */
-export async function loginWithPassword(tenantId: string, email: string, password: string) {
-  const user = await User.findOne({ tenantId, email: email.toLowerCase(), active: true });
-  if (!user) return null;
+export async function loginWithPassword(tenantId: string | undefined, email: string, password: string) {
+  const filter: Record<string, unknown> = { email: email.toLowerCase(), active: true };
+  if (tenantId) filter.tenantId = tenantId;
+  const matches = await User.find(filter).limit(2);
+  if (matches.length !== 1) return null; // introuvable, ou ambigu sans tenantId
+  const user = matches[0];
 
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) return null;
@@ -95,7 +107,7 @@ export async function loginWithPassword(tenantId: string, email: string, passwor
     role: user.role,
     canViewPurchasePrice: canViewPurchasePrice(user),
   };
-  return { token: signToken(claims), user: { id: user._id, name: user.name, role: user.role, canViewPurchasePrice: canViewPurchasePrice(user) } };
+  return { token: signToken(claims), tenantId: String(user.tenantId), user: { id: user._id, name: user.name, role: user.role, canViewPurchasePrice: canViewPurchasePrice(user) } };
 }
 
 /**

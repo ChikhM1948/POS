@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../../middleware/asyncHandler';
+import { User } from '../../models/User';
 import { bootstrapTenant } from '../sync/replicate.service';
 import { loginCashierWithPassword, loginWithPassword, loginWithPin, signupTenant } from './auth.service';
 
@@ -8,11 +9,15 @@ export const authRouter = Router();
 /** Premier lancement : crée le commerce (tenant) et son premier compte administrateur. */
 authRouter.post('/setup', asyncHandler(async (req: Request, res: Response) => {
   const { businessName, adminName, email, password, phone, syncEnabled } = req.body ?? {};
-  if (!businessName || !adminName || !email || !password) {
-    return res.status(400).json({ error: 'businessName, adminName, email et password sont requis.' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'email et password sont requis.' });
   }
   if (String(password).length < 6) {
     return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 6 caractères.' });
+  }
+
+  if (await User.exists({ email: String(email).trim().toLowerCase() })) {
+    return res.status(409).json({ error: 'Un compte existe déjà avec cet email.' });
   }
 
   const result = await signupTenant({ businessName, adminName, email, password, phone, syncEnabled });
@@ -30,8 +35,8 @@ authRouter.post('/replicate-bootstrap', asyncHandler(async (req: Request, res: R
 
 authRouter.post('/login', asyncHandler(async (req: Request, res: Response) => {
   const { tenantId, email, password } = req.body ?? {};
-  if (!tenantId || !email || !password) {
-    return res.status(400).json({ error: 'tenantId, email et password sont requis.' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'email et password sont requis.' });
   }
 
   const result = await loginWithPassword(tenantId, email, password);

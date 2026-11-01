@@ -70,8 +70,23 @@
     top: 0;
     inset-inline-start: 0;
   }
+  /* Rouleau d'étiquettes : une étiquette = une page, sans l'espacement d'écran (le gap de l'aperçu
+     décalait chaque étiquette de plus en plus bas) ni saut de page après la dernière (étiquette vide). */
+  .label-print.label-roll {
+    display: block;
+    gap: 0;
+  }
   .label-roll .label-page {
     break-after: page;
+    break-inside: avoid;
+  }
+  .label-roll .label-page:last-child {
+    break-after: auto;
+  }
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
   }
   .label-roll .label {
     border: none !important;

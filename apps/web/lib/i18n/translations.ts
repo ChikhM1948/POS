@@ -180,6 +180,8 @@ export interface TranslationDict {
     showPrice: string;
     showCode: string;
     rotate: string;
+    offsetY: string;
+    offsetYHint: string;
     usesSku: string;
     hint: string;
     preview: string;
@@ -879,6 +881,8 @@ const fr: TranslationDict = {
     showPrice: 'Prix',
     showCode: 'Numéro sous le code',
     rotate: 'Pivoter de 90° (si l’impression sort à la verticale)',
+    offsetY: 'Décalage vertical',
+    offsetYHint: 'Si le contenu est coupé en haut, augmentez ; coupé en bas, diminuez. Test avec une seule étiquette.',
     usesSku: '{count} produit(s) sans code-barres : le SKU sera utilisé.',
     hint: 'Dans la fenêtre d\'impression, choisissez votre imprimante d\'étiquettes, marges « Aucune » et échelle 100 %.',
     preview: 'Aperçu',
@@ -1579,6 +1583,8 @@ const ar: TranslationDict = {
     showPrice: 'السعر',
     showCode: 'الرقم تحت الباركود',
     rotate: 'تدوير 90° (إذا خرجت الطباعة عمودية)',
+    offsetY: 'الإزاحة العمودية',
+    offsetYHint: 'إذا قُطع المحتوى من الأعلى فزد القيمة، ومن الأسفل فأنقصها. جرّب بملصق واحد.',
     usesSku: '{count} منتج بدون باركود: سيتم استعمال SKU.',
     hint: 'في نافذة الطباعة اختر طابعة الملصقات، الهوامش «بدون» والمقياس 100%.',
     preview: 'معاينة',

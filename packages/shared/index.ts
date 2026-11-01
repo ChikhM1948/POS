@@ -372,8 +372,9 @@ export interface DebtsSummaryDTO {
 
 /** Crée le tenant + son premier compte administrateur — un seul appel, avant toute session. */
 export interface SignupInput {
-  businessName: string;
-  adminName: string;
+  /** Optionnels : dérivés de l'email si absents (inscription email + mot de passe uniquement). */
+  businessName?: string;
+  adminName?: string;
   email: string;
   password: string;
   phone?: string;

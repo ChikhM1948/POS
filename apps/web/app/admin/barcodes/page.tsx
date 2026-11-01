@@ -35,6 +35,23 @@ export default function BarcodesPage() {
   const [showPrice, setShowPrice] = useState(true);
   const [showCode, setShowCode] = useState(true);
   const [rotate, setRotate] = useState(false);
+  // Calibrage fin selon l'imprimante (capteur d'espacement) : décalage vertical en mm, mémorisé sur ce poste.
+  const [offsetY, setOffsetY] = useState(() => {
+    try {
+      return parseFloat(localStorage.getItem('labelOffsetY') ?? '0') || 0;
+    } catch {
+      return 0;
+    }
+  });
+  function changeOffset(v: number) {
+    const n = Math.max(-5, Math.min(5, Math.round(v * 10) / 10));
+    setOffsetY(n);
+    try {
+      localStorage.setItem('labelOffsetY', String(n));
+    } catch {
+      /* stockage indisponible */
+    }
+  }
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -221,6 +238,17 @@ export default function BarcodesPage() {
               {label}
             </label>
           ))}
+          {!preset.sheet && (
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-neutral-700">
+              {t('barcodes.offsetY')}
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => changeOffset(offsetY - 0.5)} className="rounded-lg border border-neutral-300 px-3 py-1.5">−</button>
+                <span className="w-16 text-center font-normal tabular-nums">{offsetY} mm</span>
+                <button type="button" onClick={() => changeOffset(offsetY + 0.5)} className="rounded-lg border border-neutral-300 px-3 py-1.5">+</button>
+              </div>
+              <span className="text-xs font-normal text-neutral-400">{t('barcodes.offsetYHint')}</span>
+            </label>
+          )}
           {selectedMissing.length > 0 && (
             <p className="text-xs text-amber-700">{t('barcodes.usesSku', { count: String(selectedMissing.length) })}</p>
           )}
@@ -233,13 +261,13 @@ export default function BarcodesPage() {
         <h2 className="no-print mb-2 text-sm font-medium text-neutral-500">{t('barcodes.preview')}</h2>
         <div className={`label-print ${preset.sheet ? 'label-sheet' : 'label-roll'}`} style={preset.sheet ? { gridTemplateColumns: `repeat(3, ${preset.w}mm)` } : undefined}>
           {labels.map(({ p, key }) => (
-            <div key={key} className="label-page" style={{ width: `${pageW}mm`, height: `${pageH}mm` }}>
+            <div key={key} className="label-page" style={{ width: `${pageW}mm`, height: `${pageH - (preset.sheet ? 0 : 0.3)}mm` }}>
               <div
                 className="label"
                 style={
                   rot
-                    ? { position: 'absolute', top: 0, left: `${pageW}mm`, width: `${preset.w}mm`, height: `${preset.h}mm`, transformOrigin: 'top left', transform: 'rotate(90deg)' }
-                    : { width: `${preset.w}mm`, height: `${preset.h}mm` }
+                    ? { position: 'absolute', top: `${offsetY}mm`, left: `${pageW}mm`, width: `${preset.w}mm`, height: `${preset.h}mm`, transformOrigin: 'top left', transform: 'rotate(90deg)' }
+                    : { position: 'relative', top: `${preset.sheet ? 0 : offsetY}mm`, width: `${preset.w}mm`, height: `${preset.h}mm` }
                 }
               >
                 {showName && <div className="label-name">{p.name.fr}</div>}
