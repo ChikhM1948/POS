@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAdminAuth } from '../../../lib/adminAuth';
 import { adminFetch } from '../../../lib/adminApi';
 import { StockMovementPanel } from '../../../components/admin/StockMovementPanel';
+import { BatchesPanel } from '../../../components/admin/BatchesPanel';
+import { ReorderPanel } from '../../../components/admin/ReorderPanel';
 import { useTranslation } from '../../../lib/i18n/LanguageContext';
 import type { StockBalanceDTO, StoreDTO } from '@pos-dz/shared';
 
@@ -15,6 +17,8 @@ export default function StockPage() {
   const [balances, setBalances] = useState<StockBalanceDTO[]>([]);
   const [selected, setSelected] = useState<StockBalanceDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<'stock' | 'batches' | 'reorder'>('stock');
+  const [lowOnly, setLowOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -67,7 +71,30 @@ export default function StockPage() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {selected && (
+      <div className="flex items-center gap-1 border-b border-neutral-200">
+        {([['stock', 'inventory.tabStock'], ['batches', 'inventory.tabBatches'], ['reorder', 'inventory.tabReorder']] as const).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition ${
+              tab === id ? 'border-brand-600 text-neutral-900' : 'border-transparent text-neutral-500 hover:text-neutral-800'
+            }`}
+          >
+            {t(label)}
+          </button>
+        ))}
+        {tab === 'stock' && (
+          <label className="ms-auto flex items-center gap-2 pb-1 text-sm text-neutral-600">
+            <input type="checkbox" checked={lowOnly} onChange={(e) => setLowOnly(e.target.checked)} />
+            {t('inventory.lowOnly')}
+          </label>
+        )}
+      </div>
+
+      {tab === 'batches' && <BatchesPanel storeId={storeId} />}
+      {tab === 'reorder' && <ReorderPanel storeId={storeId} />}
+
+      {tab === 'stock' && selected && (
         <StockMovementPanel
           storeId={storeId}
           product={selected}
@@ -76,7 +103,7 @@ export default function StockPage() {
         />
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+      {tab === 'stock' && <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
         <table className="w-full text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
             <tr>
@@ -87,7 +114,7 @@ export default function StockPage() {
             </tr>
           </thead>
           <tbody>
-            {balances.map((b) => {
+            {balances.filter((b) => !lowOnly || (b.lowStockThreshold !== undefined && b.lowStockThreshold > 0 && b.quantity <= b.lowStockThreshold)).map((b) => {
               const isOut = b.quantity <= 0;
               const isLow = !isOut && b.lowStockThreshold !== undefined && b.lowStockThreshold > 0 && b.quantity <= b.lowStockThreshold;
               return (
@@ -119,7 +146,7 @@ export default function StockPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </div>}
     </div>
   );
 }

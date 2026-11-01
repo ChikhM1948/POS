@@ -28,6 +28,7 @@ function tenantDTO(t: any): TenantSettingsDTO {
       secondaryColor: branding.secondaryColor ?? '#38bdf8',
     },
     phone: legal.phone,
+    legal: { address: legal.address, rc: legal.rc, nif: legal.nif, nis: legal.nis, ai: legal.ai },
     syncEnabled: Boolean(t.sync_enabled),
   };
 }
@@ -46,6 +47,9 @@ export function tenantRouter({ db }: Ctx) {
     const branding = JSON.parse(t.branding);
     const legal = JSON.parse(t.legal);
     if (input.phone !== undefined) legal.phone = input.phone.trim();
+    for (const k of ['address', 'rc', 'nif', 'nis', 'ai'] as const) {
+      if (input.legal?.[k] !== undefined) legal[k] = input.legal[k]!.trim();
+    }
     for (const k of ['logoUrl', 'primaryColor', 'secondaryColor'] as const) {
       if (input.branding?.[k] !== undefined) branding[k] = input.branding[k];
     }

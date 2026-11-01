@@ -376,6 +376,32 @@ export interface TranslationDict {
     errorPrefix: string;
     passwordNote: string;
   };
+  backup: {
+    title: string;
+    intro: string;
+    folder: string;
+    choose: string;
+    folderPlaceholder: string;
+    auto: string;
+    every: string;
+    hours: string;
+    keep: string;
+    save: string;
+    backupNow: string;
+    working: string;
+    lastBackup: string;
+    never: string;
+    errorPrefix: string;
+    unavailable: string;
+    available: string;
+    history: string;
+    noBackups: string;
+    restore: string;
+    restoreFromFile: string;
+    restoreConfirm: string;
+    restoring: string;
+    secretsNote: string;
+  };
   settings: {
     title: string;
   };
@@ -395,6 +421,131 @@ export interface TranslationDict {
     errorImageType: string;
     errorImageLoad: string;
     errorSave: string;
+    legalTitle: string;
+    address: string;
+    nif: string;
+    nis: string;
+    rc: string;
+    ai: string;
+  };
+  hold: {
+    button: string;
+    title: string;
+    empty: string;
+    resume: string;
+    discard: string;
+    items: string;
+    heldAt: string;
+    swapped: string;
+  };
+  shortcuts: {
+    title: string;
+    scan: string;
+    cash: string;
+    cib: string;
+    credit: string;
+    hold: string;
+    recall: string;
+    discount: string;
+    clear: string;
+    qty: string;
+    remove: string;
+    select: string;
+    toggle: string;
+  };
+  expiry: {
+    expired: string;
+    daysLeft: string;
+    expiredWarning: string;
+  };
+  inventory: {
+    tabStock: string;
+    tabBatches: string;
+    tabReorder: string;
+    lowOnly: string;
+    alertsLow: string;
+    alertsExpiring: string;
+    alertsExpired: string;
+    batchesIntro: string;
+    tableLot: string;
+    tableExpiry: string;
+    tableQuantity: string;
+    tableStatus: string;
+    noLot: string;
+    noExpiry: string;
+    statusExpired: string;
+    statusSoon: string;
+    statusOk: string;
+    noBatches: string;
+    reorderIntro: string;
+    reorderEmpty: string;
+    noSupplier: string;
+    suggested: string;
+    orderQty: string;
+    currentQty: string;
+    threshold: string;
+    unitCost: string;
+    estimatedTotal: string;
+    print: string;
+    copy: string;
+    copied: string;
+    orderTitle: string;
+    orderDate: string;
+    supplier: string;
+    product: string;
+    quantity: string;
+    lineTotal: string;
+  };
+  docs: {
+    invoice: string;
+    deliveryNote: string;
+    proforma: string;
+    menuLabel: string;
+    print: string;
+    back: string;
+    clientInfo: string;
+    clientName: string;
+    clientAddress: string;
+    clientNote: string;
+    nif: string;
+    nis: string;
+    rc: string;
+    ai: string;
+    phone: string;
+    number: string;
+    date: string;
+    designation: string;
+    qty: string;
+    unitHt: string;
+    vat: string;
+    totalHt: string;
+    base: string;
+    vatAmount: string;
+    totalVat: string;
+    totalTtc: string;
+    stampDuty: string;
+    netToPay: string;
+    paymentMode: string;
+    proformaNote: string;
+    proformaValidity: string;
+    refundNotice: string;
+    receivedBy: string;
+    signatureSeller: string;
+    missingLegal: string;
+    amountInWords: string;
+  };
+  priceHistory: {
+    button: string;
+    title: string;
+    empty: string;
+    colProduct: string;
+    colLatest: string;
+    colPrevious: string;
+    colChange: string;
+    colHistory: string;
+    alertBadge: string;
+    alertBanner: string;
+    thresholdHint: string;
   };
   saleCheckout: {
     cash: string;
@@ -925,6 +1076,32 @@ const fr: TranslationDict = {
     errorPrefix: 'Dernière erreur',
     passwordNote: 'Le mot de passe est conservé sur ce poste pour reconnecter automatiquement le compte en ligne.',
   },
+  backup: {
+    title: 'Sauvegarde et restauration',
+    intro: "Copie automatiquement la base de ce poste (ventes, stock, clients…) vers une clé USB, un disque externe ou un dossier synchronisé par un service cloud (Google Drive, OneDrive, Dropbox).",
+    folder: 'Dossier de sauvegarde',
+    choose: 'Parcourir…',
+    folderPlaceholder: 'Ex. E:\\Sauvegardes-POS',
+    auto: 'Sauvegarde automatique',
+    every: 'Toutes les',
+    hours: 'heures',
+    keep: 'Copies conservées',
+    save: 'Enregistrer',
+    backupNow: 'Sauvegarder maintenant',
+    working: 'En cours…',
+    lastBackup: 'Dernière sauvegarde',
+    never: 'jamais',
+    errorPrefix: 'Dernière erreur',
+    unavailable: 'Dossier inaccessible — clé USB débranchée ?',
+    available: 'Dossier accessible',
+    history: 'Sauvegardes disponibles',
+    noBackups: 'Aucune sauvegarde dans ce dossier.',
+    restore: 'Restaurer',
+    restoreFromFile: 'Restaurer depuis un fichier…',
+    restoreConfirm: "Remplacer TOUTES les données actuelles par cette sauvegarde ? Les ventes faites depuis seront perdues (une copie de l'état actuel est gardée dans le dossier pre-restore). L'application va redémarrer.",
+    restoring: 'Restauration… redémarrage de l’application.',
+    secretsNote: 'Les identifiants de la synchronisation en ligne ne sont pas inclus dans les sauvegardes.',
+  },
   settings: {
     title: 'Paramètres du commerce',
   },
@@ -944,6 +1121,131 @@ const fr: TranslationDict = {
     errorImageType: 'Le fichier doit être une image.',
     errorImageLoad: "Impossible de charger l'image.",
     errorSave: "Erreur lors de l'enregistrement.",
+    legalTitle: 'Informations légales (factures, bons de livraison)',
+    address: 'Adresse',
+    nif: 'NIF',
+    nis: 'NIS',
+    rc: 'RC (registre de commerce)',
+    ai: 'AI (article d’imposition)',
+  },
+  hold: {
+    button: 'Mettre en attente',
+    title: 'Paniers en attente',
+    empty: 'Aucun panier en attente.',
+    resume: 'Reprendre',
+    discard: 'Supprimer',
+    items: '{n} article(s)',
+    heldAt: 'Mis en attente à {time}',
+    swapped: 'Le panier en cours a été mis en attente.',
+  },
+  shortcuts: {
+    title: 'Raccourcis clavier',
+    scan: 'Scanner / rechercher',
+    cash: 'Encaisser en espèces',
+    cib: 'Paiement CIB / Edahabia',
+    credit: 'Crédit client',
+    hold: 'Mettre en attente',
+    recall: 'Paniers en attente',
+    discount: 'Remise sur la ligne',
+    clear: 'Vider le panier',
+    qty: 'Quantité +/−',
+    remove: 'Retirer la ligne',
+    select: 'Sélectionner une ligne',
+    toggle: 'Afficher / masquer cette aide',
+  },
+  expiry: {
+    expired: 'Périmé',
+    daysLeft: 'Expire dans {n} j',
+    expiredWarning: '« {name} » : un lot périmé est encore en stock !',
+  },
+  inventory: {
+    tabStock: 'Stock',
+    tabBatches: 'Lots & péremption',
+    tabReorder: 'À réapprovisionner',
+    lowOnly: 'Stock faible uniquement',
+    alertsLow: '{n} produit(s) sous le seuil',
+    alertsExpiring: '{n} lot(s) bientôt périmé(s)',
+    alertsExpired: '{n} lot(s) périmé(s)',
+    batchesIntro: 'Les ventes décomptent automatiquement le lot qui expire en premier (FEFO).',
+    tableLot: 'Lot',
+    tableExpiry: 'Péremption',
+    tableQuantity: 'Quantité',
+    tableStatus: 'État',
+    noLot: 'Sans n° de lot',
+    noExpiry: 'Sans date',
+    statusExpired: 'Périmé',
+    statusSoon: 'Bientôt périmé',
+    statusOk: 'OK',
+    noBatches: 'Aucun lot suivi. Renseignez un lot et une date de péremption lors d’une réception (produit périssable).',
+    reorderIntro: 'Produits sous leur seuil, regroupés par fournisseur habituel. Ajustez les quantités puis imprimez le bon de commande.',
+    reorderEmpty: 'Rien à commander : tous les produits avec seuil sont au-dessus de leur seuil.',
+    noSupplier: 'Fournisseur non défini',
+    suggested: 'Suggéré',
+    orderQty: 'Qté à commander',
+    currentQty: 'En stock',
+    threshold: 'Seuil',
+    unitCost: 'Dernier coût',
+    estimatedTotal: 'Total estimé',
+    print: 'Imprimer le bon de commande',
+    copy: 'Copier (WhatsApp)',
+    copied: 'Copié !',
+    orderTitle: 'Bon de commande',
+    orderDate: 'Date',
+    supplier: 'Fournisseur',
+    product: 'Produit',
+    quantity: 'Quantité',
+    lineTotal: 'Montant',
+  },
+  docs: {
+    invoice: 'Facture',
+    deliveryNote: 'Bon de livraison',
+    proforma: 'Facture proforma',
+    menuLabel: 'Documents',
+    print: 'Imprimer (A4)',
+    back: 'Retour',
+    clientInfo: 'Informations client (facultatif pour un particulier)',
+    clientName: 'Nom / Raison sociale',
+    clientAddress: 'Adresse',
+    clientNote: 'Pour une vente à une entreprise, renseignez NIF, RC, NIS et AI du client.',
+    nif: 'NIF',
+    nis: 'NIS',
+    rc: 'RC',
+    ai: 'AI',
+    phone: 'Tél',
+    number: 'N°',
+    date: 'Date',
+    designation: 'Désignation',
+    qty: 'Qté',
+    unitHt: 'P.U. HT',
+    vat: 'TVA',
+    totalHt: 'Total HT',
+    base: 'Base HT',
+    vatAmount: 'Montant TVA',
+    totalVat: 'Total TVA',
+    totalTtc: 'Total TTC',
+    stampDuty: 'Droit de timbre',
+    netToPay: 'Net à payer',
+    paymentMode: 'Mode de paiement',
+    proformaNote: "Document non valable comme facture — il ne constitue pas une demande de paiement.",
+    proformaValidity: 'Offre valable 15 jours.',
+    refundNotice: "Ce document est un retour : utilisez la vente d'origine pour générer une facture.",
+    receivedBy: 'Reçu par (nom, date, signature)',
+    signatureSeller: 'Cachet et signature',
+    missingLegal: "Mentions légales incomplètes : renseignez NIF, NIS, RC, AI et adresse dans Paramètres.",
+    amountInWords: 'Arrêté le présent document à la somme de :',
+  },
+  priceHistory: {
+    button: 'Prix d’achat',
+    title: 'Historique des prix d’achat — {name}',
+    empty: 'Aucun achat enregistré chez ce fournisseur.',
+    colProduct: 'Produit',
+    colLatest: 'Dernier prix',
+    colPrevious: 'Précédent',
+    colChange: 'Variation',
+    colHistory: 'Historique',
+    alertBadge: '{count} hausse(s)',
+    alertBanner: 'Ce fournisseur a augmenté ses prix sur {count} produit(s).',
+    thresholdHint: 'Alerte à partir de +3 % entre les deux derniers achats.',
   },
   saleCheckout: {
     cash: 'Espèces',
@@ -1474,6 +1776,32 @@ const ar: TranslationDict = {
     errorPrefix: 'آخر خطأ',
     passwordNote: 'تُحفظ كلمة المرور على هذا الجهاز لإعادة الاتصال بالحساب تلقائيًا.',
   },
+  backup: {
+    title: 'النسخ الاحتياطي والاستعادة',
+    intro: 'ينسخ قاعدة بيانات هذا الجهاز (المبيعات، المخزون، الزبائن…) تلقائيًا إلى مفتاح USB أو قرص خارجي أو مجلد متزامن مع خدمة سحابية (Google Drive، OneDrive، Dropbox).',
+    folder: 'مجلد النسخ الاحتياطي',
+    choose: 'استعراض…',
+    folderPlaceholder: 'مثال: E:\\Sauvegardes-POS',
+    auto: 'نسخ احتياطي تلقائي',
+    every: 'كل',
+    hours: 'ساعات',
+    keep: 'عدد النسخ المحفوظة',
+    save: 'حفظ',
+    backupNow: 'انسخ الآن',
+    working: 'جارٍ العمل…',
+    lastBackup: 'آخر نسخة',
+    never: 'أبدًا',
+    errorPrefix: 'آخر خطأ',
+    unavailable: 'المجلد غير متاح — هل فُصل مفتاح USB؟',
+    available: 'المجلد متاح',
+    history: 'النسخ المتوفرة',
+    noBackups: 'لا توجد نسخ في هذا المجلد.',
+    restore: 'استعادة',
+    restoreFromFile: 'استعادة من ملف…',
+    restoreConfirm: 'استبدال جميع البيانات الحالية بهذه النسخة؟ ستفقد المبيعات المنجزة بعدها (تُحفظ نسخة من الحالة الحالية في المجلد pre-restore). سيُعاد تشغيل التطبيق.',
+    restoring: 'جارٍ الاستعادة… سيُعاد تشغيل التطبيق.',
+    secretsNote: 'بيانات اعتماد المزامنة عبر الإنترنت غير مُضمَّنة في النسخ الاحتياطية.',
+  },
   settings: {
     title: 'إعدادات المتجر',
   },
@@ -1493,6 +1821,131 @@ const ar: TranslationDict = {
     errorImageType: 'يجب أن يكون الملف صورة.',
     errorImageLoad: 'تعذّر تحميل الصورة.',
     errorSave: 'خطأ أثناء الحفظ.',
+    legalTitle: 'البيانات القانونية (الفواتير، وصولات التسليم)',
+    address: 'العنوان',
+    nif: 'NIF (رقم التعريف الجبائي)',
+    nis: 'NIS (رقم التعريف الإحصائي)',
+    rc: 'RC (السجل التجاري)',
+    ai: 'AI (مادة الإخضاع)',
+  },
+  hold: {
+    button: 'تعليق السلة',
+    title: 'السلال المعلّقة',
+    empty: 'لا توجد سلال معلّقة.',
+    resume: 'استئناف',
+    discard: 'حذف',
+    items: '{n} منتج',
+    heldAt: 'عُلّقت على الساعة {time}',
+    swapped: 'تم تعليق السلة الحالية.',
+  },
+  shortcuts: {
+    title: 'اختصارات لوحة المفاتيح',
+    scan: 'مسح / بحث',
+    cash: 'الدفع نقدًا',
+    cib: 'الدفع CIB / الذهبية',
+    credit: 'بيع بالدين',
+    hold: 'تعليق السلة',
+    recall: 'السلال المعلّقة',
+    discount: 'تخفيض على السطر',
+    clear: 'تفريغ السلة',
+    qty: 'الكمية +/−',
+    remove: 'حذف السطر',
+    select: 'اختيار سطر',
+    toggle: 'إظهار / إخفاء هذه المساعدة',
+  },
+  expiry: {
+    expired: 'منتهي الصلاحية',
+    daysLeft: 'ينتهي بعد {n} يوم',
+    expiredWarning: '« {name} »: توجد دفعة منتهية الصلاحية في المخزون!',
+  },
+  inventory: {
+    tabStock: 'المخزون',
+    tabBatches: 'الدفعات والصلاحية',
+    tabReorder: 'للتزوّد',
+    lowOnly: 'المخزون المنخفض فقط',
+    alertsLow: '{n} منتج تحت الحد',
+    alertsExpiring: '{n} دفعة قاربت على الانتهاء',
+    alertsExpired: '{n} دفعة منتهية',
+    batchesIntro: 'تخصم المبيعات تلقائيًا الدفعة الأقرب انتهاءً أولًا (FEFO).',
+    tableLot: 'الدفعة',
+    tableExpiry: 'تاريخ الانتهاء',
+    tableQuantity: 'الكمية',
+    tableStatus: 'الحالة',
+    noLot: 'بدون رقم دفعة',
+    noExpiry: 'بدون تاريخ',
+    statusExpired: 'منتهية',
+    statusSoon: 'قاربت على الانتهاء',
+    statusOk: 'سليمة',
+    noBatches: 'لا توجد دفعات متتبَّعة. أدخل رقم الدفعة وتاريخ الانتهاء عند استلام منتج قابل للتلف.',
+    reorderIntro: 'منتجات تحت حدّها مجمّعة حسب المورّد المعتاد. عدّل الكميات ثم اطبع طلب الشراء.',
+    reorderEmpty: 'لا شيء للطلب: كل المنتجات ذات الحد فوق حدّها.',
+    noSupplier: 'مورّد غير محدد',
+    suggested: 'مقترح',
+    orderQty: 'الكمية المطلوبة',
+    currentQty: 'في المخزون',
+    threshold: 'الحد',
+    unitCost: 'آخر تكلفة',
+    estimatedTotal: 'المجموع التقديري',
+    print: 'طباعة طلب الشراء',
+    copy: 'نسخ (واتساب)',
+    copied: 'تم النسخ!',
+    orderTitle: 'طلب شراء',
+    orderDate: 'التاريخ',
+    supplier: 'المورّد',
+    product: 'المنتج',
+    quantity: 'الكمية',
+    lineTotal: 'المبلغ',
+  },
+  docs: {
+    invoice: 'فاتورة',
+    deliveryNote: 'وصل التسليم',
+    proforma: 'فاتورة شكلية',
+    menuLabel: 'المستندات',
+    print: 'طباعة (A4)',
+    back: 'رجوع',
+    clientInfo: 'معلومات الزبون (اختياري للأفراد)',
+    clientName: 'الاسم / الشركة',
+    clientAddress: 'العنوان',
+    clientNote: 'عند البيع لشركة، أدخل NIF وRC وNIS وAI الخاصة بالزبون.',
+    nif: 'NIF',
+    nis: 'NIS',
+    rc: 'RC',
+    ai: 'AI',
+    phone: 'الهاتف',
+    number: 'رقم',
+    date: 'التاريخ',
+    designation: 'البيان',
+    qty: 'الكمية',
+    unitHt: 'السعر دون رسم',
+    vat: 'ر.ق.م',
+    totalHt: 'المجموع دون رسم',
+    base: 'الأساس دون رسم',
+    vatAmount: 'مبلغ الرسم',
+    totalVat: 'مجموع الرسم',
+    totalTtc: 'المجموع بكل الرسوم',
+    stampDuty: 'حق الطابع',
+    netToPay: 'الصافي للدفع',
+    paymentMode: 'طريقة الدفع',
+    proformaNote: 'وثيقة غير صالحة كفاتورة — ولا تعتبر طلب دفع.',
+    proformaValidity: 'العرض صالح لمدة 15 يومًا.',
+    refundNotice: 'هذا المستند إرجاع: استعمل عملية البيع الأصلية لإنشاء فاتورة.',
+    receivedBy: 'استلمه (الاسم، التاريخ، الإمضاء)',
+    signatureSeller: 'الختم والإمضاء',
+    missingLegal: 'البيانات القانونية ناقصة: أدخل NIF وNIS وRC وAI والعنوان في الإعدادات.',
+    amountInWords: '',
+  },
+  priceHistory: {
+    button: 'أسعار الشراء',
+    title: 'سجل أسعار الشراء — {name}',
+    empty: 'لا توجد مشتريات مسجّلة عند هذا المورد.',
+    colProduct: 'المنتج',
+    colLatest: 'آخر سعر',
+    colPrevious: 'السابق',
+    colChange: 'التغيّر',
+    colHistory: 'السجل',
+    alertBadge: '{count} ارتفاع',
+    alertBanner: 'رفع هذا المورد أسعاره على {count} منتج.',
+    thresholdHint: 'ينبّه عند ارتفاع 3% أو أكثر بين آخر عمليتي شراء.',
   },
   saleCheckout: {
     cash: 'نقدًا',

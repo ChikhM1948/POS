@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { JwtClaims, UserRole } from '@pos-dz/shared';
 import type { Db } from './db';
 import type { CloudSync } from './cloud';
+import type { BackupManager } from './backup';
 
 export const newId = () => randomUUID();
 export const nowIso = () => new Date().toISOString();
@@ -19,6 +20,7 @@ export interface Ctx {
   db: Db;
   jwtSecret: string;
   cloud: CloudSync;
+  backup: BackupManager;
 }
 
 export interface AuthedRequest extends Request {

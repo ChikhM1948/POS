@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import type { AuthenticatedRequest } from '../../middleware/auth';
 import { requireRole } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/asyncHandler';
-import { listSuppliers, createSupplier, updateSupplier, getSupplierLedger, recordSupplierPayment, recordSupplierDebt } from './suppliers.service';
+import { getSupplierPriceAlerts, getSupplierPriceHistory, listSuppliers, createSupplier, updateSupplier, getSupplierLedger, recordSupplierPayment, recordSupplierDebt } from './suppliers.service';
 import type { CreateLedgerPaymentInput, SupplierInput } from '@pos-dz/shared';
 
 export const suppliersRouter = Router();
@@ -25,6 +25,14 @@ suppliersRouter.patch('/:id', asyncHandler(async (req: AuthenticatedRequest & { 
   const supplier = await updateSupplier(req.auth!.tenantId, req.params.id, req.body);
   if (!supplier) return res.status(404).json({ error: 'Fournisseur introuvable.' });
   res.json({ supplier });
+}));
+
+suppliersRouter.get('/price-alerts', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  res.json({ alerts: await getSupplierPriceAlerts(req.auth!.tenantId) });
+}));
+
+suppliersRouter.get('/:id/price-history', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  res.json(await getSupplierPriceHistory(req.auth!.tenantId, req.params.id));
 }));
 
 suppliersRouter.get('/:id/ledger', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {

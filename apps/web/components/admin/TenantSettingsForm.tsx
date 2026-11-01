@@ -40,6 +40,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
   const { t } = useTranslation();
   const [name, setName] = useState(initial.name);
   const [phone, setPhone] = useState(initial.phone ?? '');
+  const [legal, setLegal] = useState({ address: initial.legal?.address ?? '', rc: initial.legal?.rc ?? '', nif: initial.legal?.nif ?? '', nis: initial.legal?.nis ?? '', ai: initial.legal?.ai ?? '' });
   const [logoUrl, setLogoUrl] = useState(initial.branding.logoUrl ?? '');
   const [logoError, setLogoError] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState(initial.branding.primaryColor);
@@ -74,6 +75,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
       await onSubmit({
         name: name.trim(),
         phone: phone.trim() || undefined,
+        legal: { address: legal.address.trim(), rc: legal.rc.trim(), nif: legal.nif.trim(), nis: legal.nis.trim(), ai: legal.ai.trim() },
         branding: { logoUrl: logoUrl || undefined, primaryColor, secondaryColor },
         syncEnabled,
       });
@@ -129,6 +131,20 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
           className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500"
         />
       </label>
+
+      <fieldset className="flex flex-col gap-3 rounded-lg border border-neutral-200 p-3">
+        <legend className="px-1 text-sm font-medium text-neutral-700">{t('tenantSettings.legalTitle')}</legend>
+        {(['address', 'nif', 'nis', 'rc', 'ai'] as const).map((k) => (
+          <label key={k} className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+            {t(`tenantSettings.${k}`)}
+            <input
+              value={legal[k]}
+              onChange={(e) => setLegal({ ...legal, [k]: e.target.value })}
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 focus:border-brand-500"
+            />
+          </label>
+        ))}
+      </fieldset>
 
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">

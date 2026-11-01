@@ -39,12 +39,31 @@
   }
   .receipt-print,
   .receipt-print *,
+  .doc-print,
+  .doc-print *,
   .label-print,
   .label-print * {
     visibility: visible;
   }
   .no-print {
     display: none !important;
+  }
+  .doc-overlay {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  .doc-print {
+    box-shadow: none !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  @page {
+    size: A4;
+    margin: 12mm;
   }
   .label-print {
     position: absolute;

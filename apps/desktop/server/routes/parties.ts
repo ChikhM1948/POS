@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { buildSupplierPriceHistory, type PurchaseCostRow } from '@pos-dz/shared';
 import type { CreateCustomerInput, CreateLedgerPaymentInput, CustomerDTO, LedgerEntryDTO, SupplierDTO, SupplierInput, UpdateCustomerInput } from '@pos-dz/shared';
 import { Ctx, HttpError, bool, handler, newId, nowIso, requireRole } from '../util';
 
@@ -117,6 +118,29 @@ export function suppliersRouter({ db }: Ctx) {
       input.name ?? s.name, input.phone !== undefined ? input.phone || null : s.phone, input.address !== undefined ? input.address || null : s.address,
       input.active !== undefined ? bool(input.active) : s.active, nowIso(), s.id);
     res.json({ supplier: dto(one(s.id)) });
+  }));
+
+  const purchaseRows = (tenantId: string, supplierId?: string): PurchaseCostRow[] =>
+    (db.prepare(`SELECT m.product_id, p.name_fr, m.created_at_local, m.unit_cost_cents, m.quantity_delta
+      FROM stock_movements m JOIN products p ON p.id = m.product_id
+      WHERE m.tenant_id = ? AND m.type = 'purchase' AND m.unit_cost_cents IS NOT NULL ${supplierId ? 'AND m.supplier_id = ?' : 'AND m.supplier_id IS NOT NULL'}`)
+      .all(...(supplierId ? [tenantId, supplierId] : [tenantId])) as any[])
+      .map((r) => ({ productId: r.product_id, productName: r.name_fr, date: r.created_at_local, unitCostCents: r.unit_cost_cents, quantity: r.quantity_delta }));
+
+  // Nombre de produits en hausse de prix par fournisseur — alimente le badge de la liste.
+  router.get('/price-alerts', handler((req, res) => {
+    const tenantId = req.auth!.tenantId;
+    const ids = (db.prepare("SELECT DISTINCT supplier_id id FROM stock_movements WHERE tenant_id = ? AND type = 'purchase' AND supplier_id IS NOT NULL").all(tenantId) as any[]).map((r) => r.id as string);
+    const alerts: Record<string, number> = {};
+    for (const id of ids) {
+      const n = buildSupplierPriceHistory(purchaseRows(tenantId, id)).alertCount;
+      if (n > 0) alerts[id] = n;
+    }
+    res.json({ alerts });
+  }));
+
+  router.get('/:id/price-history', handler((req, res) => {
+    res.json(buildSupplierPriceHistory(purchaseRows(req.auth!.tenantId, req.params.id)));
   }));
 
   router.get('/:id/ledger', handler((req, res) => {

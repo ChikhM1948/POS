@@ -5,7 +5,7 @@
   "main": "dist/main.js",
   "scripts": {
     "dev": "node scripts/bundle.js && electron dist/main.js",
-    "build": "tsc -p . --noEmit && node scripts/fetch-native.js && node scripts/bundle.js && node scripts/copy-renderer.js && electron-builder",
+    "build": "tsc -p . --noEmit && node scripts/fetch-native.js && node scripts/bundle.js && node scripts/copy-renderer.js && electron-builder --win",
     "typecheck": "tsc -p . --noEmit"
   },
   "dependencies": {
@@ -23,6 +23,7 @@
     "electron": "^31.0.0",
     "electron-builder": "^24.13.0",
     "esbuild": "^0.28.2",
+    "resedit": "^2.0.3",
     "typescript": "^5.5.0"
   },
   "build": {
@@ -30,10 +31,12 @@
     "productName": "POS Algerie",
     "electronVersion": "31.7.7",
     "npmRebuild": false,
+    "afterPack": "scripts/set-exe-icon.js",
     "files": [
       "dist/**/*",
       "renderer/**/*",
       "pos.png",
+      "icon.ico",
       "!**/node_modules/better-sqlite3/{deps,src,build}/**"
     ],
     "directories": {
@@ -55,7 +58,7 @@
         }
       ],
       "signAndEditExecutable": false,
-      "icon": "pos.png"
+      "icon": "icon.ico"
     },
     "extraResources": [
       {
@@ -72,6 +75,10 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
+      "installerIcon": "icon.ico",
+      "installerHeaderIcon": "icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
       "artifactName": "POS-Algerie-Setup-${version}.exe"
     }
   },

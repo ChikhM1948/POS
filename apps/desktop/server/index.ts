@@ -6,6 +6,7 @@ import { randomBytes } from 'node:crypto';
 import { openDatabase, type Db } from './db';
 import { Ctx, requireAuth, requireRole } from './util';
 import { CloudSync } from './cloud';
+import { applyPendingRestore, BackupManager } from './backup';
 import { authRouter } from './routes/auth';
 import { productsRouter } from './routes/products';
 import { stockRouter } from './routes/stock';
@@ -15,6 +16,7 @@ import { syncRouter } from './routes/sync';
 import { salesRouter } from './routes/sales';
 import { reportsRouter } from './routes/reports';
 import { cloudRouter } from './routes/cloud';
+import { backupRouter } from './routes/backup';
 
 export interface LocalServerOptions {
   /** Dossier des données (base SQLite). */
@@ -26,6 +28,8 @@ export interface LocalServerOptions {
   nativeBinding?: string;
   /** Origine supplémentaire autorisée (serveur `next dev`). */
   devOrigin?: string;
+  /** Demande à l'application de se relancer (appelé après la préparation d'une restauration). */
+  onRestartRequired?: () => void;
 }
 
 const MIME_TYPES: Record<string, string> = {
@@ -69,6 +73,7 @@ export function createApi(ctx: Ctx) {
   api.use('/suppliers', auth, suppliersRouter(ctx));
   api.use('/customers', auth, customersRouter(ctx));
   api.use('/cloud', auth, admins, cloudRouter(ctx));
+  api.use('/backup', auth, admins, backupRouter(ctx));
   api.use(((err, _req, res, _next) => {
     // eslint-disable-next-line no-console
     console.error('[local-api] erreur non gérée:', err);
@@ -79,9 +84,13 @@ export function createApi(ctx: Ctx) {
 
 export async function startLocalServer(opts: LocalServerOptions): Promise<{ close: () => Promise<void>; db: Db; port: number }> {
   fs.mkdirSync(opts.dataDir, { recursive: true });
-  const db = openDatabase(path.join(opts.dataDir, 'pos-data.sqlite'), opts.nativeBinding);
-  const ctx: Ctx = { db, jwtSecret: loadJwtSecret(db), cloud: new CloudSync(db) };
+  const dbFile = path.join(opts.dataDir, 'pos-data.sqlite');
+  applyPendingRestore(dbFile); // restauration préparée à la session précédente, avant d'ouvrir la base
+  const db = openDatabase(dbFile, opts.nativeBinding);
+  const backup = new BackupManager(db, dbFile, opts.nativeBinding, opts.onRestartRequired ?? (() => undefined));
+  const ctx: Ctx = { db, jwtSecret: loadJwtSecret(db), cloud: new CloudSync(db), backup };
   ctx.cloud.start();
+  backup.start();
 
   const app = express();
   app.disable('x-powered-by');
@@ -133,6 +142,7 @@ export async function startLocalServer(opts: LocalServerOptions): Promise<{ clos
       new Promise<void>((resolve) => {
         server.closeAllConnections();
         ctx.cloud.stop();
+        backup.stop();
         server.close(() => {
           db.close();
           resolve();

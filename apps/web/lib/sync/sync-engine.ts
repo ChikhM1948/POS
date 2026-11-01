@@ -127,6 +127,7 @@ export class SyncEngine {
           minSellingPriceCents: p.minSellingPriceCents,
           taxRate: p.taxRate,
           unit: p.unit,
+          nearestExpiry: p.nearestExpiry,
           updatedAt: p.updatedAt,
         });
       }

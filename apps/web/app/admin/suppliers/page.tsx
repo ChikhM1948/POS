@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAdminAuth } from '../../../lib/adminAuth';
 import { adminFetch } from '../../../lib/adminApi';
 import { SupplierForm } from '../../../components/admin/SupplierForm';
+import { SupplierPriceHistoryPanel } from '../../../components/admin/SupplierPriceHistoryPanel';
 import { LedgerPanel } from '../../../components/admin/LedgerPanel';
 import { useTranslation } from '../../../lib/i18n/LanguageContext';
 import { formatCurrency } from '../../../lib/format';
@@ -19,6 +20,8 @@ export default function SuppliersPage() {
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
   const [onlyWithBalance, setOnlyWithBalance] = useState(false);
+  const [priceSupplierId, setPriceSupplierId] = useState<string | null>(null);
+  const [alerts, setAlerts] = useState<Record<string, number>>({});
   const [openLedgerId, setOpenLedgerId] = useState<string | null>(null);
   const [ledgerMode, setLedgerMode] = useState<'payment' | 'debt'>('payment');
   const [loading, setLoading] = useState(true);
@@ -30,6 +33,7 @@ export default function SuppliersPage() {
     try {
       const { suppliers } = await adminFetch<{ suppliers: SupplierDTO[] }>(session.token, '/suppliers');
       setSuppliers(suppliers);
+      adminFetch<{ alerts: Record<string, number> }>(session.token, '/suppliers/price-alerts').then((r) => setAlerts(r.alerts)).catch(() => undefined);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.errorLoading'));
@@ -112,10 +116,16 @@ export default function SuppliersPage() {
           <tbody>
             {visible.map((s) => (
               <tr key={s.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
-                <td className="px-4 py-2.5 font-medium text-neutral-900">{s.name}</td>
+                <td className="px-4 py-2.5 font-medium text-neutral-900">
+                  {s.name}
+                  {alerts[s.id] > 0 && <span className="ms-2 rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">▲ {t('priceHistory.alertBadge', { count: alerts[s.id] })}</span>}
+                </td>
                 <td className="px-4 py-2.5 text-neutral-600">{s.phone ?? t('common.dash')}</td>
                 <td className={`px-4 py-2.5 font-medium ${s.balanceCents > 0 ? 'text-red-600' : 'text-neutral-600'}`}>{formatDZD(s.balanceCents)}</td>
                 <td className="px-4 py-2.5 text-end">
+                  <button onClick={() => setPriceSupplierId(s.id)} className="me-3 text-sm font-medium text-neutral-600 hover:underline">
+                    {t('priceHistory.button')}
+                  </button>
                   <button onClick={() => { setLedgerMode('payment'); setOpenLedgerId(s.id); }} className="me-3 text-sm font-medium text-brand-700 hover:underline">
                     {s.balanceCents > 0 ? t('suppliers.settle') : t('ledger.historyTitle')}
                   </button>
@@ -135,6 +145,15 @@ export default function SuppliersPage() {
           </tbody>
         </table>
       </div>
+
+      {priceSupplierId && (
+        <SupplierPriceHistoryPanel
+          key={priceSupplierId}
+          supplierId={priceSupplierId}
+          supplierName={suppliers.find((s) => s.id === priceSupplierId)?.name ?? ''}
+          onClose={() => setPriceSupplierId(null)}
+        />
+      )}
 
       {openLedgerId && (
         <LedgerPanel

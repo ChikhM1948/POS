@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
 import { formatCurrency } from '../../lib/format';
 import { IconMinus } from '../icons';
@@ -11,6 +11,8 @@ interface Props {
   minSellingPriceCents?: number;
   discountCents: number;
   onApply: (discountCents: number) => void;
+  /** Incrémenté par la caisse (raccourci F7) pour ouvrir l'éditeur sans souris. */
+  openSignal?: number;
 }
 
 /**
@@ -19,11 +21,15 @@ interface Props {
  * affiche un avertissement — mais la vente reste possible : décision produit, voir plan de la
  * fonctionnalité.
  */
-export function DiscountEditor({ quantity, unitPriceCents, minSellingPriceCents, discountCents, onApply }: Props) {
+export function DiscountEditor({ quantity, unitPriceCents, minSellingPriceCents, discountCents, onApply, openSignal = 0 }: Props) {
   const { t, locale } = useTranslation();
   const formatDZD = (cents: number) => formatCurrency(cents, locale);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState(discountCents > 0 ? String(Math.round(discountCents / 100)) : '');
+
+  useEffect(() => {
+    if (openSignal > 0) setOpen(true);
+  }, [openSignal]);
 
   const candidateDiscountCents = Math.max(0, Math.round(parseFloat(input.replace(',', '.') || '0') * 100));
   const netUnitCents = quantity > 0 ? (unitPriceCents * quantity - candidateDiscountCents) / quantity : unitPriceCents;
@@ -51,6 +57,13 @@ export function DiscountEditor({ quantity, unitPriceCents, minSellingPriceCents,
           autoFocus
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') apply();
+            else if (e.key === 'Escape') setOpen(false);
+            else return;
+            e.preventDefault();
+            e.stopPropagation();
+          }}
           inputMode="decimal"
           className="rounded-lg border border-neutral-300 px-2 py-1 text-sm text-neutral-900 focus:border-brand-500"
         />

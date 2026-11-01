@@ -5,6 +5,7 @@ import { useAdminAuth } from '../../../lib/adminAuth';
 import { adminFetch } from '../../../lib/adminApi';
 import { TenantSettingsForm } from '../../../components/admin/TenantSettingsForm';
 import { CloudSyncPanel } from '../../../components/admin/CloudSyncPanel';
+import { BackupPanel } from '../../../components/admin/BackupPanel';
 import { LOCAL_MODE } from '../../../lib/localMode';
 import { useTranslation } from '../../../lib/i18n/LanguageContext';
 import type { TenantSettingsDTO, UpdateTenantSettingsInput } from '@pos-dz/shared';
@@ -45,6 +46,7 @@ export default function SettingsPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
       {tenant && <TenantSettingsForm initial={tenant} onSubmit={handleSubmit} />}
       {LOCAL_MODE && <CloudSyncPanel />}
+      {LOCAL_MODE && <BackupPanel />}
     </div>
   );
 }

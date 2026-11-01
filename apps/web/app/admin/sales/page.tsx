@@ -5,10 +5,12 @@ import { useAdminAuth } from '../../../lib/adminAuth';
 import { adminFetch } from '../../../lib/adminApi';
 import { DateRangeFilter, type DateRangeValue } from '../../../components/admin/DateRangeFilter';
 import { resolvePreset } from '../../../lib/dateRangePresets';
+import { SalesDocument } from '../../../components/admin/SalesDocument';
+import type { FiscalDocKind } from '../../../lib/documents';
 import { RefundForm } from '../../../components/admin/RefundForm';
 import { useTranslation } from '../../../lib/i18n/LanguageContext';
 import { formatCurrency, formatDateTime } from '../../../lib/format';
-import type { SaleDetailDTO, SaleListItemDTO, SalesListResponse, StoreDTO } from '@pos-dz/shared';
+import type { SaleDetailDTO, SaleListItemDTO, SalesListResponse, StoreDTO, TenantSettingsDTO } from '@pos-dz/shared';
 
 const PAYMENT_METHODS = ['cash', 'cib', 'edahabia', 'cheque', 'credit', 'voucher'] as const;
 
@@ -26,6 +28,8 @@ export default function SalesPage() {
   const [sales, setSales] = useState<SaleListItemDTO[]>([]);
   const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<SaleDetailDTO | null>(null);
+  const [tenant, setTenant] = useState<TenantSettingsDTO | null>(null);
+  const [docKind, setDocKind] = useState<FiscalDocKind | null>(null);
   const [refunding, setRefunding] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +38,13 @@ export default function SalesPage() {
     if (!session) return;
     adminFetch<{ stores: StoreDTO[] }>(session.token, '/stores')
       .then(({ stores }) => setStores(stores))
+      .catch(() => undefined);
+  }, [session]);
+
+  useEffect(() => {
+    if (!session) return;
+    adminFetch<{ tenant: TenantSettingsDTO }>(session.token, '/tenant')
+      .then(({ tenant }) => setTenant(tenant))
       .catch(() => undefined);
   }, [session]);
 
@@ -74,6 +85,7 @@ export default function SalesPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      {docKind && selected && tenant && <SalesDocument sale={selected} tenant={tenant} kind={docKind} onClose={() => setDocKind(null)} />}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-semibold tracking-tight text-neutral-900">
           {t('sales.title')} {total > 0 && <span className="text-sm font-normal text-neutral-500">({total})</span>}
@@ -116,6 +128,15 @@ export default function SalesPage() {
               {t('common.close')}
             </button>
           </div>
+          {tenant && selected.type === 'sale' && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {(['invoice', 'deliveryNote', 'proforma'] as const).map((k) => (
+                <button key={k} onClick={() => setDocKind(k)} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50">
+                  {t(`docs.${k}`)}
+                </button>
+              ))}
+            </div>
+          )}
           <p className="mb-3 text-sm text-neutral-500">
             {formatDateTime(selected.createdAtLocal, locale)} · {t('sales.cashier', { name: selected.cashierName })}
           </p>

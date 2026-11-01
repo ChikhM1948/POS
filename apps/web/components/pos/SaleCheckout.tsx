@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { forwardRef, useImperativeHandle, useState } from 'react';
 import { useCreateSale } from '../../hooks/useCreateSale';
 import { renderReceiptToImageData } from '../../lib/print/receipt-renderer';
 import { imageDataToEscPosRaster, buildPrintJob } from '../../lib/print/escpos-raster';
@@ -23,8 +23,18 @@ interface Props {
   onSaleComplete: (sale: CompletedSale) => void;
 }
 
+/** Actions déclenchables au clavier (F2/F3/F4) depuis la page caisse. */
+export interface SaleCheckoutHandle {
+  payCash: () => void;
+  payCib: () => void;
+  payCredit: () => void;
+}
+
 /** Flux caisse : calcule les totaux, encaisse (espèces avec monnaie, ou CIB), écrit la vente en local, imprime le ticket. */
-export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashierId, cartLines, tenantBranding, onSaleComplete }: Props) {
+export const SaleCheckout = forwardRef<SaleCheckoutHandle, Props>(function SaleCheckout(
+  { deviceId, storeId, storeCode, registerId, cashierId, cartLines, tenantBranding, onSaleComplete },
+  ref,
+) {
   const { t, locale } = useTranslation();
   const formatDZD = (cents: number) => formatCurrency(cents, locale);
   const { createSale } = useCreateSale(deviceId);
@@ -99,6 +109,18 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
     await finalize(payments);
   }
 
+  useImperativeHandle(ref, () => ({
+    payCash: () => {
+      if (!isBusy && cartLines.length > 0) setShowCashModal(true);
+    },
+    payCib: () => {
+      if (!isBusy && cartLines.length > 0) handleCib();
+    },
+    payCredit: () => {
+      if (!isBusy && cartLines.length > 0) setShowCreditModal(true);
+    },
+  }));
+
   return (
     <div className="flex flex-col gap-3 border-t border-neutral-200 bg-neutral-50 p-4">
       <div className="flex flex-col gap-1">
@@ -130,6 +152,7 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
         >
           <IconBanknote className="h-5 w-5" />
           {t('saleCheckout.cash')}
+          <kbd className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold">F2</kbd>
         </button>
         <div className="grid grid-cols-2 gap-2">
         <button
@@ -139,6 +162,7 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
         >
           <IconCreditCard className="h-4 w-4" />
           {processingMethod === 'cib' ? t('saleCheckout.processing') : 'CIB / Edahabia'}
+          <kbd className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-500">F3</kbd>
         </button>
         <button
           disabled={isBusy || cartLines.length === 0}
@@ -147,6 +171,7 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
         >
           <IconWallet className="h-4 w-4" />
           {t('saleCheckout.credit')}
+          <kbd className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-500">F4</kbd>
         </button>
         </div>
       </div>
@@ -171,7 +196,7 @@ export function SaleCheckout({ deviceId, storeId, storeCode, registerId, cashier
       )}
     </div>
   );
-}
+});
 
 function computeTotals(lines: SaleLine[]): SaleTotals {
   const subtotalCents = lines.reduce((sum, l) => sum + l.unitPriceCents * l.quantity, 0);
@@ -186,6 +211,8 @@ declare global {
     posBridge?: {
       printThermal: (job: Uint8Array) => Promise<void>;
       openCashDrawer?: () => Promise<void>;
+      pickBackupFolder?: () => Promise<string | null>;
+      pickBackupFile?: () => Promise<string | null>;
     };
   }
 }

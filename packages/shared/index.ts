@@ -167,6 +167,45 @@ export interface CreateStockMovementInput {
   note?: string;
 }
 
+/** Lot d'un produit (regroupement des mouvements par numéro de lot + date de péremption). */
+export interface StockBatchDTO {
+  productId: string;
+  sku: string;
+  name: LocalizedText;
+  unit: string;
+  lotNumber?: string;
+  expiryDate?: string; // ISO 8601
+  quantity: number; // > 0 uniquement
+  /** Jours restants avant péremption (négatif = périmé). Absent si le lot n'a pas de date. */
+  daysLeft?: number;
+}
+
+export interface StockAlertsDTO {
+  lowStockCount: number;
+  outOfStockCount: number;
+  expiringSoonCount: number;
+  expiredCount: number;
+  expiryWarningDays: number;
+}
+
+export interface ReorderItemDTO {
+  productId: string;
+  sku: string;
+  name: LocalizedText;
+  unit: string;
+  quantity: number;
+  lowStockThreshold: number;
+  suggestedQuantity: number;
+  lastUnitCostCents: number;
+}
+
+export interface ReorderGroupDTO {
+  supplierId: string | null; // null = aucun fournisseur connu pour ces produits
+  supplierName: string | null;
+  supplierPhone?: string;
+  items: ReorderItemDTO[];
+}
+
 /** Réception fournisseur — flux dédié (voir POST /stock/purchases) car il met à jour le coût
  * moyen pondéré du produit et peut générer une dette fournisseur pour la part non payée. */
 export interface CreatePurchaseInput {
@@ -394,17 +433,91 @@ export interface TenantSettingsDTO {
     secondaryColor: string;
   };
   phone?: string;
+  /** Identité légale imprimée sur les documents fiscaux (facture, bon de livraison, proforma). */
+  legal: TenantLegalInfo;
   /** true = synchronise en ligne, le commerce est accessible depuis le web ; false = local uniquement, aucune donnée ne quitte le poste. */
   syncEnabled: boolean;
+}
+
+export interface TenantLegalInfo {
+  address?: string;
+  rc?: string; // Registre de commerce
+  nif?: string; // Numéro d'identification fiscale
+  nis?: string; // Numéro d'identification statistique
+  ai?: string; // Article d'imposition
 }
 
 export interface UpdateTenantSettingsInput {
   name?: string;
   phone?: string;
+  legal?: TenantLegalInfo;
   branding?: {
     logoUrl?: string;
     primaryColor?: string;
     secondaryColor?: string;
   };
   syncEnabled?: boolean;
+}
+
+// --- Historique des prix d'achat par fournisseur ---
+
+export interface PricePointDTO {
+  date: string;
+  unitCostCents: number;
+  quantity: number;
+}
+
+export interface SupplierProductPriceDTO {
+  productId: string;
+  productName: string;
+  points: PricePointDTO[]; // du plus ancien au plus récent
+  latestCents: number;
+  previousCents?: number;
+  /** Variation du dernier achat par rapport au précédent, en % (positif = hausse). */
+  changePct?: number;
+  /** true = hausse >= PRICE_INCREASE_ALERT_PCT : à signaler au gérant. */
+  alert: boolean;
+}
+
+export interface SupplierPriceHistoryDTO {
+  products: SupplierProductPriceDTO[];
+  alertCount: number;
+}
+
+export const PRICE_INCREASE_ALERT_PCT = 3;
+
+export interface PurchaseCostRow {
+  productId: string;
+  productName: string;
+  date: string;
+  unitCostCents: number;
+  quantity: number;
+}
+
+/** Regroupe les achats d'un fournisseur par produit et signale les hausses de prix. Partagé par l'API et le poste local. */
+export function buildSupplierPriceHistory(rows: PurchaseCostRow[]): SupplierPriceHistoryDTO {
+  const byProduct = new Map<string, PurchaseCostRow[]>();
+  for (const r of rows) {
+    const list = byProduct.get(r.productId) ?? [];
+    list.push(r);
+    byProduct.set(r.productId, list);
+  }
+  const products: SupplierProductPriceDTO[] = [];
+  for (const list of byProduct.values()) {
+    list.sort((a, b) => a.date.localeCompare(b.date));
+    const latest = list[list.length - 1];
+    const prev = list.length > 1 ? list[list.length - 2] : undefined;
+    const changePct = prev && prev.unitCostCents > 0 ? ((latest.unitCostCents - prev.unitCostCents) / prev.unitCostCents) * 100 : undefined;
+    products.push({
+      productId: latest.productId,
+      productName: latest.productName,
+      points: list.map((r) => ({ date: r.date, unitCostCents: r.unitCostCents, quantity: r.quantity })),
+      latestCents: latest.unitCostCents,
+      previousCents: prev?.unitCostCents,
+      changePct: changePct === undefined ? undefined : Math.round(changePct * 10) / 10,
+      alert: changePct !== undefined && changePct >= PRICE_INCREASE_ALERT_PCT,
+    });
+  }
+  products.sort((a, b) => Number(b.alert) - Number(a.alert) || (b.changePct ?? -Infinity) - (a.changePct ?? -Infinity) || a.productName.localeCompare(b.productName));
+  return { products, alertCount: products.filter((p) => p.alert).length };
 }

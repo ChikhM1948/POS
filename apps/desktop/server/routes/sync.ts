@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import type { SyncOperation, SyncPushRequest, SyncPushResponse, SyncPushResult } from '@pos-dz/shared';
+import { allocateFefo, nearestExpiryByProduct, touchProduct } from '../batches';
 import { Ctx, HttpError, handler, newId, nowIso, toIso } from '../util';
 
 export function syncRouter({ db }: Ctx) {
@@ -46,17 +47,30 @@ export function syncRouter({ db }: Ctx) {
             serverId = (db.prepare('SELECT id FROM sales WHERE tenant_id = ? AND client_generated_id = ?').get(tenantId, op.clientGeneratedId) as any).id;
           }
         } else if (op.entityType === 'stockMovement') {
-          serverId = newId();
-          const r = insertMovement.run({
-            id: serverId, tenant_id: tenantId, store_id: p.storeId, product_id: p.productId, variant_sku: p.variantSku ?? null,
-            type: p.type, quantity_delta: p.quantityDelta, unit_cost: p.unitCostCents ?? null, supplier_id: p.supplierId ?? null,
-            lot: p.lotNumber ?? null, expiry: p.expiryDate ? toIso(p.expiryDate) : null, note: p.note ?? null,
-            source_type: p.sourceDocument?.type ?? null, source_id: p.sourceDocument?.id ?? null,
-            cgid: op.clientGeneratedId, created_local: createdLocal, now,
+          const base = {
+            tenant_id: tenantId, store_id: p.storeId, product_id: p.productId, variant_sku: p.variantSku ?? null,
+            type: p.type, unit_cost: p.unitCostCents ?? null, supplier_id: p.supplierId ?? null, note: p.note ?? null,
+            source_type: p.sourceDocument?.type ?? null, source_id: p.sourceDocument?.id ?? null, created_local: createdLocal, now,
+          };
+          // Vente sans lot précisé (la caisse ne connaît pas les lots) : on décompte FEFO, le lot le plus
+          // proche de la péremption d'abord. Un mouvement par lot ; les suivants dérivent le client id (#2, #3…).
+          const fefo = p.type === 'sale' && p.quantityDelta < 0 && !p.lotNumber;
+          const parts = fefo
+            ? allocateFefo(db, tenantId, p.storeId, p.productId, -p.quantityDelta)
+            : [{ lotNumber: p.lotNumber ?? null, expiryDate: p.expiryDate ? toIso(p.expiryDate) : null, quantity: Math.abs(p.quantityDelta) }];
+          let firstId = '';
+          let emptiedBatch = false;
+          parts.forEach((part, i) => {
+            const id = newId();
+            const r = insertMovement.run({
+              ...base, id, quantity_delta: fefo ? -part.quantity : p.quantityDelta, lot: part.lotNumber, expiry: part.expiryDate,
+              cgid: i === 0 ? op.clientGeneratedId : `${op.clientGeneratedId}#${i + 1}`,
+            });
+            if (i === 0) firstId = r.changes ? id : (db.prepare('SELECT id FROM stock_movements WHERE tenant_id = ? AND client_generated_id = ?').get(tenantId, op.clientGeneratedId) as any).id;
+            if (fefo && (part.lotNumber || part.expiryDate)) emptiedBatch = true;
           });
-          if (!r.changes) {
-            serverId = (db.prepare('SELECT id FROM stock_movements WHERE tenant_id = ? AND client_generated_id = ?').get(tenantId, op.clientGeneratedId) as any).id;
-          }
+          serverId = firstId;
+          if (emptiedBatch || p.lotNumber || p.expiryDate) touchProduct(db, tenantId, p.productId);
         } else {
           throw new Error(`Type d'entité inconnu: ${op.entityType}`);
         }
@@ -96,6 +110,8 @@ export function syncRouter({ db }: Ctx) {
       minSellingPriceCents: r.min_selling_price_cents ?? undefined, taxRate: r.tax_rate, unit: r.unit, updatedAt: r.updated_at,
       active: Boolean(r.active),
     }));
+    const expiries = nearestExpiryByProduct(db, tenantId, req.auth!.storeId);
+    for (const prod of products) (prod as any).nearestExpiry = expiries.get(prod._id);
     const customers = (db.prepare('SELECT * FROM customers WHERE tenant_id = ? AND active = 1 AND updated_at > ?').all(tenantId, sinceIso) as any[])
       .map((r) => ({ _id: r.id, name: r.name, phone: r.phone ?? undefined }));
     res.json({ products, customers, serverTime });

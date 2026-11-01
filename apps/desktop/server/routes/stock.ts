@@ -1,6 +1,9 @@
 import { Router } from 'express';
-import type { CreatePurchaseInput, CreateStockMovementInput, StockBalanceDTO, StockMovementDTO } from '@pos-dz/shared';
+import type {
+  CreatePurchaseInput, CreateStockMovementInput, ReorderGroupDTO, StockAlertsDTO, StockBalanceDTO, StockBatchDTO, StockMovementDTO,
+} from '@pos-dz/shared';
 import { Ctx, HttpError, handler, newId, nowIso, requireRole, toIso } from '../util';
+import { DEFAULT_EXPIRY_WARNING_DAYS, batchBalances, daysUntil, touchProduct } from '../batches';
 import { recomputeCostPrice } from './products';
 
 function movementDTO(m: any): StockMovementDTO {
@@ -50,6 +53,99 @@ export function stockRouter({ db }: Ctx) {
     res.json({ balances });
   }));
 
+  /** Quantité en stock par produit actif pour une boutique (une requête, pas de N+1). */
+  function quantities(tenantId: string, storeId: string) {
+    return db.prepare(`
+      SELECT p.*, COALESCE((SELECT SUM(quantity_delta) FROM stock_movements m
+        WHERE m.tenant_id = p.tenant_id AND m.store_id = ? AND m.product_id = p.id), 0) AS quantity
+      FROM products p WHERE p.tenant_id = ? AND p.active = 1`).all(storeId, tenantId) as any[];
+  }
+
+  const warningDays = (req: { query: Record<string, unknown> }) => {
+    const n = parseInt(String(req.query.days ?? ''), 10);
+    return Number.isFinite(n) && n >= 0 ? n : DEFAULT_EXPIRY_WARNING_DAYS;
+  };
+
+  /** Lots encore en stock, triés par péremption (le plus urgent d'abord) — base du FEFO et des alertes. */
+  router.get('/batches', handler((req, res) => {
+    const storeId = req.query.storeId as string | undefined;
+    if (!storeId) throw new HttpError(400, 'storeId est requis.');
+    const tenantId = req.auth!.tenantId;
+    const products = new Map<string, any>(
+      (db.prepare('SELECT id, sku, name_fr, name_ar, unit FROM products WHERE tenant_id = ?').all(tenantId) as any[]).map((p) => [p.id, p]),
+    );
+    const batches: StockBatchDTO[] = [];
+    for (const b of batchBalances(db, tenantId, storeId)) {
+      const p = products.get(b.product_id);
+      if (!p) continue;
+      batches.push({
+        productId: p.id, sku: p.sku, name: { fr: p.name_fr, ar: p.name_ar ?? undefined }, unit: p.unit,
+        lotNumber: b.lot_number ?? undefined, expiryDate: b.expiry_date ?? undefined, quantity: b.quantity,
+        daysLeft: b.expiry_date ? daysUntil(b.expiry_date) : undefined,
+      });
+    }
+    res.json({ batches, expiryWarningDays: warningDays(req) });
+  }));
+
+  /** Compteurs pour les pastilles d'alerte (menu back-office). */
+  router.get('/alerts', handler((req, res) => {
+    const storeId = req.query.storeId as string | undefined;
+    if (!storeId) throw new HttpError(400, 'storeId est requis.');
+    const tenantId = req.auth!.tenantId;
+    const days = warningDays(req);
+    let low = 0, out = 0;
+    for (const p of quantities(tenantId, storeId)) {
+      if (p.low_stock_threshold > 0 && p.quantity <= p.low_stock_threshold) low++;
+      if (p.quantity <= 0 && p.low_stock_threshold > 0) out++;
+    }
+    let expired = 0, soon = 0;
+    for (const b of batchBalances(db, tenantId, storeId)) {
+      if (!b.expiry_date) continue;
+      const left = daysUntil(b.expiry_date);
+      if (left < 0) expired++;
+      else if (left <= days) soon++;
+    }
+    const alerts: StockAlertsDTO = { lowStockCount: low, outOfStockCount: out, expiringSoonCount: soon, expiredCount: expired, expiryWarningDays: days };
+    res.json({ alerts });
+  }));
+
+  /**
+   * Liste de réapprovisionnement : produits sous leur seuil, groupés par fournisseur (le dernier
+   * fournisseur chez qui le produit a été acheté). Quantité suggérée = remonter à 2× le seuil.
+   */
+  router.get('/reorder', handler((req, res) => {
+    const storeId = req.query.storeId as string | undefined;
+    if (!storeId) throw new HttpError(400, 'storeId est requis.');
+    const tenantId = req.auth!.tenantId;
+    const lastPurchase = db.prepare(`SELECT supplier_id, unit_cost_cents FROM stock_movements
+      WHERE tenant_id = ? AND product_id = ? AND type = 'purchase' AND supplier_id IS NOT NULL
+      ORDER BY created_at_local DESC LIMIT 1`);
+    const suppliers = new Map<string, any>(
+      (db.prepare('SELECT * FROM suppliers WHERE tenant_id = ? AND active = 1').all(tenantId) as any[]).map((s) => [s.id, s]),
+    );
+    const groups = new Map<string, ReorderGroupDTO>();
+    for (const p of quantities(tenantId, storeId)) {
+      const threshold = p.low_stock_threshold;
+      if (!(threshold > 0) || p.quantity > threshold) continue;
+      const last = lastPurchase.get(tenantId, p.id) as any;
+      const supplier = last && suppliers.get(last.supplier_id);
+      const key = supplier ? supplier.id : '';
+      if (!groups.has(key)) {
+        groups.set(key, {
+          supplierId: supplier?.id ?? null, supplierName: supplier?.name ?? null, supplierPhone: supplier?.phone ?? undefined, items: [],
+        });
+      }
+      groups.get(key)!.items.push({
+        productId: p.id, sku: p.sku, name: { fr: p.name_fr, ar: p.name_ar ?? undefined }, unit: p.unit, quantity: p.quantity,
+        lowStockThreshold: threshold, suggestedQuantity: Math.max(1, Math.ceil(threshold * 2 - p.quantity)),
+        lastUnitCostCents: last?.unit_cost_cents ?? p.cost_price_cents ?? 0,
+      });
+    }
+    const list = [...groups.values()].sort((a, b) => (a.supplierName ?? '\uffff').localeCompare(b.supplierName ?? '\uffff'));
+    for (const g of list) g.items.sort((a, b) => a.name.fr.localeCompare(b.name.fr));
+    res.json({ groups: list });
+  }));
+
   router.get('/movements', handler((req, res) => {
     const { storeId, productId } = req.query as Record<string, string | undefined>;
     if (!storeId || !productId) throw new HttpError(400, 'storeId et productId sont requis.');
@@ -70,6 +166,7 @@ export function stockRouter({ db }: Ctx) {
       type, quantity_delta: quantityDelta, unit_cost_cents: null, supplier_id: null, lot_number: input.lotNumber ?? null,
       expiry_date: input.expiryDate ? toIso(input.expiryDate) : null, note: input.note ?? null, cgid: newId(), now: nowIso(),
     });
+    if (input.expiryDate || input.lotNumber) touchProduct(db, req.auth!.tenantId, productId);
     res.status(201).json({ movement: movementDTO(db.prepare('SELECT * FROM stock_movements WHERE id = ?').get(id)) });
   }));
 
@@ -96,7 +193,7 @@ export function stockRouter({ db }: Ctx) {
         lot_number: input.lotNumber ?? null, expiry_date: input.expiryDate ? toIso(input.expiryDate) : null,
         note: input.note ?? null, cgid: newId(), now,
       });
-      recomputeCostPrice(db, tenantId, productId, currentQty, qty, unitCostCents);
+      recomputeCostPrice(db, tenantId, productId, currentQty, qty, unitCostCents); // touche aussi updated_at
       if (input.supplierId && total - paid > 0) {
         db.prepare(`INSERT INTO ledger_entries (id, tenant_id, party_kind, party_id, type, amount_cents, note, ref_type, ref_id, client_generated_id, created_at_local, created_at)
           VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(newId(), tenantId, 'supplier', input.supplierId, 'purchase_on_credit', total - paid,

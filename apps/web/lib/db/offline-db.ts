@@ -14,6 +14,8 @@ export interface LocalProduct {
   minSellingPriceCents?: number;
   taxRate: 19 | 9 | 0;
   unit: string;
+  /** Péremption la plus proche parmi les lots en stock (ISO) — avertissement à la caisse. */
+  nearestExpiry?: string;
   updatedAt: string;
 }
 
@@ -47,6 +49,14 @@ export interface LocalStockMovement {
   syncStatus: 'pending' | 'synced';
 }
 
+/** Panier mis en attente (client parti chercher un article) — local au poste, survit au redémarrage. */
+export interface HeldCart {
+  id?: number; // auto-increment
+  label?: string;
+  lines: SaleLine[];
+  heldAt: string; // ISO 8601
+}
+
 export interface OutboxEntry {
   id?: number; // auto-increment
   operation: SyncOperation;
@@ -68,6 +78,7 @@ export class OfflineDB extends Dexie {
   outbox!: Table<OutboxEntry, number>;
   meta!: Table<SyncMeta, string>;
   customers!: Table<LocalCustomer, string>;
+  heldCarts!: Table<HeldCart, number>;
 
   constructor(deviceId: string) {
     super(`pos-db-${deviceId}`);
@@ -81,6 +92,10 @@ export class OfflineDB extends Dexie {
     // v2 : clients synchronisés pour la sélection à la caisse lors d'une vente à crédit ("Karna").
     this.version(2).stores({
       customers: 'id, name',
+    });
+    // v3 : paniers en attente (vente suspendue, reprise plus tard).
+    this.version(3).stores({
+      heldCarts: '++id, heldAt',
     });
   }
 }

@@ -11,6 +11,7 @@ function toDTO(t: any): TenantSettingsDTO {
       secondaryColor: t.branding?.secondaryColor,
     },
     phone: t.legal?.phone,
+    legal: { address: t.legal?.address, rc: t.legal?.rc, nif: t.legal?.nif, nis: t.legal?.nis, ai: t.legal?.ai },
     syncEnabled: t.syncEnabled ?? true,
   };
 }
@@ -27,6 +28,9 @@ export async function updateTenantSettings(
   const $set: Record<string, unknown> = {};
   if (input.name !== undefined) $set.name = input.name.trim();
   if (input.phone !== undefined) $set['legal.phone'] = input.phone.trim();
+  for (const k of ['address', 'rc', 'nif', 'nis', 'ai'] as const) {
+    if (input.legal?.[k] !== undefined) $set[`legal.${k}`] = input.legal[k]!.trim();
+  }
   if (input.branding?.logoUrl !== undefined) $set['branding.logoUrl'] = input.branding.logoUrl;
   if (input.branding?.primaryColor !== undefined) $set['branding.primaryColor'] = input.branding.primaryColor;
   if (input.branding?.secondaryColor !== undefined) $set['branding.secondaryColor'] = input.branding.secondaryColor;

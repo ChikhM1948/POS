@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDeviceId } from '../hooks/useDeviceId';
-import { getOfflineDB, type LocalProduct } from '../lib/db/offline-db';
+import { getOfflineDB, type HeldCart, type LocalProduct } from '../lib/db/offline-db';
 import { SyncEngine } from '../lib/sync/sync-engine';
 import { LOCAL_MODE } from '../lib/localMode';
 import { LoginForm, type Session } from '../components/pos/LoginForm';
 import { OfflineBanner } from '../components/pos/OfflineBanner';
-import { SaleCheckout } from '../components/pos/SaleCheckout';
+import { SaleCheckout, type SaleCheckoutHandle } from '../components/pos/SaleCheckout';
+import { HeldCartsModal } from '../components/pos/HeldCartsModal';
+import { daysUntilExpiry, EXPIRY_WARNING_DAYS } from '../lib/expiry';
 import { DiscountEditor } from '../components/pos/DiscountEditor';
 import { Receipt, type CompletedSale } from '../components/pos/Receipt';
 import { BrandMark } from '../components/BrandMark';
@@ -35,6 +37,11 @@ export default function PosPage() {
   const [query, setQuery] = useState('');
   const [scanFeedback, setScanFeedback] = useState<string | null>(null);
   const scanInputRef = useRef<HTMLInputElement>(null);
+  const checkoutRef = useRef<SaleCheckoutHandle>(null);
+  const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
+  const [discountTrigger, setDiscountTrigger] = useState({ productId: '', n: 0 });
+  const [showHeld, setShowHeld] = useState(false);
+  const [showLegend, setShowLegend] = useState(true);
 
   const db = useMemo(() => (deviceId ? getOfflineDB(deviceId) : null), [deviceId]);
 
@@ -45,6 +52,7 @@ export default function PosPage() {
     return () => engine.stop();
   }, [db, deviceId, session]);
 
+  const heldCount = useLiveQuery(() => (db ? db.heldCarts.count() : Promise.resolve(0)), [db]) ?? 0;
   const products = useLiveQuery(() => (db ? db.products.toArray() : Promise.resolve<LocalProduct[]>([])), [db]) ?? [];
 
   const categories = useMemo(() => {
@@ -93,7 +101,16 @@ export default function PosPage() {
     });
   }, [products, selectedCategory, query]);
 
+  function flash(message: string) {
+    setScanFeedback(message);
+    setTimeout(() => setScanFeedback(null), 3500);
+  }
+
   function addToCart(product: LocalProduct) {
+    setSelectedLineId(product.id);
+    if (product.nearestExpiry && daysUntilExpiry(product.nearestExpiry) < 0) {
+      flash(t('expiry.expiredWarning', { name: product.nameFr }));
+    }
     setCart((prev) => {
       const existing = prev.find((l) => l.productId === product.id);
       if (existing) {
@@ -155,6 +172,76 @@ export default function PosPage() {
     scanInputRef.current?.focus();
   }
 
+  /** Suspend la vente en cours (le client va chercher un autre article) : persistée localement, reprise à tout moment. */
+  const holdCurrentCart = useCallback(async () => {
+    if (!db || cart.length === 0) return;
+    await db.heldCarts.add({ lines: cart, heldAt: new Date().toISOString() });
+    setCart([]);
+    setQuery('');
+    scanInputRef.current?.focus();
+  }, [db, cart]);
+
+  async function resumeCart(held: HeldCart) {
+    if (!db) return;
+    // Un panier déjà en cours n'est jamais perdu : il passe lui-même en attente (échange).
+    const current = cart;
+    await db.transaction('rw', db.heldCarts, async () => {
+      await db.heldCarts.delete(held.id!);
+      if (current.length > 0) await db.heldCarts.add({ lines: current, heldAt: new Date().toISOString() });
+    });
+    if (current.length > 0) flash(t('hold.swapped'));
+    setCart(held.lines);
+    setSelectedLineId(held.lines[held.lines.length - 1]?.productId ?? null);
+    setShowHeld(false);
+    scanInputRef.current?.focus();
+  }
+
+  const activeLineId = cart.some((l) => l.productId === selectedLineId) ? selectedLineId : cart[cart.length - 1]?.productId ?? null;
+
+  // Mode clavier : F1 scan · F2 espèces · F3 CIB · F4 crédit · F5 attente · F6 paniers en attente ·
+  // F7 remise · F8 vider · ↑/↓ ligne · +/− quantité · Suppr retirer (champ de saisie vide).
+  // Ignoré quand un modal est ouvert (chacun gère ses propres touches).
+  useEffect(() => {
+    if (!session) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.ctrlKey || e.altKey || e.metaKey || document.querySelector('.fixed.inset-0.z-50')) return;
+      const input = scanInputRef.current;
+      const target = e.target as HTMLElement | null;
+      const typingElsewhere = !!target && target !== input && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+
+      const fKey: Record<string, () => void> = {
+        F1: () => input?.focus(),
+        F2: () => checkoutRef.current?.payCash(),
+        F3: () => checkoutRef.current?.payCib(),
+        F4: () => checkoutRef.current?.payCredit(),
+        F5: () => void holdCurrentCart(),
+        F6: () => setShowHeld(true),
+        F7: () => activeLineId && setDiscountTrigger((d) => ({ productId: activeLineId, n: d.n + 1 })),
+        F8: () => setCart([]),
+      };
+      if (fKey[e.key]) {
+        if (typingElsewhere && e.key !== 'F1') return;
+        e.preventDefault();
+        fKey[e.key]();
+        return;
+      }
+
+      if (typingElsewhere || (input && input.value !== '')) return; // le champ de scan sert d'abord à saisir
+      if (cart.length === 0 || !activeLineId) return;
+      const i = cart.findIndex((l) => l.productId === activeLineId);
+      if (e.key === 'ArrowDown') setSelectedLineId(cart[Math.min(i + 1, cart.length - 1)].productId);
+      else if (e.key === 'ArrowUp') setSelectedLineId(cart[Math.max(i - 1, 0)].productId);
+      else if (e.key === '+' || e.key === 'Add') changeQuantity(activeLineId, 1);
+      else if (e.key === '-' || e.key === 'Subtract') changeQuantity(activeLineId, -1);
+      else if (e.key === 'Delete') removeLine(activeLineId);
+      else return;
+      e.preventDefault();
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, cart, activeLineId, holdCurrentCart]);
+
   function handleSaleComplete(sale: CompletedSale) {
     setLastSale(sale);
     setCart([]);
@@ -177,6 +264,14 @@ export default function PosPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowHeld(true)}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900"
+          >
+            {t('hold.title')}
+            {heldCount > 0 && <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-amber-800">{heldCount}</span>}
+            <kbd className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-500">F6</kbd>
+          </button>
           <LanguageSwitcher />
           <a
             href="/admin"
@@ -254,6 +349,7 @@ export default function PosPage() {
                         {product.nameAr}
                       </p>
                     )}
+                    <ExpiryBadge nearestExpiry={product.nearestExpiry} />
                     <p className="mt-auto pt-1 text-base font-semibold tabular-nums text-neutral-900">{formatDZD(product.sellingPriceCents)}</p>
                   </div>
                 </button>
@@ -277,12 +373,20 @@ export default function PosPage() {
               </span>
             )}
             {cart.length > 0 && (
-              <button
-                onClick={() => setCart([])}
-                className="ms-auto rounded-md px-2 py-1 text-xs font-medium normal-case tracking-normal text-neutral-500 transition hover:bg-red-50 hover:text-red-600"
-              >
-                {t('pos.cart.clear')}
-              </button>
+              <div className="ms-auto flex items-center gap-1">
+                <button
+                  onClick={() => void holdCurrentCart()}
+                  className="rounded-md px-2 py-1 text-xs font-medium normal-case tracking-normal text-neutral-500 transition hover:bg-amber-50 hover:text-amber-700"
+                >
+                  {t('hold.button')} <kbd className="ms-1 rounded bg-neutral-100 px-1 text-[10px]">F5</kbd>
+                </button>
+                <button
+                  onClick={() => setCart([])}
+                  className="rounded-md px-2 py-1 text-xs font-medium normal-case tracking-normal text-neutral-500 transition hover:bg-red-50 hover:text-red-600"
+                >
+                  {t('pos.cart.clear')} <kbd className="ms-1 rounded bg-neutral-100 px-1 text-[10px]">F8</kbd>
+                </button>
+              </div>
             )}
           </h2>
 
@@ -297,7 +401,11 @@ export default function PosPage() {
                 {cart.map((line) => {
                   const product = products.find((p) => p.id === line.productId);
                   return (
-                  <li key={`${line.productId}-${line.variantSku ?? ''}`} className="relative flex items-center gap-3 px-4 py-3">
+                  <li
+                    key={`${line.productId}-${line.variantSku ?? ''}`}
+                    onClick={() => setSelectedLineId(line.productId)}
+                    className={`relative flex items-center gap-3 px-4 py-3 ${line.productId === activeLineId ? 'bg-brand-50/60 shadow-[inset_3px_0_0_0] shadow-brand-500' : ''}`}
+                  >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-neutral-900">{line.name.fr}</p>
                       <p className="text-xs text-neutral-500">
@@ -309,6 +417,7 @@ export default function PosPage() {
                         minSellingPriceCents={product?.minSellingPriceCents}
                         discountCents={line.discountCents}
                         onApply={(discountCents) => applyDiscount(line.productId, discountCents)}
+                        openSignal={discountTrigger.productId === line.productId ? discountTrigger.n : 0}
                       />
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -344,6 +453,7 @@ export default function PosPage() {
           </div>
 
           <SaleCheckout
+            ref={checkoutRef}
             deviceId={deviceId!}
             storeId={session.storeId}
             storeCode="ALG01"
@@ -356,6 +466,40 @@ export default function PosPage() {
         </section>
       </main>
 
+      {showLegend && (
+        <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-neutral-200 bg-white px-6 py-1.5 text-xs text-neutral-500">
+          {([
+            ['F1', 'shortcuts.scan'], ['F2', 'shortcuts.cash'], ['F3', 'shortcuts.cib'], ['F4', 'shortcuts.credit'],
+            ['F5', 'shortcuts.hold'], ['F6', 'shortcuts.recall'], ['F7', 'shortcuts.discount'], ['F8', 'shortcuts.clear'],
+            ['↑↓', 'shortcuts.select'], ['+ −', 'shortcuts.qty'], ['Suppr', 'shortcuts.remove'],
+          ] as const).map(([key, label]) => (
+            <span key={key} className="flex items-center gap-1">
+              <kbd className="rounded border border-neutral-200 bg-neutral-50 px-1.5 py-0.5 font-semibold text-neutral-700">{key}</kbd>
+              {t(label)}
+            </span>
+          ))}
+          <button onClick={() => setShowLegend(false)} className="ms-auto text-neutral-400 hover:text-neutral-700" aria-label={t('shortcuts.toggle')}>
+            ×
+          </button>
+        </footer>
+      )}
+      {!showLegend && (
+        <button onClick={() => setShowLegend(true)} className="absolute bottom-2 end-2 rounded-md bg-white px-2 py-1 text-xs text-neutral-500 shadow-sm ring-1 ring-neutral-200 hover:text-neutral-800">
+          {t('shortcuts.title')}
+        </button>
+      )}
+
+      {showHeld && db && (
+        <HeldCartsModal
+          db={db}
+          onResume={(c) => void resumeCart(c)}
+          onClose={() => {
+            setShowHeld(false);
+            scanInputRef.current?.focus();
+          }}
+        />
+      )}
+
       {lastSale && (
         <Receipt
           sale={lastSale}
@@ -367,5 +511,19 @@ export default function PosPage() {
         />
       )}
     </div>
+  );
+}
+
+/** Pastille de péremption d'un produit : rouge si un lot périmé est encore en stock, ambre s'il expire bientôt. */
+function ExpiryBadge({ nearestExpiry }: { nearestExpiry?: string }) {
+  const { t } = useTranslation();
+  if (!nearestExpiry) return null;
+  const days = daysUntilExpiry(nearestExpiry);
+  if (days > EXPIRY_WARNING_DAYS) return null;
+  const expired = days < 0;
+  return (
+    <span className={`w-fit rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${expired ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}`}>
+      {expired ? t('expiry.expired') : t('expiry.daysLeft', { n: days })}
+    </span>
   );
 }

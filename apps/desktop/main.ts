@@ -86,6 +86,15 @@ function buildMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+/** Relance l'application (après une restauration). En version portable, relance l'exécutable d'origine. */
+async function restartApp() {
+  await localServer?.close().catch(() => undefined);
+  localServer = null;
+  const portableExe = process.env.PORTABLE_EXECUTABLE_FILE;
+  app.relaunch(portableExe ? { execPath: portableExe } : undefined);
+  app.exit(0);
+}
+
 async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -109,6 +118,7 @@ async function createWindow() {
     port: RENDERER_PORT,
     nativeBinding: nativeBinding && fs.existsSync(nativeBinding) ? nativeBinding : undefined,
     devOrigin: devUrl || undefined,
+    onRestartRequired: restartApp,
   });
   baseUrl = devUrl || `http://127.0.0.1:${RENDERER_PORT}`;
   buildMenu();
@@ -177,4 +187,17 @@ ipcMain.handle('cashdrawer:open', async () => {
       printer.cashdraw(2).close(() => resolve());
     });
   });
+});
+
+/** Sélecteurs natifs pour les sauvegardes (dossier de destination / fichier à restaurer). */
+ipcMain.handle('backup:pickFolder', async () => {
+  const opts: Electron.OpenDialogOptions = { properties: ['openDirectory', 'createDirectory'] };
+  const res = mainWindow ? await dialog.showOpenDialog(mainWindow, opts) : await dialog.showOpenDialog(opts);
+  return res.canceled ? null : res.filePaths[0];
+});
+
+ipcMain.handle('backup:pickFile', async () => {
+  const opts: Electron.OpenDialogOptions = { properties: ['openFile'], filters: [{ name: 'Sauvegarde POS', extensions: ['sqlite'] }] };
+  const res = mainWindow ? await dialog.showOpenDialog(mainWindow, opts) : await dialog.showOpenDialog(opts);
+  return res.canceled ? null : res.filePaths[0];
 });

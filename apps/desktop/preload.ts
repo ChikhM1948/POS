@@ -8,4 +8,6 @@ import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('posBridge', {
   printThermal: (job: Uint8Array) => ipcRenderer.invoke('print:thermal', job),
   openCashDrawer: () => ipcRenderer.invoke('cashdrawer:open'),
+  pickBackupFolder: () => ipcRenderer.invoke('backup:pickFolder'),
+  pickBackupFile: () => ipcRenderer.invoke('backup:pickFile'),
 });

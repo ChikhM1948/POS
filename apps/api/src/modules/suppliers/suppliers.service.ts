@@ -1,6 +1,8 @@
 import { Types } from 'mongoose';
 import { randomUUID } from 'node:crypto';
 import { Supplier } from '../../models/Supplier';
+import { StockMovement } from '../../models/StockMovement';
+import { buildSupplierPriceHistory, type PurchaseCostRow, type SupplierPriceHistoryDTO } from '@pos-dz/shared';
 import { SupplierLedgerEntry } from '../../models/SupplierLedgerEntry';
 import type { SupplierDTO, SupplierInput, LedgerEntryDTO, CreateLedgerPaymentInput } from '@pos-dz/shared';
 
@@ -93,4 +95,37 @@ export async function recordSupplierPayment(tenantId: string, supplierId: string
     createdAtLocal: new Date(),
   });
   return toLedgerDTO(doc);
+}
+
+async function purchaseRows(tenantId: string, supplierId?: string): Promise<(PurchaseCostRow & { supplierId: string })[]> {
+  const docs = await StockMovement.find({
+    tenantId: new Types.ObjectId(tenantId),
+    type: 'purchase',
+    unitCostCents: { $ne: null },
+    supplierId: supplierId ? new Types.ObjectId(supplierId) : { $ne: null },
+  }).populate('productId', 'name').lean();
+  return docs.map((d: any) => ({
+    supplierId: String(d.supplierId),
+    productId: String(d.productId?._id ?? d.productId),
+    productName: d.productId?.name?.fr ?? '—',
+    date: new Date(d.createdAtLocal).toISOString(),
+    unitCostCents: d.unitCostCents,
+    quantity: d.quantityDelta,
+  }));
+}
+
+export async function getSupplierPriceHistory(tenantId: string, supplierId: string): Promise<SupplierPriceHistoryDTO> {
+  return buildSupplierPriceHistory(await purchaseRows(tenantId, supplierId));
+}
+
+export async function getSupplierPriceAlerts(tenantId: string): Promise<Record<string, number>> {
+  const rows = await purchaseRows(tenantId);
+  const bySupplier = new Map<string, PurchaseCostRow[]>();
+  for (const r of rows) bySupplier.set(r.supplierId, [...(bySupplier.get(r.supplierId) ?? []), r]);
+  const alerts: Record<string, number> = {};
+  for (const [id, list] of bySupplier) {
+    const n = buildSupplierPriceHistory(list).alertCount;
+    if (n > 0) alerts[id] = n;
+  }
+  return alerts;
 }

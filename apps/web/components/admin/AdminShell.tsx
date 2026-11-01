@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { adminFetch } from '../../lib/adminApi';
 import { useAdminAuth } from '../../lib/adminAuth';
 import { BrandMark } from '../BrandMark';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
 import { IconBarcode, IconBox, IconChart, IconLayers, IconLogout, IconReceipt, IconSettings, IconTruck, IconUsers, IconWallet } from '../icons';
-import type { UserRole } from '@pos-dz/shared';
+import type { StockAlertsDTO, StoreDTO, UserRole } from '@pos-dz/shared';
 
 interface NavItem {
   href: string;
@@ -38,6 +39,38 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const { session, logout } = useAdminAuth();
   const { t } = useTranslation();
   const pathname = usePathname();
+  const [alerts, setAlerts] = useState<StockAlertsDTO | null>(null);
+
+  // Pastille « à traiter » sur Stock : produits sous leur seuil + lots périmés / bientôt périmés (boutique principale).
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const { stores } = await adminFetch<{ stores: StoreDTO[] }>(session.token, '/stores');
+        const store = stores.find((s) => s.isMainStore) ?? stores[0];
+        if (!store) return;
+        const { alerts } = await adminFetch<{ alerts: StockAlertsDTO }>(session.token, `/stock/alerts?storeId=${store.id}`);
+        if (!cancelled) setAlerts(alerts);
+      } catch {
+        /* la pastille est facultative */
+      }
+    };
+    load();
+    const timer = setInterval(load, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [session, pathname]);
+  const stockBadge = alerts ? alerts.lowStockCount + alerts.expiringSoonCount + alerts.expiredCount : 0;
+  const stockBadgeTitle = alerts
+    ? [
+        alerts.lowStockCount > 0 && t('inventory.alertsLow', { n: alerts.lowStockCount }),
+        alerts.expiredCount > 0 && t('inventory.alertsExpired', { n: alerts.expiredCount }),
+        alerts.expiringSoonCount > 0 && t('inventory.alertsExpiring', { n: alerts.expiringSoonCount }),
+      ].filter(Boolean).join(' · ')
+    : '';
   const visibleNav = NAV.filter((item) => !item.roles || (session && item.roles.includes(session.role)));
 
   return (
@@ -64,6 +97,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
               >
                 <Icon className="h-[18px] w-[18px] shrink-0" />
                 {t(`adminShell.nav.${item.labelKey}`)}
+                {item.labelKey === 'stock' && stockBadge > 0 && (
+                  <span
+                    title={stockBadgeTitle}
+                    className={`ms-auto rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${alerts && alerts.expiredCount > 0 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}`}
+                  >
+                    {stockBadge}
+                  </span>
+                )}
               </Link>
             );
           })}
