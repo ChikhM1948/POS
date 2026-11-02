@@ -11,3 +11,4 @@ apps/desktop/renderer/
 *.log
 *.tsbuildinfo
 apps/desktop/native/
+packages/shared/index.js

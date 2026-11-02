@@ -2,6 +2,9 @@
   "name": "@pos-dz/shared",
   "version": "0.1.0",
   "private": true,
-  "main": "./index.ts",
-  "types": "./index.ts"
+  "main": "./index.js",
+  "types": "./index.ts",
+  "scripts": {
+    "build": "tsc index.ts --target ES2022 --module commonjs --moduleResolution node --strict --skipLibCheck --esModuleInterop"
+  }
 }
