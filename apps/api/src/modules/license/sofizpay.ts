@@ -1,4 +1,3 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { env } from '../../config/env';
 
 // Mêmes endpoints que la webapp Lingolab (lib/sofizpay.js).
@@ -52,15 +51,3 @@ export async function checkSofizpayPayment(cibOrderId: string): Promise<{ paid: 
     return null;
   }
 }
-
-/** HMAC-SHA256 hex de `order_id + transaction_id + amount + status` (le statut est couvert pour empêcher le rejeu d'un « failed » signé en « success »). */
-export function verifyWebhookSignature(body: any, signature: string | undefined): boolean {
-  if (!env.sofizpayWebhookSecret) return false;
-  const payload = `${body.order_id}${body.transaction_id}${body.amount}${body.status}`;
-  const expected = createHmac('sha256', env.sofizpayWebhookSecret).update(payload).digest('hex');
-  const given = Buffer.from(signature ?? '', 'utf8');
-  const exp = Buffer.from(expected, 'utf8');
-  return given.length === exp.length && timingSafeEqual(given, exp);
-}
-
-export const PAID_STATUSES = new Set(['success', 'PAID', 'completed']);

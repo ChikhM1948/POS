@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "cd ../.. && npm install",
+  "buildCommand": "npm run build -w @pos-dz/shared",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "functions": { "api/index.ts": { "maxDuration": 30, "includeFiles": "../../packages/shared/**" } }
+}

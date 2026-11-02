@@ -14,5 +14,5 @@
       "@pos-dz/shared": ["../../packages/shared/index.ts"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "api"]
 }

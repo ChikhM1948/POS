@@ -5,8 +5,7 @@ import { requireAuth, requireRole, type AuthenticatedRequest } from '../../middl
 import { env } from '../../config/env';
 import { License } from '../../models/License';
 import { Tenant } from '../../models/Tenant';
-import { activateForTenant, fulfillPayment, generateKeys, getTenantLicenseStatus, markPaymentFailed, redeemKey, signLicense, startCheckout, verifyCheckout } from './license.service';
-import { PAID_STATUSES, verifyWebhookSignature } from './sofizpay';
+import { activateForTenant, generateKeys, getTenantLicenseStatus, handleSofizpayCallback, redeemKey, signLicense, startCheckout, verifyCheckout } from './license.service';
 
 export const licenseRouter = Router();
 
@@ -73,13 +72,12 @@ licenseRouter.get('/checkout/:orderId', requireAuth, asyncHandler(async (req: Au
   res.json(await verifyCheckout(req.auth!.tenantId, String(req.params.orderId)));
 }));
 
-/** Callback SofizPay (signature HMAC dans x-sofizpay-signature). Public mais authentifié par signature. */
+/**
+ * Callback SofizPay. SofizPay ne fournit ni secret ni signature : le corps n'est donc jamais cru, il sert
+ * seulement à retrouver la commande ; le paiement est ensuite vérifié auprès de SofizPay (cib-transaction-check).
+ */
 licenseRouter.post('/sofizpay/webhook', asyncHandler(async (req: Request, res: Response) => {
-  const body = req.body ?? {};
-  if (!verifyWebhookSignature(body, req.get('x-sofizpay-signature'))) return res.status(401).json({ error: 'Signature invalide.' });
-  const { order_id, transaction_id, status, amount } = body;
-  if (typeof order_id !== 'string' || !order_id.startsWith('POS-')) return res.json({ received: true }); // pas une commande de licence
-  if (PAID_STATUSES.has(status)) await fulfillPayment(order_id, Number(amount), transaction_id ? String(transaction_id) : undefined);
-  else await markPaymentFailed(order_id);
+  const orderId = String(req.body?.order_id ?? req.body?.orderId ?? '');
+  if (orderId.startsWith('POS-')) await handleSofizpayCallback(orderId);
   res.json({ received: true });
 }));

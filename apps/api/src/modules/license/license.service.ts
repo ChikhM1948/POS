@@ -130,18 +130,28 @@ export async function fulfillPayment(orderId: string, paidAmount: number | undef
   return getTenantLicenseStatus(String(order.tenantId));
 }
 
-export async function markPaymentFailed(orderId: string) {
-  await LicensePayment.updateOne({ orderId, status: 'pending' }, { $set: { status: 'failed' } });
+/** Confirme une commande auprès de SofizPay (source de vérité) et émet la licence si elle est payée. */
+async function confirmWithGateway(order: { orderId: string; cibOrderId?: string | null; tenantId: unknown; status: string }) {
+  if (order.status === 'paid') return true;
+  if (!order.cibOrderId) return false;
+  const check = await checkSofizpayPayment(order.cibOrderId);
+  if (!check?.paid) return false;
+  return !!(await fulfillPayment(order.orderId, check.amount, order.cibOrderId));
 }
 
-/** Retour client : on interroge SofizPay (la source de vérité) plutôt que de croire l'URL de retour. */
+/** Retour client : on interroge SofizPay plutôt que de croire l'URL de retour. */
 export async function verifyCheckout(tenantId: string, orderId: string) {
   const order = await LicensePayment.findOne({ orderId, tenantId });
   if (!order) fail(404, 'Commande introuvable.');
-  if (order.status === 'paid') return { paid: true, license: await getTenantLicenseStatus(tenantId) };
-  if (!order.cibOrderId) return { paid: false };
-  const check = await checkSofizpayPayment(order.cibOrderId);
-  if (!check?.paid) return { paid: false };
-  const license = await fulfillPayment(orderId, check.amount, order.cibOrderId);
-  return { paid: !!license, license: license ?? undefined };
+  const paid = await confirmWithGateway(order);
+  return paid ? { paid: true, license: await getTenantLicenseStatus(tenantId) } : { paid: false };
+}
+
+/**
+ * Callback SofizPay : pas de secret ni de signature chez SofizPay, donc le contenu du callback n'est jamais cru.
+ * Il sert uniquement de déclencheur : l'état réel du paiement est relu chez SofizPay.
+ */
+export async function handleSofizpayCallback(orderId: string) {
+  const order = await LicensePayment.findOne({ orderId });
+  if (order) await confirmWithGateway(order);
 }
