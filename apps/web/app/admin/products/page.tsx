@@ -19,6 +19,8 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState<ProductDTO | 'new' | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Confirmation intégrée : window.confirm() est peu fiable dans Electron (peut retourner false sans s'afficher).
+  const [pending, setPending] = useState<{ kind: 'deactivate' | 'delete'; product: ProductDTO } | null>(null);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -29,7 +31,6 @@ export default function ProductsPage() {
         `/products${search ? `?search=${encodeURIComponent(search)}` : ''}`,
       );
       setProducts(products);
-      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
@@ -74,22 +75,21 @@ export default function ProductsPage() {
 
   async function handleDeactivate(product: ProductDTO) {
     if (!session) return;
-    if (!confirm(t('products.confirmDeactivate', { name: product.name.fr }))) return;
     await adminFetch(session.token, `/products/${product.id}`, { method: 'DELETE' });
     await load();
   }
 
   async function handleDeletePermanently(product: ProductDTO) {
     if (!session) return;
-    if (!confirm(t('products.confirmDeletePermanently', { name: product.name.fr }))) return;
     try {
       await adminFetch(session.token, `/products/${product.id}?permanent=true`, { method: 'DELETE' });
       setError(null);
+      setPending(null);
+      await load();
     } catch (err) {
       // 409 : le produit a un historique (ventes, documents, mouvements) — le message du serveur propose de le désactiver.
       setError(err instanceof Error ? err.message : t('common.errorLoading'));
     }
-    await load();
   }
 
   async function handleReactivate(product: ProductDTO) {
@@ -131,6 +131,38 @@ export default function ProductsPage() {
       )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
+
+      {pending && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setPending(null)}>
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <p className="text-sm text-neutral-800">
+              {pending.kind === 'delete'
+                ? t('products.confirmDeletePermanently', { name: pending.product.name.fr })
+                : t('products.confirmDeactivate', { name: pending.product.name.fr })}
+            </p>
+            {error && <p className="mt-3 rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>}
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setPending(null)} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm">
+                {t('common.cancel')}
+              </button>
+              <button
+                autoFocus
+                onClick={() => {
+                  const { kind, product } = pending;
+                  if (kind === 'delete') void handleDeletePermanently(product);
+                  else {
+                    setPending(null);
+                    void handleDeactivate(product);
+                  }
+                }}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium text-white ${pending.kind === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'}`}
+              >
+                {pending.kind === 'delete' ? t('products.deletePermanently') : t('common.deactivate')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-card">
         <table className="w-full text-sm">
@@ -184,7 +216,7 @@ export default function ProductsPage() {
                     {t('common.edit')}
                   </button>
                   {p.active ? (
-                    <button onClick={() => handleDeactivate(p)} className="me-3 text-sm font-medium text-amber-600 hover:text-amber-700 hover:underline">
+                    <button onClick={() => setPending({ kind: 'deactivate', product: p })} className="me-3 text-sm font-medium text-amber-600 hover:text-amber-700 hover:underline">
                       {t('common.deactivate')}
                     </button>
                   ) : (
@@ -192,7 +224,7 @@ export default function ProductsPage() {
                       {t('common.reactivate')}
                     </button>
                   )}
-                  <button onClick={() => handleDeletePermanently(p)} className="text-sm font-medium text-red-600 hover:text-red-700 hover:underline">
+                  <button onClick={() => { setError(null); setPending({ kind: 'delete', product: p }); }} className="text-sm font-medium text-red-600 hover:text-red-700 hover:underline">
                     {t('products.deletePermanently')}
                   </button>
                 </td>

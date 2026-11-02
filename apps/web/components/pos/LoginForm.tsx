@@ -63,16 +63,10 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
     });
   }, []);
 
-  function handleSetupSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const next: RegisterConfig = { tenantId: tenantId.trim(), storeId: storeId.trim() };
-    saveRegisterConfig(next);
-    setConfig(next);
-  }
-
   async function handleLoginSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!config) return;
+    const cfg: RegisterConfig | null = config ?? (tenantId.trim() && storeId.trim() ? { tenantId: tenantId.trim(), storeId: storeId.trim() } : null);
+    if (!cfg) return;
     setError(null);
     setLoading(true);
     try {
@@ -81,8 +75,8 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
       const path = method === 'pin' ? '/auth/login-pin' : '/auth/login-cashier';
       const body =
         method === 'pin'
-          ? { tenantId: config.tenantId, storeId: config.storeId, pinCode }
-          : { tenantId: config.tenantId, email, password };
+          ? { tenantId: cfg.tenantId, storeId: cfg.storeId, pinCode }
+          : { tenantId: cfg.tenantId, email, password };
 
       const res = await fetch(`${API_BASE_URL}${path}`, {
         method: 'POST',
@@ -110,7 +104,13 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
         // hors-ligne juste après la connexion — voir commentaire ci-dessus
       }
 
-      onLogin({ token, tenantId: config.tenantId, storeId: config.storeId, cashierId: user.id, cashierName: user.name, syncEnabled });
+      // Première configuration : le poste n'est mémorisé qu'une fois les identifiants validés.
+      if (!config) {
+        saveRegisterConfig(cfg);
+        setConfig(cfg);
+      }
+
+      onLogin({ token, tenantId: cfg.tenantId, storeId: cfg.storeId, cashierId: user.id, cashierName: user.name, syncEnabled });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('login.errorGeneric'));
       setPinCode('');
@@ -163,58 +163,6 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
     );
   }
 
-  if (!config) {
-    return (
-      <div className="relative flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
-        <div className="absolute top-4 end-4">
-          <LanguageSwitcher />
-        </div>
-        <form
-          onSubmit={handleSetupSubmit}
-          className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-8 shadow-card"
-        >
-          <div className="mb-1 flex flex-col items-center gap-3 text-center">
-            <BrandMark size={44} />
-            <div>
-              <h1 className="text-lg font-semibold text-neutral-900">{t('login.setupTitle')}</h1>
-              <p className="text-sm text-neutral-500">{t('login.setupSubtitle')}</p>
-            </div>
-          </div>
-
-          <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-            {t('login.tenantLabel')}
-            <input
-              value={tenantId}
-              onChange={(e) => setTenantId(e.target.value)}
-              placeholder={t('login.tenantPlaceholder')}
-              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
-              required
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-            {t('login.storeLabel')}
-            <input
-              value={storeId}
-              onChange={(e) => setStoreId(e.target.value)}
-              placeholder={t('login.storePlaceholder')}
-              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
-              required
-            />
-          </label>
-
-          <button
-            type="submit"
-            className="mt-1 flex items-center justify-center rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700"
-          >
-            {t('login.setupSubmit')}
-          </button>
-
-          <p className="text-center text-xs text-neutral-400">{t('login.setupFooter')}</p>
-        </form>
-      </div>
-    );
-  }
-
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
       <div className="absolute top-4 end-4">
@@ -227,10 +175,36 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
         <div className="mb-1 flex flex-col items-center gap-3 text-center">
           <BrandMark size={44} />
           <div>
-            <h1 className="text-lg font-semibold text-neutral-900">{t('login.title')}</h1>
-            <p className="text-sm text-neutral-500">{t('login.subtitle')}</p>
+            <h1 className="text-lg font-semibold text-neutral-900">{config ? t('login.title') : t('login.setupTitle')}</h1>
+            <p className="text-sm text-neutral-500">{config ? t('login.subtitle') : t('login.setupSubtitle')}</p>
           </div>
         </div>
+
+        {!config && (
+          <>
+            <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+              {t('login.tenantLabel')}
+              <input
+                value={tenantId}
+                onChange={(e) => setTenantId(e.target.value)}
+                placeholder={t('login.tenantPlaceholder')}
+                autoFocus
+                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
+                required
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+              {t('login.storeLabel')}
+              <input
+                value={storeId}
+                onChange={(e) => setStoreId(e.target.value)}
+                placeholder={t('login.storePlaceholder')}
+                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
+                required
+              />
+            </label>
+          </>
+        )}
 
         <div className="grid grid-cols-2 gap-1 rounded-lg bg-neutral-100 p-1">
           <button
@@ -263,7 +237,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
               type="password"
               inputMode="numeric"
               maxLength={8}
-              autoFocus
+              autoFocus={!!config}
               className="rounded-lg border border-neutral-300 px-3 py-2.5 text-center text-lg tracking-[0.6em] text-neutral-900 placeholder:tracking-normal placeholder:text-neutral-400"
               required
             />
@@ -277,7 +251,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('login.emailPlaceholder')}
                 type="email"
-                autoFocus
+                autoFocus={!!config}
                 className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
                 required
               />
@@ -310,7 +284,9 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
           {loading ? t('login.submitting') : t('login.submit')}
         </button>
 
-        {!LOCAL_MODE && (
+        {!config && <p className="text-center text-xs text-neutral-400">{t('login.setupFooter')}</p>}
+
+        {!LOCAL_MODE && config && (
           <button
             type="button"
             onClick={handleChangeStore}
