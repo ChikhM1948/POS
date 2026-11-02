@@ -337,7 +337,7 @@ export default function LandingPage() {
               <div className="rounded-lg border-2 border-brand-600 bg-white p-6">
                 <p className="text-sm font-semibold text-neutral-500">{c.pricing.lifetimeLabel}</p>
                 <p className="mt-2 flex items-baseline gap-2 text-4xl font-bold text-brand-800">
-                  {c.pricing.price} <span className="text-lg">{c.pricing.currency}</span>
+                  <bdi dir="ltr">{c.pricing.price}</bdi> <span className="text-lg">{c.pricing.currency}</span>
                   <span className="text-sm font-medium text-neutral-500">· {c.pricing.once}</span>
                 </p>
                 <p className="mt-3 text-sm text-neutral-600">{c.pricing.lifetimeText}</p>
