@@ -28,6 +28,8 @@ export interface ITenant extends Document {
   status: 'active' | 'suspended' | 'trial';
   /** true = ce commerce synchronise ses données en ligne (accessible depuis le web) ; false = local uniquement — voir sync-engine.ts, gaté côté client sur ce champ. */
   syncEnabled: boolean;
+  /** Licence active (essai 14 jours ou payante) — voir modules/license. Absente = commerce antérieur au système de licence. */
+  license?: { key?: string; kind: 'trial' | 'paid'; activatedAt: Date; expiresAt: Date };
   createdAt: Date;
 }
 
@@ -58,6 +60,12 @@ const TenantSchema = new Schema<ITenant>(
     plan: { type: String, enum: ['starter', 'pro', 'enterprise'], default: 'starter' },
     status: { type: String, enum: ['active', 'suspended', 'trial'], default: 'trial' },
     syncEnabled: { type: Boolean, default: true },
+    license: {
+      key: String,
+      kind: { type: String, enum: ['trial', 'paid'] },
+      activatedAt: Date,
+      expiresAt: Date,
+    },
   },
   { timestamps: true },
 );

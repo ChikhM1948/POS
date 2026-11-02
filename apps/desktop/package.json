@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "node scripts/bundle.js && electron dist/main.js",
     "build": "tsc -p . --noEmit && node scripts/fetch-native.js && node scripts/bundle.js && node scripts/copy-renderer.js && electron-builder --win",
-    "typecheck": "tsc -p . --noEmit"
+    "typecheck": "tsc -p . --noEmit",
+    "publish:update": "node scripts/publish-update.js"
   },
   "dependencies": {
     "better-sqlite3": "11.10.0",
+    "electron-updater": "^6.8.11",
     "escpos": "^3.0.0-alpha.6",
     "escpos-usb": "^3.0.0-alpha.4"
   },
@@ -80,7 +82,13 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "artifactName": "POS-Algerie-Setup-${version}.exe"
-    }
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "${env.POS_UPDATE_URL}"
+      }
+    ]
   },
   "optionalDependencies": {
     "@node-usb/usb-win32-x64-msvc": "3.1.0"

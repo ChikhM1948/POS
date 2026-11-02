@@ -379,19 +379,85 @@ export interface DebtsSummaryDTO {
 
 // --- Auth : création du commerce (premier lancement) & connexion ---
 
+/**
+ * Identifiant de connexion : email OU numéro de téléphone. Il est stocké dans le champ `email`
+ * des comptes (clé unique de login), sous forme normalisée.
+ */
+export type IdentifierKind = 'email' | 'phone';
+
+/** Normalise un numéro : retire espaces/points/tirets/parenthèses, convertit un préfixe `00` en `+`. */
+export function normalizePhone(raw: string): string {
+  const compact = String(raw ?? '').trim().replace(/[\s.\-()]/g, '');
+  return compact.startsWith('00') ? `+${compact.slice(2)}` : compact;
+}
+
+export function isValidPhone(raw: string): boolean {
+  return /^\+?\d{8,15}$/.test(normalizePhone(raw));
+}
+
+export function isValidEmail(raw: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(raw ?? '').trim());
+}
+
+/**
+ * Détecte et normalise un identifiant (email en minuscules, ou téléphone nettoyé).
+ * Retourne `null` si ce n'est ni un email ni un téléphone valide.
+ */
+export function parseIdentifier(raw: string): { kind: IdentifierKind; value: string } | null {
+  const trimmed = String(raw ?? '').trim();
+  if (trimmed.includes('@')) {
+    return isValidEmail(trimmed) ? { kind: 'email', value: trimmed.toLowerCase() } : null;
+  }
+  return isValidPhone(trimmed) ? { kind: 'phone', value: normalizePhone(trimmed) } : null;
+}
+
+/** Normalisation tolérante pour le login : un identifiant invalide ne correspondra simplement à aucun compte. */
+export function normalizeIdentifier(raw: string): string {
+  return parseIdentifier(raw)?.value ?? String(raw ?? '').trim().toLowerCase();
+}
+
 /** Crée le tenant + son premier compte administrateur — un seul appel, avant toute session. */
 export interface SignupInput {
-  /** Optionnels : dérivés de l'email si absents (inscription email + mot de passe uniquement). */
+  /** Optionnels : dérivés de l'identifiant si absents. */
   businessName?: string;
   adminName?: string;
+  /** Identifiant de connexion : adresse email OU numéro de téléphone (voir parseIdentifier). */
   email: string;
   password: string;
   phone?: string;
   /** Mode choisi à l'installation : true = synchronise en ligne (accessible depuis le web), false = local uniquement. Défaut : true. */
   syncEnabled?: boolean;
+  /** Clé d'activation remise à l'achat/inscription : démarre la période d'essai (ou la licence) du commerce. */
+  activationKey?: string;
+}
+
+/** Licence d'un commerce : essai de 14 jours (clé `trial`) ou licence payante (clé `paid`). */
+export const TRIAL_DAYS = 14;
+
+export interface LicenseDTO {
+  key: string;
+  kind: 'trial' | 'paid';
+  activatedAt: string;
+  expiresAt: string;
+}
+
+/** Licence signée par le serveur (Ed25519) : le poste hors-ligne vérifie la signature avec la clé publique embarquée. */
+export interface SignedLicense extends LicenseDTO {
+  signature: string;
+}
+
+export interface LicenseStatusDTO {
+  /** false = aucune clé activée sur ce commerce. */
+  activated: boolean;
+  kind?: 'trial' | 'paid';
+  expiresAt?: string;
+  /** Jours entiers restants (0 le dernier jour), négatif non renvoyé : voir `expired`. */
+  daysLeft?: number;
+  expired: boolean;
 }
 
 export interface AuthResult {
+  license?: LicenseStatusDTO;
   token: string;
   tenantId: string;
   storeId?: string;

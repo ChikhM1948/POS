@@ -4,7 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { openDatabase, type Db } from './db';
-import { Ctx, requireAuth, requireRole } from './util';
+import { Ctx, requireAuth, requireLicense, requireRole } from './util';
+import { LicenseManager } from './license';
+import { licenseRouter } from './routes/license';
 import { CloudSync } from './cloud';
 import { applyPendingRestore, BackupManager } from './backup';
 import { authRouter } from './routes/auth';
@@ -59,21 +61,25 @@ function loadJwtSecret(db: Db): string {
 export function createApi(ctx: Ctx) {
   const auth = requireAuth(ctx.jwtSecret, ctx.db);
   const admins = requireRole('store_admin', 'super_admin');
+  const licensed = requireLicense(ctx.license);
   const api = express.Router();
   api.use(express.json({ limit: '10mb' })); // logos / photos produit en data URL base64
   api.get('/health', (_req, res) => res.json({ status: 'ok' }));
   api.use('/auth', authRouter(ctx));
-  api.use('/sync', auth, syncRouter(ctx));
-  api.use('/products', auth, productsRouter(ctx));
-  api.use('/stock', auth, stockRouter(ctx));
-  api.use('/stores', auth, storesRouter(ctx));
-  api.use('/sales', auth, admins, salesRouter(ctx));
-  api.use('/documents', auth, admins, documentsRouter(ctx));
-  api.use('/reports', auth, admins, reportsRouter(ctx));
-  api.use('/users', auth, usersRouter(ctx));
-  api.use('/tenant', auth, tenantRouter(ctx));
-  api.use('/suppliers', auth, suppliersRouter(ctx));
-  api.use('/customers', auth, customersRouter(ctx));
+  api.use('/license', licenseRouter(ctx));
+  // Licence expirée => 402 sur toute l'activité métier. /backup reste ouvert : les données du commerçant
+  // ne doivent jamais être prises en otage ; /cloud aussi (la réplication n'est pas une fonctionnalité de caisse).
+  api.use('/sync', auth, licensed, syncRouter(ctx));
+  api.use('/products', auth, licensed, productsRouter(ctx));
+  api.use('/stock', auth, licensed, stockRouter(ctx));
+  api.use('/stores', auth, licensed, storesRouter(ctx));
+  api.use('/sales', auth, licensed, admins, salesRouter(ctx));
+  api.use('/documents', auth, licensed, admins, documentsRouter(ctx));
+  api.use('/reports', auth, licensed, admins, reportsRouter(ctx));
+  api.use('/users', auth, licensed, usersRouter(ctx));
+  api.use('/tenant', auth, licensed, tenantRouter(ctx));
+  api.use('/suppliers', auth, licensed, suppliersRouter(ctx));
+  api.use('/customers', auth, licensed, customersRouter(ctx));
   api.use('/cloud', auth, admins, cloudRouter(ctx));
   api.use('/backup', auth, admins, backupRouter(ctx));
   api.use(((err, _req, res, _next) => {
@@ -90,7 +96,8 @@ export async function startLocalServer(opts: LocalServerOptions): Promise<{ clos
   applyPendingRestore(dbFile); // restauration préparée à la session précédente, avant d'ouvrir la base
   const db = openDatabase(dbFile, opts.nativeBinding);
   const backup = new BackupManager(db, dbFile, opts.nativeBinding, opts.onRestartRequired ?? (() => undefined));
-  const ctx: Ctx = { db, jwtSecret: loadJwtSecret(db), cloud: new CloudSync(db), backup };
+  const cloud = new CloudSync(db);
+  const ctx: Ctx = { db, jwtSecret: loadJwtSecret(db), cloud, backup, license: new LicenseManager(db, () => cloud.status().url) };
   ctx.cloud.start();
   backup.start();
 

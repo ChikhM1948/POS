@@ -1,5 +1,6 @@
 'use client';
 
+import { LicenseGate } from '../components/LicenseGate';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDeviceId } from '../hooks/useDeviceId';
@@ -278,6 +279,7 @@ export default function PosPage() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-neutral-50">
       <OfflineBanner localMode={LOCAL_MODE || !session.syncEnabled} />
+      <LicenseGate token={session.token} canActivate={false} />
       <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3">
         <div className="flex items-center gap-3">
           <BrandMark size={38} />

@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 import type { Model } from 'mongoose';
 import { Tenant } from '../../models/Tenant';
+import { License } from '../../models/License';
 import { Store } from '../../models/Store';
 import { User } from '../../models/User';
 import { Product } from '../../models/Product';
@@ -166,7 +167,7 @@ export async function replicate(tenantId: string, records: Record<string, any[]>
  * Première connexion d'un poste : crée commerce + boutique + compte admin s'ils n'existent pas
  * (jamais de modification d'un commerce existant — il faut alors s'authentifier).
  */
-export async function bootstrapTenant(input: { tenant: any; store: any; user: any }): Promise<{ created: boolean }> {
+export async function bootstrapTenant(input: { tenant: any; store: any; user: any; licenseKey?: string }): Promise<{ created: boolean }> {
   const tenantDoc = convert(input.tenant, REPLICATION_SPECS.tenants);
   if (await Tenant.collection.findOne({ _id: tenantDoc._id })) return { created: false };
 
@@ -177,6 +178,17 @@ export async function bootstrapTenant(input: { tenant: any; store: any; user: an
   const userDoc = convert(input.user, REPLICATION_SPECS.users);
   storeDoc.tenantId = userDoc.tenantId = tenantDoc._id;
 
+  // Le poste a déjà échangé sa clé (POST /license/redeem) : on rattache cette licence au commerce cloud.
+  // Route non authentifiée : sans clé redeemée et libre, on refuse (sinon essai gratuit illimité en créant des commerces).
+  const lic = input.licenseKey
+    ? await License.findOne({ key: String(input.licenseKey).toUpperCase(), redeemedAt: { $exists: true }, revoked: false })
+    : null;
+  if (!lic || lic.tenantId) {
+    throw Object.assign(new Error("Clé d'activation invalide ou déjà rattachée à un commerce."), { status: 403 });
+  }
+  lic.tenantId = tenantDoc._id;
+  await lic.save();
+  tenantDoc.license = { key: lic.key, kind: lic.kind, activatedAt: lic.redeemedAt, expiresAt: lic.expiresAt };
   await Tenant.collection.insertOne(tenantDoc);
   await Store.collection.insertOne(storeDoc);
   await User.collection.insertOne(userDoc);

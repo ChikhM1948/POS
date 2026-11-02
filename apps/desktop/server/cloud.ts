@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { normalizeIdentifier } from './identifier';
 import { createHash } from 'node:crypto';
 import type { Db } from './db';
 import { HttpError, nowIso } from './util';
@@ -138,6 +139,11 @@ export class CloudSync {
 
   constructor(private db: Db) {}
 
+  /** Licence signée du poste, envoyée avec le bootstrap pour la rattacher au commerce cloud. */
+  licenseKey(): string | undefined {
+    try { return JSON.parse(this.getMeta('license') ?? '{}').key; } catch { return undefined; }
+  }
+
   private getMeta(key: string): string | undefined {
     return (this.db.prepare('SELECT value FROM app_meta WHERE key = ?').get(key) as { value: string } | undefined)?.value;
   }
@@ -198,7 +204,7 @@ export class CloudSync {
   /** Relie ce poste au cloud avec le compte administrateur local (mêmes identifiants des deux côtés). */
   async connect(input: { url?: string; email?: string; password?: string }): Promise<CloudStatus> {
     const url = String(input.url ?? '').trim().replace(/\/+$/, '');
-    const email = String(input.email ?? '').trim().toLowerCase();
+    const email = normalizeIdentifier(input.email ?? '');
     const password = String(input.password ?? '');
     if (!/^https?:\/\//.test(url) || !email || !password) throw new HttpError(400, 'Adresse du serveur, email et mot de passe sont requis.');
 
@@ -212,7 +218,7 @@ export class CloudSync {
       const [, tenant] = TABLES[0].map(this.db.prepare('SELECT * FROM tenants WHERE id = ?').get(user.tenant_id));
       const [, store] = TABLES[1].map(this.db.prepare('SELECT * FROM stores WHERE tenant_id = ? AND is_main_store = 1').get(user.tenant_id) ?? this.db.prepare('SELECT * FROM stores WHERE tenant_id = ? LIMIT 1').get(user.tenant_id));
       const [, cloudUser] = TABLES[2].map(user);
-      const boot = await this.http('/auth/replicate-bootstrap', { tenant, store: { ...store, tenantId: tenant._id }, user: { ...cloudUser, tenantId: tenant._id } });
+      const boot = await this.http('/auth/replicate-bootstrap', { tenant, store: { ...store, tenantId: tenant._id }, user: { ...cloudUser, tenantId: tenant._id }, license: { key: this.licenseKey() } });
       if (boot.status !== 200) throw new Error(boot.data.error ?? `Serveur injoignable ou incompatible (${boot.status}).`);
       await this.login();
     } catch (err) {

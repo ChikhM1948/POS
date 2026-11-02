@@ -231,7 +231,10 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('login.emailPlaceholder')}
-                type="email"
+                type="text"
+                inputMode="email"
+                autoCapitalize="none"
+                autoComplete="username"
                 autoFocus
                 className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
                 required

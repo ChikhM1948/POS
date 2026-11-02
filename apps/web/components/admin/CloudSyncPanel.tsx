@@ -93,7 +93,7 @@ export function CloudSyncPanel() {
             </label>
           )}
           <label className="flex flex-col gap-1 text-neutral-700">{t('cloudSync.email')}
-            <input required type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
+            <input required type="text" autoCapitalize="none" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
           </label>
           <label className="flex flex-col gap-1 text-neutral-700">{t('cloudSync.password')}
             <input required type="password" dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />

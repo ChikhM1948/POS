@@ -5,6 +5,7 @@ import type { JwtClaims, UserRole } from '@pos-dz/shared';
 import type { Db } from './db';
 import type { CloudSync } from './cloud';
 import type { BackupManager } from './backup';
+import type { LicenseManager } from './license';
 
 export const newId = () => randomUUID();
 export const nowIso = () => new Date().toISOString();
@@ -21,6 +22,7 @@ export interface Ctx {
   jwtSecret: string;
   cloud: CloudSync;
   backup: BackupManager;
+  license: LicenseManager;
 }
 
 export interface AuthedRequest extends Request {
@@ -59,6 +61,15 @@ export function requireRole(...roles: UserRole[]) {
     if (!req.auth || !roles.includes(req.auth.role)) {
       return res.status(403).json({ error: 'Rôle insuffisant pour cette action.' });
     }
+    next();
+  };
+}
+
+/** 402 quand l'essai / la licence du poste est expiré — même contrat que l'API cloud (code LICENSE_EXPIRED). */
+export function requireLicense(license: LicenseManager) {
+  return (_req: AuthedRequest, res: Response, next: NextFunction) => {
+    const status = license.status();
+    if (status.expired) return res.status(402).json({ error: "Licence expirée. Saisissez une clé d'activation pour continuer.", code: 'LICENSE_EXPIRED', license: status });
     next();
   };
 }

@@ -19,6 +19,9 @@ export async function adminFetch<T>(token: string, path: string, options: Reques
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    if (res.status === 402 && body.code === 'LICENSE_EXPIRED' && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('pos:license-expired')); // voir lib/license.ts / LicenseGate
+    }
     throw new ApiError(res.status, body.error ?? `Erreur ${res.status}`);
   }
   if (res.status === 204) return undefined as T;

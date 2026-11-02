@@ -4,6 +4,7 @@ import fs from 'node:fs';
 // `escpos` + `escpos-usb` gèrent la découverte/écriture sur le port USB de l'imprimante.
 // Alternative Windows/partagée réseau : passer par le spouleur (node-thermal-printer, driver "raw").
 import { startLocalServer } from './server';
+import { setupAutoUpdate, type Updater } from './updater';
 
 /**
  * Chargés à la demande : si le module USB natif est indisponible, l'application démarre quand
@@ -20,7 +21,8 @@ function loadPrinterLibs(): { escpos: any; EscposUSB: any } {
 
 let mainWindow: BrowserWindow | null = null;
 let baseUrl = '';
-let localServer: { close: () => Promise<void> } | null = null;
+let localServer: { close: () => Promise<void>; db: import('./server/db').Db } | null = null;
+let updater: Updater | null = null;
 
 /**
  * Port fixe : l'origine `http://127.0.0.1:RENDERER_PORT` doit rester identique d'un lancement à
@@ -79,6 +81,15 @@ function buildMenu() {
         { role: 'reload' },
         { role: 'toggleDevTools' },
         { type: 'separator' },
+        {
+          label: 'Rechercher une mise à jour',
+          click: async () => {
+            const message = updater ? await updater.checkNow() : "Les mises à jour automatiques ne sont disponibles que dans la version installée (pas la version portable).";
+            const opts: Electron.MessageBoxOptions = { type: 'info', message, buttons: ['OK'] };
+            if (mainWindow) await dialog.showMessageBox(mainWindow, opts); else await dialog.showMessageBox(opts);
+          },
+        },
+        { type: 'separator' },
         { role: 'quit' },
       ],
     },
@@ -121,6 +132,11 @@ async function createWindow() {
     onRestartRequired: restartApp,
   });
   baseUrl = devUrl || `http://127.0.0.1:${RENDERER_PORT}`;
+  updater = setupAutoUpdate({
+    dataDir,
+    getWindow: () => mainWindow,
+    getServerUrl: () => (localServer?.db.prepare("SELECT value FROM app_meta WHERE key = 'cloud_url'").get() as { value: string } | undefined)?.value,
+  });
   buildMenu();
   mainWindow.loadURL(baseUrl);
 }

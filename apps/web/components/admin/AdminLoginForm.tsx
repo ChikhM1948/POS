@@ -74,7 +74,10 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t('adminLogin.emailPlaceholder')}
-            type="email"
+            type="text"
+            inputMode="email"
+            autoCapitalize="none"
+            autoComplete="username"
             className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
             required
           />

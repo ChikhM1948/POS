@@ -6,6 +6,7 @@ import { BrandMark } from '../BrandMark';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
 import { LOCAL_MODE } from '../../lib/localMode';
+import { parseIdentifier } from '@pos-dz/shared';
 import type { AuthResult } from '@pos-dz/shared';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -20,22 +21,31 @@ interface Props {
  * /admin/team). Distinct du login habituel (email + mot de passe + tenantId déjà connu).
  */
 export function AdminSetupForm({ onSwitchToLogin }: Props) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { login } = useAdminAuth();
+  // Deux modes d'inscription : email ou téléphone (l'un ou l'autre sert ensuite d'identifiant de connexion).
+  const [method, setMethod] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [activationKey, setActivationKey] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const identifier = parseIdentifier(method === 'email' ? email : phone);
+    if (!identifier || identifier.kind !== method) {
+      setError(t(method === 'email' ? 'adminSetup.errorInvalidEmail' : 'adminSetup.errorInvalidPhone'));
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/auth/setup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, syncEnabled: !LOCAL_MODE }),
+        body: JSON.stringify({ email: identifier.value, password, syncEnabled: !LOCAL_MODE }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -74,17 +84,51 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
           </div>
         </div>
 
-        <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-          {t('adminSetup.emailLabel')}
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={t('adminSetup.emailPlaceholder')}
-            type="email"
-            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
-            required
-          />
-        </label>
+        <div role="tablist" className="grid grid-cols-2 gap-1 rounded-lg bg-neutral-100 p-1 text-sm font-medium">
+          {(['email', 'phone'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={method === m}
+              onClick={() => { setMethod(m); setError(null); }}
+              className={`rounded-md py-1.5 transition ${method === m ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-700'}`}
+            >
+              {t(m === 'email' ? 'adminSetup.methodEmail' : 'adminSetup.methodPhone')}
+            </button>
+          ))}
+        </div>
+
+        {method === 'email' ? (
+          <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+            {t('adminSetup.emailLabel')}
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t('adminSetup.emailPlaceholder')}
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
+              required
+            />
+          </label>
+        ) : (
+          <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+            {t('adminSetup.phoneLoginLabel')}
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder={t('adminSetup.phonePlaceholder')}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              dir="ltr"
+              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
+              required
+            />
+          </label>
+        )}
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
           {t('adminSetup.passwordLabel')}
           <input
@@ -96,6 +140,23 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
             className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
             required
           />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+          {locale === 'ar' ? 'مفتاح التفعيل' : "Clé d'activation"}
+          <input
+            value={activationKey}
+            onChange={(e) => setActivationKey(e.target.value)}
+            placeholder="POS-XXXX-XXXX-XXXX-XXXX"
+            autoCapitalize="characters"
+            spellCheck={false}
+            dir="ltr"
+            className="rounded-lg border border-neutral-300 px-3 py-2 font-mono text-sm uppercase text-neutral-900 placeholder:text-neutral-400"
+            required
+          />
+          <span className="text-xs font-normal text-neutral-500">
+            {locale === 'ar' ? 'تبدأ الفترة التجريبية (14 يومًا) عند التفعيل.' : "L'essai de 14 jours démarre à l'activation."}
+          </span>
         </label>
 
         {error && (

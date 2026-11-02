@@ -121,6 +121,11 @@ export interface TranslationDict {
     emailPlaceholder: string;
     phoneLabel: string;
     phonePlaceholder: string;
+    methodEmail: string;
+    methodPhone: string;
+    phoneLoginLabel: string;
+    errorInvalidEmail: string;
+    errorInvalidPhone: string;
     modeLabel: string;
     modeSyncTitle: string;
     modeSyncDescription: string;
@@ -956,9 +961,9 @@ const fr: TranslationDict = {
     title: 'Connexion caisse',
     subtitle: 'Identifiez-vous pour ouvrir la session de vente',
     methodPin: 'Code PIN',
-    methodPassword: 'Email / mot de passe',
+    methodPassword: 'Email ou téléphone / mot de passe',
     pinLabel: 'Code PIN',
-    emailLabel: 'Email',
+    emailLabel: 'Email ou téléphone',
     emailPlaceholder: 'vous@commerce.dz',
     passwordLabel: 'Mot de passe',
     passwordPlaceholder: '••••••••',
@@ -973,7 +978,7 @@ const fr: TranslationDict = {
     subtitle: 'Connectez-vous pour gérer votre commerce',
     tenantLabel: 'Identifiant boutique (tenant)',
     tenantPlaceholder: 'ex. tenant_demo',
-    emailLabel: 'Email',
+    emailLabel: 'Email ou téléphone',
     emailPlaceholder: 'vous@commerce.dz',
     passwordLabel: 'Mot de passe',
     passwordPlaceholder: '••••••••',
@@ -1000,6 +1005,11 @@ const fr: TranslationDict = {
     emailPlaceholder: 'vous@commerce.dz',
     phoneLabel: 'Téléphone (optionnel)',
     phonePlaceholder: '0555 12 34 56',
+    methodEmail: 'Email',
+    methodPhone: 'Téléphone',
+    phoneLoginLabel: 'Numéro de téléphone',
+    errorInvalidEmail: 'Saisissez une adresse email valide.',
+    errorInvalidPhone: 'Saisissez un numéro de téléphone valide (8 à 15 chiffres).',
     modeLabel: 'Mode de fonctionnement',
     modeSyncTitle: 'Synchronisé',
     modeSyncDescription: 'Données en ligne, accessibles depuis le web.',
@@ -1842,9 +1852,9 @@ const ar: TranslationDict = {
     title: 'تسجيل الدخول إلى الصندوق',
     subtitle: 'سجّل الدخول لفتح جلسة البيع',
     methodPin: 'رمز PIN',
-    methodPassword: 'البريد الإلكتروني / كلمة المرور',
+    methodPassword: 'البريد الإلكتروني أو الهاتف / كلمة المرور',
     pinLabel: 'رمز PIN',
-    emailLabel: 'البريد الإلكتروني',
+    emailLabel: 'البريد الإلكتروني أو الهاتف',
     emailPlaceholder: 'vous@commerce.dz',
     passwordLabel: 'كلمة المرور',
     passwordPlaceholder: '••••••••',
@@ -1859,7 +1869,7 @@ const ar: TranslationDict = {
     subtitle: 'سجّل الدخول لإدارة متجرك',
     tenantLabel: 'معرّف المتجر (tenant)',
     tenantPlaceholder: 'مثال: tenant_demo',
-    emailLabel: 'البريد الإلكتروني',
+    emailLabel: 'البريد الإلكتروني أو الهاتف',
     emailPlaceholder: 'vous@commerce.dz',
     passwordLabel: 'كلمة المرور',
     passwordPlaceholder: '••••••••',
@@ -1886,6 +1896,11 @@ const ar: TranslationDict = {
     emailPlaceholder: 'vous@commerce.dz',
     phoneLabel: 'الهاتف (اختياري)',
     phonePlaceholder: '0555 12 34 56',
+    methodEmail: 'البريد الإلكتروني',
+    methodPhone: 'الهاتف',
+    phoneLoginLabel: 'رقم الهاتف',
+    errorInvalidEmail: 'أدخل عنوان بريد إلكتروني صالحًا.',
+    errorInvalidPhone: 'أدخل رقم هاتف صالحًا (من 8 إلى 15 رقمًا).',
     modeLabel: 'طريقة العمل',
     modeSyncTitle: 'متزامن',
     modeSyncDescription: 'بيانات عبر الإنترنت، يمكن الوصول إليها من الويب.',

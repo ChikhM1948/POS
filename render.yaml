@@ -14,3 +14,11 @@ services:
         value: 12h
       - key: CORS_ORIGIN
         sync: false
+      - key: LICENSE_PRIVATE_KEY
+        sync: false
+      - key: LICENSE_ADMIN_KEY
+        sync: false
+      # Mises à jour desktop : sur un volume persistant (disque Render, plan payant) — sinon les fichiers
+      # publiés disparaissent à chaque redéploiement.
+      - key: UPDATES_DIR
+        value: /var/data/updates

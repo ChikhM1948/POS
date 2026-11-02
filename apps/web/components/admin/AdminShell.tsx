@@ -6,6 +6,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { adminFetch } from '../../lib/adminApi';
 import { useAdminAuth } from '../../lib/adminAuth';
 import { BrandMark } from '../BrandMark';
+import { LicenseGate } from '../LicenseGate';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
 import { IconBarcode, IconBox, IconChart, IconLayers, IconLogout, IconReceipt, IconSettings, IconTruck, IconUsers, IconWallet } from '../icons';
@@ -130,6 +131,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             {t('common.logout')}
           </button>
         </header>
+        {session && <LicenseGate token={session.token} canActivate={session.role === 'store_admin' || session.role === 'super_admin'} />}
         <main className="flex-1 p-6 print:p-0">{children}</main>
       </div>
     </div>

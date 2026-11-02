@@ -4,7 +4,9 @@ import { User } from '../../models/User';
 import { Tenant } from '../../models/Tenant';
 import { Store } from '../../models/Store';
 import { env } from '../../config/env';
-import { PERMISSION_VIEW_PURCHASE_PRICE } from '@pos-dz/shared';
+import { Types } from 'mongoose';
+import { getTenantLicenseStatus, redeemKey, statusOf } from '../license/license.service';
+import { PERMISSION_VIEW_PURCHASE_PRICE, normalizeIdentifier, parseIdentifier } from '@pos-dz/shared';
 import type { AuthResult, JwtClaims, SignupInput } from '@pos-dz/shared';
 
 function canViewPurchasePrice(user: { permissions?: string[] }): boolean {
@@ -36,12 +38,18 @@ function slugify(input: string): string {
  * compte qui pourra ensuite provisionner les caissiers/gestionnaires de stock via /users.
  */
 export async function signupTenant(input: SignupInput): Promise<AuthResult> {
-  const email = input.email.trim().toLowerCase();
-  // Le login se fait par email seul (sans identifiant de commerce) : l'email doit donc être unique.
-  if (await User.exists({ email }).setOptions({ skipTenantScope: true })) {
-    throw Object.assign(new Error('Un compte existe déjà avec cet email.'), { status: 409 });
+  const identifier = parseIdentifier(input.email);
+  if (!identifier) {
+    throw Object.assign(new Error('Saisissez une adresse email ou un numéro de téléphone valide.'), { status: 400 });
   }
-  const localPart = email.split('@')[0] || 'commerce';
+  // `email` désigne l'identifiant de connexion : email OU téléphone (normalisé).
+  const email = identifier.value;
+  // Le login se fait par identifiant seul (sans identifiant de commerce) : il doit donc être unique.
+  if (await User.exists({ email }).setOptions({ skipTenantScope: true })) {
+    throw Object.assign(new Error('Un compte existe déjà avec cet identifiant.'), { status: 409 });
+  }
+  const phone = input.phone?.trim() || (identifier.kind === 'phone' ? email : undefined);
+  const localPart = (identifier.kind === 'email' ? email.split('@')[0] : '') || 'commerce';
   const businessName = input.businessName?.trim() || localPart;
   const adminName = input.adminName?.trim() || localPart;
 
@@ -51,10 +59,18 @@ export async function signupTenant(input: SignupInput): Promise<AuthResult> {
     slug = `${baseSlug}-${i}`;
   }
 
+  // La clé est consommée AVANT la création du commerce (une clé invalide ne laisse rien derrière elle) ;
+  // elle est liée à l'_id pré-généré du futur tenant.
+  const tenantId = new Types.ObjectId();
+  const license = await redeemKey(input.activationKey ?? '', `tenant:${tenantId}`, String(tenantId));
+
   const tenant = await Tenant.create({
+    _id: tenantId,
+    license,
+    status: license.kind === 'paid' ? 'active' : 'trial',
     name: businessName,
     slug,
-    legal: input.phone ? { phone: input.phone.trim() } : undefined,
+    legal: phone ? { phone } : undefined,
     syncEnabled: input.syncEnabled ?? true,
   });
 
@@ -86,12 +102,13 @@ export async function signupTenant(input: SignupInput): Promise<AuthResult> {
     tenantId: String(tenant._id),
     storeId: String(store._id),
     user: { id: String(user._id), name: user.name, role: user.role },
+    license: statusOf(license),
   };
 }
 
 /** Login back-office standard : email + mot de passe, tous rôles. */
 export async function loginWithPassword(tenantId: string | undefined, email: string, password: string) {
-  const filter: Record<string, unknown> = { email: email.trim().toLowerCase(), active: true };
+  const filter: Record<string, unknown> = { email: normalizeIdentifier(email), active: true };
   if (tenantId) filter.tenantId = tenantId;
   // Sans tenantId (login par email seul), le plugin tenantScope refuserait la requête : on l'ignore
   // explicitement ici, l'email étant unique globalement.
@@ -115,7 +132,8 @@ export async function loginWithPassword(tenantId: string | undefined, email: str
     role: user.role,
     canViewPurchasePrice: canViewPurchasePrice(user),
   };
-  return { token: signToken(claims), tenantId: String(user.tenantId), user: { id: user._id, name: user.name, role: user.role, canViewPurchasePrice: canViewPurchasePrice(user) } };
+  const license = await getTenantLicenseStatus(claims.tenantId);
+  return { token: signToken(claims), tenantId: String(user.tenantId), license, user: { id: user._id, name: user.name, role: user.role, canViewPurchasePrice: canViewPurchasePrice(user) } };
 }
 
 /**
@@ -125,7 +143,7 @@ export async function loginWithPassword(tenantId: string | undefined, email: str
  */
 export async function loginCashierWithPassword(tenantId: string | undefined, email: string, password: string) {
   // tenantId optionnel : l'email est unique (voir signup), comme pour loginWithPassword.
-  const filter: Record<string, unknown> = { email: email.trim().toLowerCase(), role: 'cashier', active: true };
+  const filter: Record<string, unknown> = { email: normalizeIdentifier(email), role: 'cashier', active: true };
   if (tenantId) filter.tenantId = tenantId;
   // Sans tenantId (login par email seul), le plugin tenantScope refuserait la requête : on l'ignore
   // explicitement ici, l'email étant unique globalement.

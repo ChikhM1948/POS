@@ -17,6 +17,9 @@ import { tenantRouter } from './modules/tenant/tenant.controller';
 import { suppliersRouter } from './modules/suppliers/suppliers.controller';
 import { customersRouter } from './modules/customers/customers.controller';
 import { requireAuth, requireRole } from './middleware/auth';
+import { requireLicense } from './middleware/license';
+import { licenseRouter } from './modules/license/license.controller';
+import { updatesRouter } from './modules/updates/updates.controller';
 
 async function main() {
   await connectDB();
@@ -31,6 +34,10 @@ async function main() {
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
   app.use('/auth', authRouter);
+  app.use('/license', licenseRouter);
+  app.use('/updates', updatesRouter);
+  // Tout ce qui suit exige une licence valide (essai 14 jours ou clé payante) : 402 LICENSE_EXPIRED sinon.
+  app.use(['/sync', '/products', '/stock', '/stores', '/sales', '/documents', '/reports', '/users', '/tenant', '/suppliers', '/customers'], requireAuth, requireLicense);
   app.use('/sync', requireAuth, syncRouter);
   app.use('/products', requireAuth, productsRouter);
   app.use('/stock', requireAuth, stockRouter);
@@ -52,6 +59,10 @@ async function main() {
   // Filet de sécurité final : toute erreur relayée par asyncHandler (voir middleware/asyncHandler.ts)
   // atterrit ici en 500 au lieu de faire planter le process — DOIT rester le dernier middleware.
   const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+    // Erreurs métier volontaires (ex. licence : 403/404/409) : on renvoie leur message tel quel.
+    if (Number.isInteger(err?.status) && err.status >= 400 && err.status < 500) {
+      return res.status(err.status).json({ error: err.message });
+    }
     // eslint-disable-next-line no-console
     console.error('[api] erreur non gérée:', err);
     res.status(500).json({ error: 'Erreur interne du serveur.' });

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { normalizeIdentifier, parseIdentifier } from '../identifier';
 import type { AuthResult, JwtClaims, SignupInput } from '@pos-dz/shared';
 import { Ctx, HttpError, handler, newId, nowIso } from '../util';
 import { PERMISSION_VIEW_PURCHASE_PRICE } from '../constants';
@@ -12,7 +13,7 @@ function slugify(input: string): string {
   );
 }
 
-export function authRouter({ db, jwtSecret }: Ctx) {
+export function authRouter({ db, jwtSecret, license }: Ctx) {
   const router = Router();
   // Poste installé : la session n'expire jamais (révocation = désactivation du compte, vérifiée à chaque requête).
   const sign = (claims: JwtClaims) => jwt.sign(claims, jwtSecret);
@@ -27,7 +28,7 @@ export function authRouter({ db, jwtSecret }: Ctx) {
       role: user.role,
       canViewPurchasePrice,
     };
-    return { token: sign(claims), tenantId: user.tenant_id, user: { id: user.id, name: user.name, role: user.role, canViewPurchasePrice } };
+    return { token: sign(claims), tenantId: user.tenant_id, license: license.status(), user: { id: user.id, name: user.name, role: user.role, canViewPurchasePrice } };
   }
 
   /** Poste local : un seul commerce par installation — permet à l'UI de se pré-configurer sans saisie d'identifiants techniques. */
@@ -39,30 +40,37 @@ export function authRouter({ db, jwtSecret }: Ctx) {
   }));
 
   router.post('/setup', handler(async (req, res) => {
-    const { businessName, adminName, email, password, phone } = (req.body ?? {}) as Partial<SignupInput>;
-    if (!email || !password) throw new HttpError(400, 'email et password sont requis.');
+    const { businessName, adminName, email, password, phone, activationKey } = (req.body ?? {}) as Partial<SignupInput>;
+    if (!email || !password) throw new HttpError(400, 'email (ou téléphone) et password sont requis.');
+    const identifier = parseIdentifier(email);
+    if (!identifier) throw new HttpError(400, 'Saisissez une adresse email ou un numéro de téléphone valide.');
     if (String(password).length < 6) throw new HttpError(400, 'Le mot de passe doit contenir au moins 6 caractères.');
     if (db.prepare('SELECT 1 FROM tenants LIMIT 1').get()) {
       throw new HttpError(409, 'Un commerce est déjà enregistré sur ce poste. Connectez-vous.');
     }
 
+    // Première activation : échange de la clé contre la licence signée (Internet requis, une seule fois).
+    const licenseStatus = await license.activate(activationKey ?? '');
     const passwordHash = await bcrypt.hash(password, 10);
     const now = nowIso();
     const tenantId = newId();
     const storeId = newId();
     const userId = newId();
-    const localPart = String(email).trim().toLowerCase().split('@')[0] || 'commerce';
+    // `email` désigne l'identifiant de connexion : email OU téléphone (normalisé).
+    const loginId = identifier.value;
+    const phoneValue = phone?.trim() || (identifier.kind === 'phone' ? loginId : undefined);
+    const localPart = (identifier.kind === 'email' ? loginId.split('@')[0] : '') || 'commerce';
     const bizName = businessName?.trim() || localPart;
     const name = adminName?.trim() || localPart;
     db.transaction(() => {
       db.prepare('INSERT INTO tenants (id, name, slug, legal, sync_enabled, created_at, updated_at) VALUES (?,?,?,?,0,?,?)').run(
-        tenantId, bizName, slugify(bizName), JSON.stringify(phone ? { phone: phone.trim() } : {}), now, now,
+        tenantId, bizName, slugify(bizName), JSON.stringify(phoneValue ? { phone: phoneValue } : {}), now, now,
       );
       db.prepare('INSERT INTO stores (id, tenant_id, name, code, is_main_store, created_at, updated_at) VALUES (?,?,?,?,1,?,?)').run(
         storeId, tenantId, 'Boutique principale', 'MAIN', now, now,
       );
       db.prepare('INSERT INTO users (id, tenant_id, store_id, name, email, password_hash, role, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)').run(
-        userId, tenantId, storeId, name, email.trim().toLowerCase(), passwordHash, 'store_admin', now, now,
+        userId, tenantId, storeId, name, loginId, passwordHash, 'store_admin', now, now,
       );
     })();
 
@@ -71,6 +79,7 @@ export function authRouter({ db, jwtSecret }: Ctx) {
       tenantId,
       storeId,
       user: { id: userId, name, role: 'store_admin' },
+      license: licenseStatus,
     };
     res.status(201).json(result);
   }));
@@ -83,7 +92,7 @@ export function authRouter({ db, jwtSecret }: Ctx) {
     if (!tid) throw new HttpError(401, 'Identifiants invalides.');
     const user: any = db
       .prepare(`SELECT * FROM users WHERE tenant_id = ? AND email = ? AND active = 1 ${cashierOnly ? "AND role = 'cashier'" : ''}`)
-      .get(tid, String(email).trim().toLowerCase());
+      .get(tid, normalizeIdentifier(email));
     if (!user || !(await bcrypt.compare(password, user.password_hash))) throw new HttpError(401, 'Identifiants invalides.');
     res.json(session(user));
   }
