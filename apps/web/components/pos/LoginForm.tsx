@@ -65,16 +65,18 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
 
   async function handleLoginSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const cfg: RegisterConfig | null = config ?? (tenantId.trim() && storeId.trim() ? { tenantId: tenantId.trim(), storeId: storeId.trim() } : null);
+    // Premier lancement : seuls tenant + email + mot de passe sont saisis, la boutique vient du compte caissier.
+    const cfg: RegisterConfig | null = config ?? (tenantId.trim() ? { tenantId: tenantId.trim(), storeId: '' } : null);
     if (!cfg) return;
     setError(null);
     setLoading(true);
     try {
       // Deux identifiants possibles pour le même compte cashier : PIN rapide (login-pin) ou
       // email + mot de passe (login-cashier) — tous deux réservés au rôle cashier côté API.
-      const path = method === 'pin' ? '/auth/login-pin' : '/auth/login-cashier';
+      const usePin = !!config && method === 'pin';
+      const path = usePin ? '/auth/login-pin' : '/auth/login-cashier';
       const body =
-        method === 'pin'
+        usePin
           ? { tenantId: cfg.tenantId, storeId: cfg.storeId, pinCode }
           : { tenantId: cfg.tenantId, email, password };
 
@@ -106,6 +108,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
 
       // Première configuration : le poste n'est mémorisé qu'une fois les identifiants validés.
       if (!config) {
+        cfg.storeId = user.storeId ?? '';
         saveRegisterConfig(cfg);
         setConfig(cfg);
       }
@@ -193,19 +196,10 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
                 required
               />
             </label>
-            <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-              {t('login.storeLabel')}
-              <input
-                value={storeId}
-                onChange={(e) => setStoreId(e.target.value)}
-                placeholder={t('login.storePlaceholder')}
-                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
-                required
-              />
-            </label>
           </>
         )}
 
+        {config && (
         <div className="grid grid-cols-2 gap-1 rounded-lg bg-neutral-100 p-1">
           <button
             type="button"
@@ -226,8 +220,9 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
             {t('login.methodPassword')}
           </button>
         </div>
+        )}
 
-        {method === 'pin' ? (
+        {config && method === 'pin' ? (
           <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
             {t('login.pinLabel')}
             <input

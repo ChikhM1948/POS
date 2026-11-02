@@ -137,7 +137,7 @@ export async function loginCashierWithPassword(tenantId: string | undefined, ema
     role: user.role,
     canViewPurchasePrice: canViewPurchasePrice(user),
   };
-  return { token: signToken(claims), user: { id: user._id, name: user.name, role: user.role, canViewPurchasePrice: canViewPurchasePrice(user) } };
+  return { token: signToken(claims), user: { id: user._id, storeId: claims.storeId, name: user.name, role: user.role, canViewPurchasePrice: canViewPurchasePrice(user) } };
 }
 
 /**
