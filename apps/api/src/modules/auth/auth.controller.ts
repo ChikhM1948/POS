@@ -16,7 +16,7 @@ authRouter.post('/setup', asyncHandler(async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 6 caractères.' });
   }
 
-  if (await User.exists({ email: String(email).trim().toLowerCase() })) {
+  if (await User.exists({ email: String(email).trim().toLowerCase() }).setOptions({ skipTenantScope: true })) {
     return res.status(409).json({ error: 'Un compte existe déjà avec cet email.' });
   }
 

@@ -38,7 +38,7 @@ function slugify(input: string): string {
 export async function signupTenant(input: SignupInput): Promise<AuthResult> {
   const email = input.email.trim().toLowerCase();
   // Le login se fait par email seul (sans identifiant de commerce) : l'email doit donc être unique.
-  if (await User.exists({ email })) {
+  if (await User.exists({ email }).setOptions({ skipTenantScope: true })) {
     throw Object.assign(new Error('Un compte existe déjà avec cet email.'), { status: 409 });
   }
   const localPart = email.split('@')[0] || 'commerce';
@@ -93,7 +93,9 @@ export async function signupTenant(input: SignupInput): Promise<AuthResult> {
 export async function loginWithPassword(tenantId: string | undefined, email: string, password: string) {
   const filter: Record<string, unknown> = { email: email.toLowerCase(), active: true };
   if (tenantId) filter.tenantId = tenantId;
-  const matches = await User.find(filter).limit(2);
+  // Sans tenantId (login par email seul), le plugin tenantScope refuserait la requête : on l'ignore
+  // explicitement ici, l'email étant unique globalement.
+  const matches = await User.find(filter).setOptions({ skipTenantScope: !tenantId }).limit(2);
   if (matches.length !== 1) return null; // introuvable, ou ambigu sans tenantId
   const user = matches[0];
 
@@ -119,7 +121,9 @@ export async function loginCashierWithPassword(tenantId: string | undefined, ema
   // tenantId optionnel : l'email est unique (voir signup), comme pour loginWithPassword.
   const filter: Record<string, unknown> = { email: email.toLowerCase(), role: 'cashier', active: true };
   if (tenantId) filter.tenantId = tenantId;
-  const matches = await User.find(filter).limit(2);
+  // Sans tenantId (login par email seul), le plugin tenantScope refuserait la requête : on l'ignore
+  // explicitement ici, l'email étant unique globalement.
+  const matches = await User.find(filter).setOptions({ skipTenantScope: !tenantId }).limit(2);
   if (matches.length !== 1) return null;
   const user = matches[0];
 

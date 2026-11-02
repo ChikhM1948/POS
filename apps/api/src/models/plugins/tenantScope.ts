@@ -11,6 +11,9 @@ export function tenantScopePlugin(schema: Schema) {
   });
 
   const requireTenantFilter = function (this: any, next: (err?: Error) => void) {
+    // Opt-out explicite et réservé aux lookups globaux par email unique (login, signup) :
+    // `.setOptions({ skipTenantScope: true })`. Tout autre appel reste refusé sans tenantId.
+    if (this.getOptions?.().skipTenantScope) return next();
     const filter = this.getFilter ? this.getFilter() : this._conditions;
     if (!filter || !filter.tenantId) {
       return next(new Error('Requête refusée : tenantId manquant dans le filtre.'));
