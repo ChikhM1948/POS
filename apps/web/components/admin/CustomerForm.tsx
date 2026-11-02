@@ -19,6 +19,7 @@ export function CustomerForm({ onSubmit, onCancel }: Props) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [openingBalance, setOpeningBalance] = useState('');
+  const [creditLimit, setCreditLimit] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +28,7 @@ export function CustomerForm({ onSubmit, onCancel }: Props) {
     setError(null);
     setSubmitting(true);
     try {
-      await onSubmit({ name: name.trim(), phone: phone.trim() || undefined }, toCents(openingBalance));
+      await onSubmit({ name: name.trim(), phone: phone.trim() || undefined, creditLimitCents: toCents(creditLimit) }, toCents(openingBalance));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('customerForm.errorSave'));
     } finally {
@@ -51,6 +52,10 @@ export function CustomerForm({ onSubmit, onCancel }: Props) {
       <label className="flex max-w-sm flex-col gap-1 text-sm font-medium text-neutral-700">
         {t('customerForm.openingBalance')}
         <input value={openingBalance} onChange={(e) => setOpeningBalance(e.target.value)} inputMode="decimal" className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 focus:border-brand-500" />
+      </label>
+      <label className="flex max-w-sm flex-col gap-1 text-sm font-medium text-neutral-700">
+        {t('customerForm.creditLimit')}
+        <input value={creditLimit} onChange={(e) => setCreditLimit(e.target.value)} inputMode="decimal" className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 focus:border-brand-500" />
       </label>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">

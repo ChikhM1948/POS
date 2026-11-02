@@ -14,6 +14,10 @@ export interface IProduct extends Document {
   sellingPriceCents: number;
   costPriceCents: number;
   minSellingPriceCents?: number;
+  promoPriceCents?: number | null;
+  promoStart?: Date | null;
+  promoEnd?: Date | null;
+  soldByWeight?: boolean;
   taxRate: TaxRate;
   isPerishable: boolean;
   lowStockThreshold?: number; // alerte de seuil critique — voir docs/ARCHITECTURE.md
@@ -47,6 +51,10 @@ const ProductSchema = new Schema<IProduct>(
     // pour connaître le coût courant à la caisse (y compris hors-ligne).
     costPriceCents: { type: Number, default: 0, min: 0 },
     minSellingPriceCents: { type: Number, min: 0 },
+    promoPriceCents: { type: Number, min: 0 },
+    promoStart: Date,
+    promoEnd: Date,
+    soldByWeight: { type: Boolean, default: false },
     taxRate: { type: Number, enum: [19, 9, 0], default: 19 },
     isPerishable: { type: Boolean, default: false },
     lowStockThreshold: { type: Number, min: 0 },

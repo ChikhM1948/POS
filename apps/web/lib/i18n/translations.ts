@@ -9,6 +9,7 @@ export interface TranslationDict {
     saving: string;
     edit: string;
     deactivate: string;
+    reactivate: string;
     active: string;
     inactive: string;
     yes: string;
@@ -49,6 +50,7 @@ export interface TranslationDict {
     noProductFound: string;
     noProductsSynced: string;
     noSearchResults: string;
+    promoBadge: string;
     categoryAll: string;
     categoryOther: string;
     demoFooter: string;
@@ -140,6 +142,8 @@ export interface TranslationDict {
       sales: string;
       reports: string;
       taxes: string;
+      documents: string;
+      accounting: string;
       suppliers: string;
       barcodes: string;
       customers: string;
@@ -166,6 +170,8 @@ export interface TranslationDict {
     tableStatus: string;
     empty: string;
     confirmDeactivate: string;
+    deletePermanently: string;
+    confirmDeletePermanently: string;
   };
   barcodes: {
     title: string;
@@ -204,6 +210,10 @@ export interface TranslationDict {
     costPrice: string;
     minSellingPrice: string;
     minSellingPricePlaceholder: string;
+    promoPrice: string;
+    promoStart: string;
+    promoEnd: string;
+    soldByWeight: string;
     marginHint: string;
     taxRate: string;
     taxExempt: string;
@@ -578,6 +588,123 @@ export interface TranslationDict {
     signatureSeller: string;
     missingLegal: string;
     amountInWords: string;
+    quote: string;
+    order: string;
+    validUntil: string;
+    dueDate: string;
+    saleRef: string;
+    sourceRef: string;
+    cancelledStamp: string;
+    notes: string;
+    einvoicePending: string;
+    issueAndShow: string;
+    issuing: string;
+    issueNote: string;
+    errorIssue: string;
+    deliveryNoteNoPrice: string;
+  };
+  documents: {
+    title: string;
+    newDocument: string;
+    searchPlaceholder: string;
+    allKinds: string;
+    allStatuses: string;
+    statusIssued: string;
+    statusCancelled: string;
+    colNumber: string;
+    colType: string;
+    colDate: string;
+    colClient: string;
+    colTotal: string;
+    colStatus: string;
+    colRef: string;
+    empty: string;
+    view: string;
+    convertTo: string;
+    cancelAction: string;
+    cancelReason: string;
+    cancelReasonPlaceholder: string;
+    cancelConfirm: string;
+    cancelledBanner: string;
+    converted: string;
+    einvoiceTitle: string;
+    einvoiceStatus: Record<'not_submitted' | 'pending' | 'submitted' | 'accepted' | 'rejected', string>;
+    einvoiceNote: string;
+    integrityTitle: string;
+    buyerSection: string;
+    linesSection: string;
+    addLine: string;
+    removeLine: string;
+    designation: string;
+    quantity: string;
+    unitHt: string;
+    discount: string;
+    vatRate: string;
+    lineTotal: string;
+    paymentMethod: string;
+    noPayment: string;
+    validUntil: string;
+    notes: string;
+    totalHt: string;
+    totalVat: string;
+    totalTtc: string;
+    stampDuty: string;
+    netToPay: string;
+    pickProduct: string;
+    submit: string;
+    submitting: string;
+    errorLines: string;
+    numberingNote: string;
+    errorLoad: string;
+  };
+  accounting: {
+    title: string;
+    subtitle: string;
+    periodMonth: string;
+    periodQuarter: string;
+    periodYear: string;
+    quarter: string;
+    allStores: string;
+    salesCount: string;
+    refundsCount: string;
+    invoicesCount: string;
+    totalHt: string;
+    totalVat: string;
+    totalTtc: string;
+    stampDuty: string;
+    vatByRate: string;
+    vatByMonth: string;
+    journal: string;
+    journalHint: string;
+    exportCsv: string;
+    exportXlsx: string;
+    print: string;
+    noData: string;
+    disclaimer: string;
+    sourceNote: string;
+    colDate: string;
+    colType: string;
+    colNumber: string;
+    colInvoice: string;
+    colClient: string;
+    colNif: string;
+    colBase: string;
+    colVat: string;
+    colTotalHt: string;
+    colTotalVat: string;
+    colTotalTtc: string;
+    colStamp: string;
+    colPayment: string;
+    colRate: string;
+    colMonth: string;
+    total: string;
+    kindSale: string;
+    kindRefund: string;
+    kindInvoice: string;
+    journalFile: string;
+    vatFile: string;
+    workbookFile: string;
+    exportAll: string;
   };
   priceHistory: {
     button: string;
@@ -724,12 +851,18 @@ export interface TranslationDict {
     submit: string;
     errorSave: string;
     openingBalance: string;
+    creditLimit: string;
   };
   discountEditor: {
     button: string;
     label: string;
     apply: string;
     marginWarning: string;
+  };
+  weightModal: {
+    title: string;
+    label: string;
+    confirm: string;
   };
   creditModal: {
     title: string;
@@ -741,6 +874,8 @@ export interface TranslationDict {
     confirm: string;
     confirming: string;
     errorNoCustomer: string;
+    limitInfo: string;
+    limitExceeded: string;
   };
 }
 
@@ -753,6 +888,7 @@ const fr: TranslationDict = {
     saving: 'Enregistrement…',
     edit: 'Modifier',
     deactivate: 'Désactiver',
+    reactivate: 'Réactiver',
     active: 'Actif',
     inactive: 'Inactif',
     yes: 'Oui',
@@ -793,6 +929,7 @@ const fr: TranslationDict = {
     noProductFound: 'Aucun produit pour « {value} »',
     noProductsSynced: "Aucun produit synchronisé. Vérifiez que l'API est démarrée et que le seed a été exécuté.",
     noSearchResults: 'Aucun produit ne correspond à cette recherche.',
+    promoBadge: 'Promo',
     categoryAll: 'Tous',
     categoryOther: 'Autres',
     demoFooter: 'Merci de votre visite !',
@@ -884,6 +1021,8 @@ const fr: TranslationDict = {
       sales: 'Ventes',
       reports: 'Rapports',
       taxes: 'Déclarations',
+      documents: 'Documents',
+      accounting: 'Export comptable',
       suppliers: 'Fournisseurs',
       barcodes: 'Étiquettes',
       customers: 'Clients',
@@ -910,6 +1049,8 @@ const fr: TranslationDict = {
     tableStatus: 'Statut',
     empty: 'Aucun produit.',
     confirmDeactivate: 'Désactiver "{name}" ? Il restera visible dans l\'historique mais plus disponible à la vente.',
+    deletePermanently: 'Supprimer',
+    confirmDeletePermanently: 'Supprimer définitivement "{name}" ? Cette action est irréversible. Elle est refusée si le produit apparaît dans des ventes, des documents ou des mouvements de stock.',
   },
   barcodes: {
     title: 'Étiquettes code-barres',
@@ -948,6 +1089,10 @@ const fr: TranslationDict = {
     costPrice: "Prix d'achat (DZD)",
     minSellingPrice: 'Prix de vente minimum (DZD)',
     minSellingPricePlaceholder: 'ex. 9500',
+    promoPrice: 'Prix promo (DZD, optionnel)',
+    promoStart: 'Début promo',
+    promoEnd: 'Fin promo',
+    soldByWeight: 'Vendu au poids — le prix de vente est le prix par unité de poids (ex. kg). Code-barres balance : « 2XXXXXX » (7 premiers chiffres).',
     marginHint: 'Marge estimée : {percent}%',
     taxRate: 'TVA',
     taxExempt: 'Exonéré',
@@ -1323,6 +1468,129 @@ const fr: TranslationDict = {
     signatureSeller: 'Cachet et signature',
     missingLegal: "Mentions légales incomplètes : renseignez NIF, NIS, RC, AI et adresse dans Paramètres.",
     amountInWords: 'Arrêté le présent document à la somme de :',
+    quote: 'Devis',
+    order: 'Bon de commande',
+    validUntil: 'Valable jusqu’au',
+    dueDate: 'Échéance',
+    saleRef: 'Ticket de caisse',
+    sourceRef: 'Établi depuis',
+    cancelledStamp: 'ANNULÉ',
+    notes: 'Observations',
+    einvoicePending: 'Facturation électronique : transmission non activée (données prêtes).',
+    issueAndShow: 'Émettre le document',
+    issuing: 'Émission…',
+    issueNote: 'Le numéro est attribué à l’émission et ne pourra plus être modifié ni réutilisé. Un document émis ne s’annule que par un motif consigné.',
+    errorIssue: 'Impossible d’émettre le document.',
+    deliveryNoteNoPrice: 'Sans prix',
+  },
+  documents: {
+    title: 'Documents commerciaux',
+    newDocument: 'Nouveau document',
+    searchPlaceholder: 'N° de document, client ou ticket…',
+    allKinds: 'Tous les types',
+    allStatuses: 'Tous les statuts',
+    statusIssued: 'Émis',
+    statusCancelled: 'Annulé',
+    colNumber: 'N°',
+    colType: 'Type',
+    colDate: 'Date',
+    colClient: 'Client',
+    colTotal: 'Total TTC',
+    colStatus: 'Statut',
+    colRef: 'Référence',
+    empty: 'Aucun document pour ces filtres.',
+    view: 'Voir',
+    convertTo: 'Transformer en',
+    cancelAction: 'Annuler le document',
+    cancelReason: 'Motif d’annulation',
+    cancelReasonPlaceholder: 'Ex. erreur de saisie, client désisté…',
+    cancelConfirm: 'Confirmer l’annulation',
+    cancelledBanner: 'Document annulé — son numéro reste dans la séquence et ne sera pas réattribué.',
+    converted: 'Document {number} émis.',
+    einvoiceTitle: 'Facturation électronique',
+    einvoiceStatus: {
+      not_submitted: 'Non transmis',
+      pending: 'En attente',
+      submitted: 'Transmis',
+      accepted: 'Accepté',
+      rejected: 'Rejeté',
+    },
+    einvoiceNote: 'Chaque document porte déjà un identifiant unique, les identités figées du vendeur et de l’acheteur, les montants HT/TVA par taux et une empreinte chaînée. La transmission à l’administration sera branchée sur ces données dès que le format officiel sera arrêté.',
+    integrityTitle: 'Empreinte d’intégrité',
+    buyerSection: 'Client',
+    linesSection: 'Lignes',
+    addLine: 'Ajouter une ligne',
+    removeLine: 'Retirer',
+    designation: 'Désignation',
+    quantity: 'Qté',
+    unitHt: 'P.U. HT',
+    discount: 'Remise HT',
+    vatRate: 'TVA',
+    lineTotal: 'Total HT',
+    paymentMethod: 'Mode de règlement',
+    noPayment: 'Non précisé',
+    validUntil: 'Valable jusqu’au',
+    notes: 'Observations',
+    totalHt: 'Total HT',
+    totalVat: 'Total TVA',
+    totalTtc: 'Total TTC',
+    stampDuty: 'Droit de timbre',
+    netToPay: 'Net à payer',
+    pickProduct: 'Ajouter un produit du catalogue…',
+    submit: 'Émettre',
+    submitting: 'Émission…',
+    errorLines: 'Ajoutez au moins une ligne avec une désignation et une quantité.',
+    numberingNote: 'Numérotation continue par type et par année (ex. FA-2026-00001), sans trou ni réutilisation.',
+    errorLoad: 'Impossible de charger les documents.',
+  },
+  accounting: {
+    title: 'Export comptable',
+    subtitle: 'Journal des ventes et récapitulatif TVA pour la déclaration G50.',
+    periodMonth: 'Mois',
+    periodQuarter: 'Trimestre',
+    periodYear: 'Année',
+    quarter: 'T{n}',
+    allStores: 'Toutes les boutiques',
+    salesCount: 'Tickets',
+    refundsCount: 'Retours',
+    invoicesCount: 'Factures hors caisse',
+    totalHt: 'Chiffre d’affaires HT',
+    totalVat: 'TVA collectée',
+    totalTtc: 'Total TTC',
+    stampDuty: 'Droit de timbre',
+    vatByRate: 'TVA par taux',
+    vatByMonth: 'TVA par mois',
+    journal: 'Journal des ventes',
+    journalHint: '{count} écriture(s)',
+    exportCsv: 'CSV',
+    exportXlsx: 'Excel (XLSX)',
+    print: 'Imprimer',
+    noData: 'Aucune écriture sur cette période.',
+    disclaimer: 'Récapitulatif indicatif établi à partir des ventes enregistrées : à faire valider par votre comptable avant dépôt de la G50.',
+    sourceNote: 'Tickets de caisse nets des retours + factures émises hors caisse et non annulées. Les factures tirées d’un ticket ne sont pas comptées deux fois. Les achats (TVA déductible) ne figurent pas ici.',
+    colDate: 'Date',
+    colType: 'Type',
+    colNumber: 'N° pièce',
+    colInvoice: 'N° facture',
+    colClient: 'Client',
+    colNif: 'NIF client',
+    colBase: 'Base HT',
+    colVat: 'TVA',
+    colTotalHt: 'Total HT',
+    colTotalVat: 'Total TVA',
+    colTotalTtc: 'Total TTC',
+    colStamp: 'Timbre',
+    colPayment: 'Règlement',
+    colRate: 'Taux',
+    colMonth: 'Mois',
+    total: 'Total',
+    kindSale: 'Vente',
+    kindRefund: 'Retour',
+    kindInvoice: 'Facture',
+    journalFile: 'journal-ventes',
+    vatFile: 'recap-tva',
+    workbookFile: 'export-comptable',
+    exportAll: 'Exports',
   },
   priceHistory: {
     button: 'Prix d’achat',
@@ -1467,6 +1735,7 @@ const fr: TranslationDict = {
     name: 'Nom',
     phone: 'Téléphone',
     openingBalance: 'Créance initiale — ce client nous doit (DZD, optionnel)',
+    creditLimit: 'Plafond de crédit (DZD, vide = illimité)',
     submit: 'Créer le client',
     errorSave: "Erreur lors de l'enregistrement.",
   },
@@ -1475,6 +1744,11 @@ const fr: TranslationDict = {
     label: 'Remise sur la ligne (DZD)',
     apply: 'Appliquer',
     marginWarning: 'Le prix de vente minimum de ce produit n\'est pas respecté.',
+  },
+  weightModal: {
+    title: 'Pesée — {name}',
+    label: 'Poids / quantité ({unit})',
+    confirm: 'Ajouter au panier',
   },
   creditModal: {
     title: 'Vente à crédit',
@@ -1486,6 +1760,8 @@ const fr: TranslationDict = {
     confirm: 'Valider la vente',
     confirming: 'Encaissement…',
     errorNoCustomer: 'Sélectionnez un client.',
+    limitInfo: 'Dette actuelle : {balance} · Plafond : {limit}',
+    limitExceeded: 'Plafond dépassé de {amount}. Encaissez davantage ou choisissez un autre mode de paiement.',
   },
 };
 
@@ -1498,6 +1774,7 @@ const ar: TranslationDict = {
     saving: 'جارٍ الحفظ…',
     edit: 'تعديل',
     deactivate: 'إلغاء التفعيل',
+    reactivate: 'إعادة التفعيل',
     active: 'نشط',
     inactive: 'غير نشط',
     yes: 'نعم',
@@ -1538,6 +1815,7 @@ const ar: TranslationDict = {
     noProductFound: 'لا يوجد منتج مطابق لـ « {value} »',
     noProductsSynced: 'لا يوجد أي منتج تمت مزامنته. تأكد من أن واجهة البرمجة (API) قيد التشغيل وأن البيانات الأولية تم إدخالها.',
     noSearchResults: 'لا يوجد منتج يطابق هذا البحث.',
+    promoBadge: 'عرض',
     categoryAll: 'الكل',
     categoryOther: 'أخرى',
     demoFooter: 'شكرًا لزيارتكم!',
@@ -1629,6 +1907,8 @@ const ar: TranslationDict = {
       sales: 'المبيعات',
       reports: 'التقارير',
       taxes: 'التصريحات',
+      documents: 'الوثائق',
+      accounting: 'التصدير المحاسبي',
       suppliers: 'الموردون',
       barcodes: 'الملصقات',
       customers: 'الزبائن',
@@ -1655,6 +1935,8 @@ const ar: TranslationDict = {
     tableStatus: 'الحالة',
     empty: 'لا يوجد منتج.',
     confirmDeactivate: 'إلغاء تفعيل "{name}"؟ سيبقى ظاهرًا في السجل لكن لن يكون متاحًا للبيع.',
+    deletePermanently: 'حذف',
+    confirmDeletePermanently: 'حذف "{name}" نهائيًا؟ لا يمكن التراجع عن هذا الإجراء. يُرفض الحذف إذا كان المنتج مذكورًا في مبيعات أو مستندات أو حركات مخزون.',
   },
   barcodes: {
     title: 'ملصقات الباركود',
@@ -1693,6 +1975,10 @@ const ar: TranslationDict = {
     costPrice: 'سعر الشراء (دج)',
     minSellingPrice: 'الحد الأدنى لسعر البيع (دج)',
     minSellingPricePlaceholder: 'مثال: 9500',
+    promoPrice: 'سعر العرض (دج، اختياري)',
+    promoStart: 'بداية العرض',
+    promoEnd: 'نهاية العرض',
+    soldByWeight: 'يُباع بالوزن — سعر البيع هو سعر الوحدة من الوزن (مثلاً كغ). باركود الميزان: «2XXXXXX» (أول 7 أرقام).',
     marginHint: 'الهامش التقديري: {percent}%',
     taxRate: 'الضريبة',
     taxExempt: 'معفى',
@@ -2068,6 +2354,129 @@ const ar: TranslationDict = {
     signatureSeller: 'الختم والإمضاء',
     missingLegal: 'البيانات القانونية ناقصة: أدخل NIF وNIS وRC وAI والعنوان في الإعدادات.',
     amountInWords: '',
+    quote: 'عرض سعر',
+    order: 'سند طلب',
+    validUntil: 'صالح إلى غاية',
+    dueDate: 'تاريخ الاستحقاق',
+    saleRef: 'تذكرة الصندوق',
+    sourceRef: 'محرر انطلاقا من',
+    cancelledStamp: 'ملغى',
+    notes: 'ملاحظات',
+    einvoicePending: 'الفوترة الإلكترونية: الإرسال غير مفعّل (البيانات جاهزة).',
+    issueAndShow: 'إصدار الوثيقة',
+    issuing: 'جارٍ الإصدار…',
+    issueNote: 'يُمنح الرقم عند الإصدار ولا يمكن تعديله أو إعادة استعماله. لا تُلغى الوثيقة الصادرة إلا بسبب مدوَّن.',
+    errorIssue: 'تعذّر إصدار الوثيقة.',
+    deliveryNoteNoPrice: 'بدون أسعار',
+  },
+  documents: {
+    title: 'الوثائق التجارية',
+    newDocument: 'وثيقة جديدة',
+    searchPlaceholder: 'رقم الوثيقة أو الزبون أو التذكرة…',
+    allKinds: 'كل الأنواع',
+    allStatuses: 'كل الحالات',
+    statusIssued: 'صادرة',
+    statusCancelled: 'ملغاة',
+    colNumber: 'الرقم',
+    colType: 'النوع',
+    colDate: 'التاريخ',
+    colClient: 'الزبون',
+    colTotal: 'المجموع بالرسوم',
+    colStatus: 'الحالة',
+    colRef: 'المرجع',
+    empty: 'لا توجد وثائق لهذه المرشحات.',
+    view: 'عرض',
+    convertTo: 'تحويل إلى',
+    cancelAction: 'إلغاء الوثيقة',
+    cancelReason: 'سبب الإلغاء',
+    cancelReasonPlaceholder: 'مثال: خطأ في الإدخال، تراجع الزبون…',
+    cancelConfirm: 'تأكيد الإلغاء',
+    cancelledBanner: 'وثيقة ملغاة — يبقى رقمها ضمن التسلسل ولن يُعاد استعماله.',
+    converted: 'تم إصدار الوثيقة {number}.',
+    einvoiceTitle: 'الفوترة الإلكترونية',
+    einvoiceStatus: {
+      not_submitted: 'غير مرسلة',
+      pending: 'قيد الانتظار',
+      submitted: 'مرسلة',
+      accepted: 'مقبولة',
+      rejected: 'مرفوضة',
+    },
+    einvoiceNote: 'تحمل كل وثيقة معرّفا فريدا وهوية البائع والمشتري مثبتة ومبالغ خارج الرسم والرسم حسب كل نسبة وبصمة متسلسلة. سيُربط الإرسال إلى الإدارة بهذه البيانات فور اعتماد الصيغة الرسمية.',
+    integrityTitle: 'بصمة السلامة',
+    buyerSection: 'الزبون',
+    linesSection: 'السطور',
+    addLine: 'إضافة سطر',
+    removeLine: 'حذف',
+    designation: 'البيان',
+    quantity: 'الكمية',
+    unitHt: 'السعر خ.ر',
+    discount: 'تخفيض خ.ر',
+    vatRate: 'الرسم',
+    lineTotal: 'المجموع خ.ر',
+    paymentMethod: 'طريقة الدفع',
+    noPayment: 'غير محددة',
+    validUntil: 'صالح إلى غاية',
+    notes: 'ملاحظات',
+    totalHt: 'المجموع خارج الرسم',
+    totalVat: 'مجموع الرسم',
+    totalTtc: 'المجموع بكل الرسوم',
+    stampDuty: 'حق الطابع',
+    netToPay: 'الصافي للدفع',
+    pickProduct: 'إضافة منتج من الكتالوج…',
+    submit: 'إصدار',
+    submitting: 'جارٍ الإصدار…',
+    errorLines: 'أضف سطرا واحدا على الأقل مع البيان والكمية.',
+    numberingNote: 'ترقيم متواصل حسب النوع والسنة (مثال FA-2026-00001) دون فراغات أو إعادة استعمال.',
+    errorLoad: 'تعذّر تحميل الوثائق.',
+  },
+  accounting: {
+    title: 'التصدير المحاسبي',
+    subtitle: 'يومية المبيعات وملخص الرسم على القيمة المضافة لتصريح G50.',
+    periodMonth: 'شهر',
+    periodQuarter: 'ثلاثي',
+    periodYear: 'سنة',
+    quarter: 'ث{n}',
+    allStores: 'كل المتاجر',
+    salesCount: 'التذاكر',
+    refundsCount: 'المرتجعات',
+    invoicesCount: 'فواتير خارج الصندوق',
+    totalHt: 'رقم الأعمال خارج الرسم',
+    totalVat: 'الرسم المحصّل',
+    totalTtc: 'المجموع بكل الرسوم',
+    stampDuty: 'حق الطابع',
+    vatByRate: 'الرسم حسب النسبة',
+    vatByMonth: 'الرسم حسب الشهر',
+    journal: 'يومية المبيعات',
+    journalHint: '{count} قيد',
+    exportCsv: 'CSV',
+    exportXlsx: 'إكسل (XLSX)',
+    print: 'طباعة',
+    noData: 'لا توجد قيود في هذه الفترة.',
+    disclaimer: 'ملخص تقديري مبني على المبيعات المسجلة: يجب أن يراجعه محاسبك قبل إيداع تصريح G50.',
+    sourceNote: 'تذاكر الصندوق بعد خصم المرتجعات + الفواتير الصادرة خارج الصندوق غير الملغاة. الفواتير المحررة من تذكرة لا تُحتسب مرتين. المشتريات (الرسم القابل للخصم) غير مشمولة.',
+    colDate: 'التاريخ',
+    colType: 'النوع',
+    colNumber: 'رقم القطعة',
+    colInvoice: 'رقم الفاتورة',
+    colClient: 'الزبون',
+    colNif: 'رقم تعريف الزبون الجبائي',
+    colBase: 'الأساس خ.ر',
+    colVat: 'الرسم',
+    colTotalHt: 'المجموع خ.ر',
+    colTotalVat: 'مجموع الرسم',
+    colTotalTtc: 'المجموع بالرسوم',
+    colStamp: 'الطابع',
+    colPayment: 'الدفع',
+    colRate: 'النسبة',
+    colMonth: 'الشهر',
+    total: 'المجموع',
+    kindSale: 'بيع',
+    kindRefund: 'مرتجع',
+    kindInvoice: 'فاتورة',
+    journalFile: 'journal-ventes',
+    vatFile: 'recap-tva',
+    workbookFile: 'export-comptable',
+    exportAll: 'التصدير',
   },
   priceHistory: {
     button: 'أسعار الشراء',
@@ -2212,6 +2621,7 @@ const ar: TranslationDict = {
     name: 'الاسم',
     phone: 'الهاتف',
     openingBalance: 'دين ابتدائي على الزبون (دج، اختياري)',
+    creditLimit: 'سقف الدين (دج، فارغ = غير محدود)',
     submit: 'إنشاء الزبون',
     errorSave: 'خطأ أثناء الحفظ.',
   },
@@ -2220,6 +2630,11 @@ const ar: TranslationDict = {
     label: 'خصم على السطر (دج)',
     apply: 'تطبيق',
     marginWarning: 'الحد الأدنى لسعر بيع هذا المنتج غير محترم.',
+  },
+  weightModal: {
+    title: 'الوزن — {name}',
+    label: 'الوزن / الكمية ({unit})',
+    confirm: 'إضافة إلى السلة',
   },
   creditModal: {
     title: 'بيع بالدين',
@@ -2231,6 +2646,8 @@ const ar: TranslationDict = {
     confirm: 'تأكيد البيع',
     confirming: 'جارٍ التحصيل…',
     errorNoCustomer: 'اختر زبونًا.',
+    limitInfo: 'الدين الحالي: {balance} · السقف: {limit}',
+    limitExceeded: 'تم تجاوز السقف بمقدار {amount}. اقبض مبلغًا أكبر أو اختر طريقة دفع أخرى.',
   },
 };
 

@@ -30,9 +30,19 @@ export function CustomerCreditModal({ deviceId, totalCents, onCancel, onConfirm,
   const [selected, setSelected] = useState<LocalCustomer | null>(null);
   const [paidNowInput, setPaidNowInput] = useState('');
 
+  // Dette locale non encore synchronisée (ventes à crédit faites sur ce poste) — s'ajoute au solde du dernier pull.
+  const pendingCreditCents = useLiveQuery(async () => {
+    if (!selected) return 0;
+    const pending = await db.sales.where('syncStatus').equals('pending').toArray();
+    return pending.reduce((sum, s) => sum + s.payments.filter((p) => p.method === 'credit' && p.customerId === selected.id).reduce((a, p) => a + p.amountCents, 0), 0);
+  }, [db, selected?.id]) ?? 0;
+
   const filtered = customers.filter((c) => !query.trim() || c.name.toLowerCase().includes(query.trim().toLowerCase()));
   const paidNowCents = Math.min(totalCents, Math.max(0, Math.round(parseFloat(paidNowInput.replace(',', '.') || '0') * 100)));
   const remainingCents = totalCents - paidNowCents;
+  const limitCents = selected?.creditLimitCents;
+  const currentDebtCents = (selected?.balanceCents ?? 0) + pendingCreditCents;
+  const overLimitCents = limitCents ? Math.max(0, currentDebtCents + remainingCents - limitCents) : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4">
@@ -99,6 +109,13 @@ export function CustomerCreditModal({ deviceId, totalCents, onCancel, onConfirm,
           <div className="flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3">
             <span className="text-sm font-medium text-amber-700">{t('creditModal.remaining', { amount: formatDZD(remainingCents) })}</span>
           </div>
+
+          {limitCents ? (
+            <p className="text-xs text-neutral-500">{t('creditModal.limitInfo', { balance: formatDZD(currentDebtCents), limit: formatDZD(limitCents) })}</p>
+          ) : null}
+          {overLimitCents > 0 && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{t('creditModal.limitExceeded', { amount: formatDZD(overLimitCents) })}</p>
+          )}
         </div>
 
         <div className="flex gap-2 border-t border-neutral-100 px-5 py-4">
@@ -106,7 +123,7 @@ export function CustomerCreditModal({ deviceId, totalCents, onCancel, onConfirm,
             {t('common.cancel')}
           </button>
           <button
-            disabled={!selected || submitting}
+            disabled={!selected || submitting || overLimitCents > 0}
             onClick={() => selected && onConfirm(selected.id, paidNowCents)}
             className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-card transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
           >

@@ -38,6 +38,7 @@ export async function listCustomers(tenantId: string, search?: string): Promise<
     phone: d.phone,
     active: d.active,
     balanceCents: balances.get(String(d._id)) ?? 0,
+    creditLimitCents: d.creditLimitCents ?? undefined,
   }));
 }
 
@@ -46,19 +47,24 @@ export async function createCustomer(tenantId: string, input: CreateCustomerInpu
     tenantId: new Types.ObjectId(tenantId),
     name: input.name.trim(),
     phone: input.phone?.trim() || undefined,
+    creditLimitCents: input.creditLimitCents && input.creditLimitCents > 0 ? Math.round(input.creditLimitCents) : undefined,
   });
-  return { id: String(doc._id), name: doc.name, phone: doc.phone, active: doc.active, balanceCents: 0 };
+  return { id: String(doc._id), name: doc.name, phone: doc.phone, active: doc.active, balanceCents: 0, creditLimitCents: doc.creditLimitCents ?? undefined };
 }
 
 export async function updateCustomer(tenantId: string, id: string, input: UpdateCustomerInput): Promise<CustomerDTO | null> {
+  const { creditLimitCents, ...rest } = input;
+  const update: Record<string, unknown> = { $set: { ...rest } };
+  if (creditLimitCents === null) update.$unset = { creditLimitCents: 1 };
+  else if (typeof creditLimitCents === 'number' && creditLimitCents >= 0) (update.$set as any).creditLimitCents = Math.round(creditLimitCents);
   const doc = await Customer.findOneAndUpdate(
     { tenantId: new Types.ObjectId(tenantId), _id: id },
-    { $set: input },
+    update,
     { new: true },
   );
   if (!doc) return null;
   const balances = await getBalances(tenantId, [doc._id]);
-  return { id: String(doc._id), name: doc.name, phone: doc.phone, active: doc.active, balanceCents: balances.get(String(doc._id)) ?? 0 };
+  return { id: String(doc._id), name: doc.name, phone: doc.phone, active: doc.active, balanceCents: balances.get(String(doc._id)) ?? 0, creditLimitCents: doc.creditLimitCents ?? undefined };
 }
 
 export async function getCustomerLedger(tenantId: string, customerId: string): Promise<LedgerEntryDTO[]> {

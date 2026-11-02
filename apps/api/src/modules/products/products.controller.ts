@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import type { AuthenticatedRequest } from '../../middleware/auth';
 import { requireRole } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/asyncHandler';
-import { listProducts, createProduct, updateProduct, deactivateProduct } from './products.service';
+import { listProducts, createProduct, updateProduct, deactivateProduct, deleteProductPermanently } from './products.service';
 
 export const productsRouter = Router();
 
@@ -38,6 +38,17 @@ productsRouter.delete(
   '/:id',
   requireRole('store_admin', 'stock_manager', 'super_admin'),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (req.query.permanent === 'true') {
+      const result = await deleteProductPermanently(req.auth!.tenantId, req.params.id);
+      if (result.status === 'not_found') return res.status(404).json({ error: 'Produit introuvable.' });
+      if (result.status === 'blocked') {
+        return res.status(409).json({
+          error: 'Suppression impossible : ce produit apparaît dans l\'historique (ventes, documents ou mouvements de stock). Désactivez-le à la place.',
+          reason: result.reason,
+        });
+      }
+      return res.status(204).send();
+    }
     const found = await deactivateProduct(req.auth!.tenantId, req.params.id);
     if (!found) return res.status(404).json({ error: 'Produit introuvable.' });
     res.status(204).send();

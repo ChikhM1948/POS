@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { Server as SocketIOServer } from 'socket.io';
 import { env } from './config/env';
 import { connectDB } from './db/connect';
+import { documentsRouter } from './modules/documents/documents.controller';
 import { authRouter } from './modules/auth/auth.controller';
 import { syncRouter } from './modules/sync/sync.controller';
 import { productsRouter } from './modules/products/products.controller';
@@ -37,6 +38,7 @@ async function main() {
   // Données financières — réservées aux rôles admin, contrairement au catalogue et au stock
   // consultables par le caissier/stock_manager.
   app.use('/sales', requireAuth, requireRole('store_admin', 'super_admin'), salesRouter);
+  app.use('/documents', requireAuth, requireRole('store_admin', 'super_admin'), documentsRouter);
   app.use('/reports', requireAuth, requireRole('store_admin', 'super_admin'), reportsRouter);
   // Provisionnement de l'équipe (cashier/stock_manager) et branding — restriction de rôle appliquée
   // dans chaque routeur (users: tout réservé aux admins ; tenant: lecture ouverte, écriture admin).

@@ -79,6 +79,25 @@ export default function ProductsPage() {
     await load();
   }
 
+  async function handleDeletePermanently(product: ProductDTO) {
+    if (!session) return;
+    if (!confirm(t('products.confirmDeletePermanently', { name: product.name.fr }))) return;
+    try {
+      await adminFetch(session.token, `/products/${product.id}?permanent=true`, { method: 'DELETE' });
+      setError(null);
+    } catch (err) {
+      // 409 : le produit a un historique (ventes, documents, mouvements) — le message du serveur propose de le désactiver.
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
+    }
+    await load();
+  }
+
+  async function handleReactivate(product: ProductDTO) {
+    if (!session) return;
+    await adminFetch(session.token, `/products/${product.id}`, { method: 'PATCH', body: JSON.stringify({ active: true }) });
+    await load();
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -164,11 +183,18 @@ export default function ProductsPage() {
                   <button onClick={() => setEditing(p)} className="me-3 text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline">
                     {t('common.edit')}
                   </button>
-                  {p.active && (
-                    <button onClick={() => handleDeactivate(p)} className="text-sm font-medium text-red-600 hover:text-red-700 hover:underline">
+                  {p.active ? (
+                    <button onClick={() => handleDeactivate(p)} className="me-3 text-sm font-medium text-amber-600 hover:text-amber-700 hover:underline">
                       {t('common.deactivate')}
                     </button>
+                  ) : (
+                    <button onClick={() => handleReactivate(p)} className="me-3 text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline">
+                      {t('common.reactivate')}
+                    </button>
                   )}
+                  <button onClick={() => handleDeletePermanently(p)} className="text-sm font-medium text-red-600 hover:text-red-700 hover:underline">
+                    {t('products.deletePermanently')}
+                  </button>
                 </td>
               </tr>
             ))}

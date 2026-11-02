@@ -15,6 +15,10 @@ export function productDTO(r: any, canViewPurchasePrice = true): ProductDTO {
     sellingPriceCents: r.selling_price_cents,
     costPriceCents: canViewPurchasePrice ? r.cost_price_cents ?? 0 : 0,
     minSellingPriceCents: r.min_selling_price_cents ?? undefined,
+    promoPriceCents: r.promo_price_cents ?? undefined,
+    promoStart: r.promo_start ?? undefined,
+    promoEnd: r.promo_end ?? undefined,
+    soldByWeight: Boolean(r.sold_by_weight),
     taxRate: r.tax_rate,
     isPerishable: Boolean(r.is_perishable),
     lowStockThreshold: r.low_stock_threshold ?? undefined,
@@ -33,6 +37,10 @@ const COLUMNS: Record<string, (v: any) => [string, unknown]> = {
   sellingPriceCents: (v) => ['selling_price_cents', v],
   costPriceCents: (v) => ['cost_price_cents', v ?? 0],
   minSellingPriceCents: (v) => ['min_selling_price_cents', v ?? null],
+  promoPriceCents: (v) => ['promo_price_cents', v ?? null],
+  promoStart: (v) => ['promo_start', v || null],
+  promoEnd: (v) => ['promo_end', v || null],
+  soldByWeight: (v) => ['sold_by_weight', bool(v)],
   taxRate: (v) => ['tax_rate', v],
   isPerishable: (v) => ['is_perishable', bool(v)],
   lowStockThreshold: (v) => ['low_stock_threshold', v ?? null],
@@ -110,6 +118,26 @@ export function productsRouter({ db }: Ctx) {
   }));
 
   router.delete('/:id', writers, handler((req, res) => {
+    if (req.query.permanent === 'true') {
+      // Suppression définitive : uniquement pour un produit sans historique (voir apps/api products.service.deleteProductPermanently).
+      const tenantId = req.auth!.tenantId;
+      const id = req.params.id;
+      if (!db.prepare('SELECT 1 FROM products WHERE tenant_id = ? AND id = ?').get(tenantId, id)) throw new HttpError(404, 'Produit introuvable.');
+      const like = `%"${id}"%`; // identifiants UUID : présents entre guillemets dans le JSON des lignes
+      const used =
+        db.prepare('SELECT 1 FROM sales WHERE tenant_id = ? AND lines LIKE ? LIMIT 1').get(tenantId, like) ||
+        db.prepare('SELECT 1 FROM business_documents WHERE tenant_id = ? AND lines LIKE ? LIMIT 1').get(tenantId, like) ||
+        db.prepare("SELECT 1 FROM stock_movements WHERE tenant_id = ? AND product_id = ? AND type <> 'adjustment' LIMIT 1").get(tenantId, id);
+      if (used) {
+        throw new HttpError(409, "Suppression impossible : ce produit apparaît dans l'historique (ventes, documents ou mouvements de stock). Désactivez-le à la place.");
+      }
+      db.transaction(() => {
+        db.prepare("DELETE FROM stock_movements WHERE tenant_id = ? AND product_id = ? AND type = 'adjustment'").run(tenantId, id);
+        db.prepare('DELETE FROM products WHERE tenant_id = ? AND id = ?').run(tenantId, id);
+        db.prepare("INSERT INTO deleted_records (id, tenant_id, kind, ref_id, deleted_at) VALUES (?,?,'product',?,?)").run(newId(), tenantId, id, nowIso());
+      })();
+      return res.status(204).send();
+    }
     const r = db.prepare('UPDATE products SET active = 0, updated_at = ? WHERE tenant_id = ? AND id = ?').run(nowIso(), req.auth!.tenantId, req.params.id);
     if (!r.changes) throw new HttpError(404, 'Produit introuvable.');
     res.status(204).send();

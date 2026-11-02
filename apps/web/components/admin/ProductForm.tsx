@@ -78,6 +78,10 @@ export function ProductForm({ initial, onSubmit, onCancel, canViewCostPrice = tr
   const [minSellingPriceInput, setMinSellingPriceInput] = useState(
     initial?.minSellingPriceCents !== undefined ? centsToInput(initial.minSellingPriceCents) : '',
   );
+  const [promoPriceInput, setPromoPriceInput] = useState(initial?.promoPriceCents != null ? centsToInput(initial.promoPriceCents) : '');
+  const [promoStart, setPromoStart] = useState(initial?.promoStart?.slice(0, 10) ?? '');
+  const [promoEnd, setPromoEnd] = useState(initial?.promoEnd?.slice(0, 10) ?? '');
+  const [soldByWeight, setSoldByWeight] = useState(initial?.soldByWeight ?? false);
   const [taxRate, setTaxRate] = useState<TaxRate>(initial?.taxRate ?? 19);
   const [isPerishable, setIsPerishable] = useState(initial?.isPerishable ?? false);
   const [threshold, setThreshold] = useState(initial?.lowStockThreshold?.toString() ?? '');
@@ -101,6 +105,11 @@ export function ProductForm({ initial, onSubmit, onCancel, canViewCostPrice = tr
         sellingPriceCents: inputToCents(priceInput),
         costPriceCents: inputToCents(costPriceInput),
         minSellingPriceCents: minSellingPriceInput ? inputToCents(minSellingPriceInput) : undefined,
+        promoPriceCents: promoPriceInput ? inputToCents(promoPriceInput) : null,
+        promoStart: promoPriceInput && promoStart ? new Date(`${promoStart}T00:00:00`).toISOString() : null,
+        // fin de journée incluse
+        promoEnd: promoPriceInput && promoEnd ? new Date(`${promoEnd}T23:59:59`).toISOString() : null,
+        soldByWeight,
         taxRate,
         isPerishable,
         lowStockThreshold: threshold ? parseFloat(threshold.replace(',', '.')) : undefined,
@@ -289,6 +298,29 @@ export function ProductForm({ initial, onSubmit, onCancel, canViewCostPrice = tr
           />
         </label>
       </div>
+      <div className="grid grid-cols-3 gap-3">
+        <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+          {t('productForm.promoPrice')}
+          <input value={promoPriceInput} onChange={(e) => setPromoPriceInput(e.target.value)} inputMode="decimal" className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 focus:border-brand-500" />
+        </label>
+        <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+          {t('productForm.promoStart')}
+          <input type="date" value={promoStart} onChange={(e) => setPromoStart(e.target.value)} disabled={!promoPriceInput} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 focus:border-brand-500 disabled:opacity-50" />
+        </label>
+        <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+          {t('productForm.promoEnd')}
+          <input type="date" value={promoEnd} onChange={(e) => setPromoEnd(e.target.value)} disabled={!promoPriceInput} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 focus:border-brand-500 disabled:opacity-50" />
+        </label>
+      </div>
+      <label className="flex items-center gap-2 text-sm text-neutral-700">
+        <input
+          type="checkbox"
+          checked={soldByWeight}
+          onChange={(e) => setSoldByWeight(e.target.checked)}
+          className="h-4 w-4 rounded border-neutral-300 text-brand-600 focus:ring-brand-500"
+        />
+        {t('productForm.soldByWeight')}
+      </label>
       <label className="flex items-center gap-2 text-sm text-neutral-700">
         <input
           type="checkbox"

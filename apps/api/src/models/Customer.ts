@@ -12,6 +12,7 @@ export interface ICustomer extends Document {
   name: string;
   phone?: string;
   active: boolean;
+  creditLimitCents?: number; // plafond de dette autorisé ; absent = illimité
 }
 
 const CustomerSchema = new Schema<ICustomer>(
@@ -19,6 +20,7 @@ const CustomerSchema = new Schema<ICustomer>(
     name: { type: String, required: true },
     phone: { type: String, trim: true },
     active: { type: Boolean, default: true },
+    creditLimitCents: { type: Number, min: 0 },
   },
   { timestamps: true },
 );

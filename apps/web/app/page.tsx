@@ -11,6 +11,8 @@ import { OfflineBanner } from '../components/pos/OfflineBanner';
 import { SaleCheckout, type SaleCheckoutHandle } from '../components/pos/SaleCheckout';
 import { HeldCartsModal } from '../components/pos/HeldCartsModal';
 import { daysUntilExpiry, EXPIRY_WARNING_DAYS } from '../lib/expiry';
+import { WeightModal } from '../components/pos/WeightModal';
+import { effectivePriceCents, isPromoActive, lineTotalCents, parseScaleBarcode, roundQty } from '../lib/pricing';
 import { DiscountEditor } from '../components/pos/DiscountEditor';
 import { Receipt, type CompletedSale } from '../components/pos/Receipt';
 import { BrandMark } from '../components/BrandMark';
@@ -41,6 +43,7 @@ export default function PosPage() {
   const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
   const [discountTrigger, setDiscountTrigger] = useState({ productId: '', n: 0 });
   const [showHeld, setShowHeld] = useState(false);
+  const [weighTarget, setWeighTarget] = useState<{ product: LocalProduct; replace: boolean } | null>(null);
   const [showLegend, setShowLegend] = useState(true);
 
   const db = useMemo(() => (deviceId ? getOfflineDB(deviceId) : null), [deviceId]);
@@ -106,7 +109,14 @@ export default function PosPage() {
     setTimeout(() => setScanFeedback(null), 3500);
   }
 
-  function addToCart(product: LocalProduct) {
+  function addToCart(product: LocalProduct, weightQty?: number) {
+    // Produit au poids : on demande la pesée (sauf si le code-barres balance l'a déjà donnée).
+    if (product.soldByWeight && weightQty === undefined) {
+      setWeighTarget({ product, replace: false });
+      return;
+    }
+    const addQty = weightQty ?? 1;
+    const unitPriceCents = effectivePriceCents(product);
     setSelectedLineId(product.id);
     if (product.nearestExpiry && daysUntilExpiry(product.nearestExpiry) < 0) {
       flash(t('expiry.expiredWarning', { name: product.nameFr }));
@@ -114,24 +124,29 @@ export default function PosPage() {
     setCart((prev) => {
       const existing = prev.find((l) => l.productId === product.id);
       if (existing) {
-        return prev.map((l) =>
-          l.productId === product.id
-            ? { ...l, quantity: l.quantity + 1, lineTotalCents: l.unitPriceCents * (l.quantity + 1) - l.discountCents }
-            : l,
-        );
+        return prev.map((l) => {
+          if (l.productId !== product.id) return l;
+          const quantity = roundQty(l.quantity + addQty);
+          return { ...l, quantity, lineTotalCents: lineTotalCents(l.unitPriceCents, quantity, l.discountCents) };
+        });
       }
       const line: SaleLine = {
         productId: product.id,
         name: { fr: product.nameFr, ar: product.nameAr },
-        quantity: 1,
-        unitPriceCents: product.sellingPriceCents,
+        quantity: addQty,
+        unitPriceCents,
         costPriceCents: product.costPriceCents,
         taxRate: product.taxRate,
         discountCents: 0,
-        lineTotalCents: product.sellingPriceCents,
+        lineTotalCents: lineTotalCents(unitPriceCents, addQty, 0),
       };
       return [...prev, line];
     });
+  }
+
+  /** Remplace la quantité (pesée) d'une ligne au poids. */
+  function setLineQuantity(product: LocalProduct, quantity: number) {
+    setCart((prev) => prev.map((l) => (l.productId === product.id ? { ...l, quantity, lineTotalCents: lineTotalCents(l.unitPriceCents, quantity, l.discountCents) } : l)));
   }
 
   function changeQuantity(productId: string, delta: number) {
@@ -139,7 +154,7 @@ export default function PosPage() {
       prev
         .map((l) =>
           l.productId === productId
-            ? { ...l, quantity: l.quantity + delta, lineTotalCents: l.unitPriceCents * (l.quantity + delta) - l.discountCents }
+            ? { ...l, quantity: l.quantity + delta, lineTotalCents: lineTotalCents(l.unitPriceCents, l.quantity + delta, l.discountCents) }
             : l,
         )
         .filter((l) => l.quantity > 0),
@@ -152,7 +167,7 @@ export default function PosPage() {
 
   function applyDiscount(productId: string, discountCents: number) {
     setCart((prev) =>
-      prev.map((l) => (l.productId === productId ? { ...l, discountCents, lineTotalCents: l.unitPriceCents * l.quantity - discountCents } : l)),
+      prev.map((l) => (l.productId === productId ? { ...l, discountCents, lineTotalCents: lineTotalCents(l.unitPriceCents, l.quantity, discountCents) } : l)),
     );
   }
 
@@ -160,6 +175,14 @@ export default function PosPage() {
     e.preventDefault();
     const value = query.trim();
     if (!value) return;
+    const scale = parseScaleBarcode(value, products);
+    if (scale) {
+      addToCart(scale.product, scale.quantity);
+      setQuery('');
+      setScanFeedback(null);
+      scanInputRef.current?.focus();
+      return;
+    }
     const match = products.find((p) => p.barcode === value || p.sku.toLowerCase() === value.toLowerCase());
     if (match) {
       addToCart(match);
@@ -350,7 +373,16 @@ export default function PosPage() {
                       </p>
                     )}
                     <ExpiryBadge nearestExpiry={product.nearestExpiry} />
-                    <p className="mt-auto pt-1 text-base font-semibold tabular-nums text-neutral-900">{formatDZD(product.sellingPriceCents)}</p>
+                    <p className="mt-auto flex items-baseline gap-2 pt-1 text-base font-semibold tabular-nums text-neutral-900">
+                      {formatDZD(effectivePriceCents(product))}
+                      {product.soldByWeight && <span className="text-xs font-normal text-neutral-500">/ {product.unit}</span>}
+                      {isPromoActive(product) && (
+                        <>
+                          <span className="text-xs font-normal text-neutral-400 line-through">{formatDZD(product.sellingPriceCents)}</span>
+                          <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-red-700">{t('pos.promoBadge')}</span>
+                        </>
+                      )}
+                    </p>
                   </div>
                 </button>
               ))}
@@ -420,6 +452,14 @@ export default function PosPage() {
                         openSignal={discountTrigger.productId === line.productId ? discountTrigger.n : 0}
                       />
                     </div>
+                    {product?.soldByWeight ? (
+                      <button
+                        onClick={() => setWeighTarget({ product, replace: true })}
+                        className="rounded-md border border-neutral-200 px-2 py-1 text-sm font-semibold tabular-nums text-neutral-900 transition hover:bg-neutral-100"
+                      >
+                        {line.quantity.toFixed(3)} {product.unit}
+                      </button>
+                    ) : (
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => changeQuantity(line.productId, -1)}
@@ -437,6 +477,7 @@ export default function PosPage() {
                         <IconPlus className="h-3.5 w-3.5" />
                       </button>
                     </div>
+                    )}
                     <span className="w-24 shrink-0 text-end text-sm font-semibold tabular-nums text-neutral-900">{formatDZD(line.lineTotalCents)}</span>
                     <button
                       onClick={() => removeLine(line.productId)}
@@ -495,6 +536,26 @@ export default function PosPage() {
           onResume={(c) => void resumeCart(c)}
           onClose={() => {
             setShowHeld(false);
+            scanInputRef.current?.focus();
+          }}
+        />
+      )}
+
+      {weighTarget && (
+        <WeightModal
+          name={weighTarget.product.nameFr}
+          unit={weighTarget.product.unit}
+          unitPriceCents={effectivePriceCents(weighTarget.product)}
+          initialQuantity={weighTarget.replace ? cart.find((l) => l.productId === weighTarget.product.id)?.quantity : undefined}
+          onCancel={() => {
+            setWeighTarget(null);
+            scanInputRef.current?.focus();
+          }}
+          onConfirm={(quantity) => {
+            const { product, replace } = weighTarget;
+            setWeighTarget(null);
+            if (replace) setLineQuantity(product, quantity);
+            else addToCart(product, quantity);
             scanInputRef.current?.focus();
           }}
         />

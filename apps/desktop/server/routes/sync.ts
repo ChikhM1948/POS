@@ -107,14 +107,19 @@ export function syncRouter({ db }: Ctx) {
       _id: r.id, sku: r.sku, barcode: r.barcode ?? undefined, name: { fr: r.name_fr, ar: r.name_ar ?? undefined },
       category: r.category ?? undefined, imageUrl: r.image_url ?? undefined, sellingPriceCents: r.selling_price_cents,
       costPriceCents: req.auth!.role !== 'cashier' || req.auth!.canViewPurchasePrice ? r.cost_price_cents : 0,
-      minSellingPriceCents: r.min_selling_price_cents ?? undefined, taxRate: r.tax_rate, unit: r.unit, updatedAt: r.updated_at,
+      minSellingPriceCents: r.min_selling_price_cents ?? undefined,
+      promoPriceCents: r.promo_price_cents ?? undefined, promoStart: r.promo_start ?? undefined, promoEnd: r.promo_end ?? undefined,
+      soldByWeight: Boolean(r.sold_by_weight), taxRate: r.tax_rate, unit: r.unit, updatedAt: r.updated_at,
       active: Boolean(r.active),
     }));
     const expiries = nearestExpiryByProduct(db, tenantId, req.auth!.storeId);
     for (const prod of products) (prod as any).nearestExpiry = expiries.get(prod._id);
-    const customers = (db.prepare('SELECT * FROM customers WHERE tenant_id = ? AND active = 1 AND updated_at > ?').all(tenantId, sinceIso) as any[])
-      .map((r) => ({ _id: r.id, name: r.name, phone: r.phone ?? undefined }));
-    res.json({ products, customers, serverTime });
+    // Les clients avec plafond sont toujours renvoyés : leur solde bouge via le ledger sans toucher updated_at.
+    const customers = (db.prepare(`SELECT c.*, (SELECT COALESCE(SUM(amount_cents),0) FROM ledger_entries l WHERE l.tenant_id = c.tenant_id AND l.party_kind = 'customer' AND l.party_id = c.id) AS balance
+        FROM customers c WHERE c.tenant_id = ? AND c.active = 1 AND (c.updated_at > ? OR c.credit_limit_cents > 0)`).all(tenantId, sinceIso) as any[])
+      .map((r) => ({ _id: r.id, name: r.name, phone: r.phone ?? undefined, creditLimitCents: r.credit_limit_cents ?? undefined, balanceCents: r.balance }));
+    const deletedProductIds = (db.prepare("SELECT ref_id FROM deleted_records WHERE tenant_id = ? AND kind = 'product' AND deleted_at > ?").all(tenantId, sinceIso) as { ref_id: string }[]).map((r) => r.ref_id);
+    res.json({ products, customers, deletedProductIds, serverTime });
   }));
 
   return router;

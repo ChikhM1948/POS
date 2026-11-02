@@ -13,7 +13,7 @@ import type { StockAlertsDTO, StoreDTO, UserRole } from '@pos-dz/shared';
 
 interface NavItem {
   href: string;
-  labelKey: 'products' | 'stock' | 'sales' | 'reports' | 'taxes' | 'suppliers' | 'barcodes' | 'customers' | 'team' | 'settings';
+  labelKey: 'products' | 'stock' | 'sales' | 'reports' | 'taxes' | 'documents' | 'accounting' | 'suppliers' | 'barcodes' | 'customers' | 'team' | 'settings';
   icon: (props: { className?: string }) => JSX.Element;
   roles?: UserRole[]; // omis = visible pour tous les rôles admis en back-office
 }
@@ -26,7 +26,9 @@ const NAV: NavItem[] = [
   // (voir server.ts), pour ne pas afficher un lien qui renverrait systématiquement un 403.
   { href: '/admin/sales', labelKey: 'sales', icon: IconReceipt, roles: ['store_admin', 'super_admin'] },
   { href: '/admin/reports', labelKey: 'reports', icon: IconChart, roles: ['store_admin', 'super_admin'] },
+  { href: '/admin/documents', labelKey: 'documents', icon: IconReceipt, roles: ['store_admin', 'super_admin'] },
   { href: '/admin/taxes', labelKey: 'taxes', icon: IconReceipt, roles: ['store_admin', 'super_admin'] },
+  { href: '/admin/accounting', labelKey: 'accounting', icon: IconChart, roles: ['store_admin', 'super_admin'] },
   // Fournisseurs : mêmes rôles que /stock/purchases côté API (ceux qui font les achats).
   { href: '/admin/suppliers', labelKey: 'suppliers', icon: IconTruck, roles: ['store_admin', 'stock_manager', 'super_admin'] },
   // Clients/dettes : données financières, réservées aux admins — voir customers.controller.ts.

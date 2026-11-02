@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import type { AuthenticatedRequest } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/asyncHandler';
+import { getAccountingJournal } from './journal.service';
 import { getSalesSummary, getTopProducts, getProfitSummary, getDebtsSummary, getTaxReturn } from './reports.service';
 
 export const reportsRouter = Router();
@@ -39,4 +40,12 @@ reportsRouter.get('/tax-return', asyncHandler(async (req: AuthenticatedRequest, 
   const range = parseRange(req.query as Record<string, string | undefined>);
   const taxReturn = await getTaxReturn(req.auth!.tenantId, range);
   res.json({ taxReturn });
+}));
+
+/** Écritures de la période (tickets, retours, factures libres) : base des exports CSV/XLSX et du récapitulatif TVA côté web. */
+reportsRouter.get('/accounting-journal', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const range = parseRange(req.query as Record<string, string | undefined>);
+  if (Number.isNaN(range.from.getTime()) || Number.isNaN(range.to.getTime())) return res.status(400).json({ error: 'Période invalide.' });
+  const entries = await getAccountingJournal(req.auth!.tenantId, range);
+  res.json({ entries });
 }));

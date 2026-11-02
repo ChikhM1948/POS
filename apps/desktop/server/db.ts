@@ -82,6 +82,27 @@ CREATE TABLE IF NOT EXISTS sync_log (
   entity_type TEXT NOT NULL, status TEXT NOT NULL, error TEXT, received_at TEXT NOT NULL, applied_at TEXT,
   PRIMARY KEY (tenant_id, client_generated_id)
 );
+CREATE TABLE IF NOT EXISTS document_counters (
+  tenant_id TEXT NOT NULL, kind TEXT NOT NULL, year INTEGER NOT NULL, last_sequence INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (tenant_id, kind, year)
+);
+CREATE TABLE IF NOT EXISTS business_documents (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, kind TEXT NOT NULL, number TEXT NOT NULL,
+  year INTEGER NOT NULL, sequence INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'issued',
+  issue_date TEXT NOT NULL, valid_until TEXT, seller TEXT NOT NULL, buyer TEXT NOT NULL, buyer_name TEXT NOT NULL,
+  store_id TEXT, lines TEXT NOT NULL, totals TEXT NOT NULL, total_ttc_cents INTEGER NOT NULL,
+  payment_method TEXT, payments TEXT, notes TEXT, sale_id TEXT, sale_number TEXT,
+  source_document_id TEXT, source_document_number TEXT, cancelled_at TEXT, cancel_reason TEXT, created_by TEXT,
+  hash TEXT NOT NULL, previous_hash TEXT, einvoice TEXT NOT NULL, created_at TEXT NOT NULL,
+  UNIQUE (tenant_id, kind, year, sequence),
+  UNIQUE (tenant_id, number)
+);
+CREATE INDEX IF NOT EXISTS idx_docs_date ON business_documents (tenant_id, issue_date);
+CREATE INDEX IF NOT EXISTS idx_docs_sale ON business_documents (tenant_id, sale_id, kind);
+CREATE TABLE IF NOT EXISTS deleted_records (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, kind TEXT NOT NULL, ref_id TEXT NOT NULL, deleted_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_deleted_records ON deleted_records (tenant_id, kind, deleted_at);
 CREATE TABLE IF NOT EXISTS app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `;
 
@@ -91,5 +112,12 @@ export function openDatabase(file: string, nativeBinding?: string): Db {
   db.pragma('synchronous = FULL'); // un ticket validé ne doit jamais être perdu sur coupure de courant
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA);
+  // Migrations légères : colonnes ajoutées après la première version du schéma.
+  const cols = (table: string) => (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((c) => c.name);
+  if (!cols('customers').includes('credit_limit_cents')) db.exec('ALTER TABLE customers ADD COLUMN credit_limit_cents INTEGER');
+  const productCols = cols('products');
+  for (const [col, type] of [['promo_price_cents', 'INTEGER'], ['promo_start', 'TEXT'], ['promo_end', 'TEXT'], ['sold_by_weight', 'INTEGER NOT NULL DEFAULT 0']] as const) {
+    if (!productCols.includes(col)) db.exec(`ALTER TABLE products ADD COLUMN ${col} ${type}`);
+  }
   return db;
 }

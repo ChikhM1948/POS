@@ -115,6 +115,12 @@ export interface ProductDTO {
   costPriceCents: number;
   /** Prix de vente minimum (DZD) sous lequel une remise caisse déclenche un avertissement — optionnel. */
   minSellingPriceCents?: number;
+  /** Prix promotionnel — appliqué automatiquement à la caisse tant que la fenêtre [promoStart, promoEnd] est ouverte. null = pas de promo. */
+  promoPriceCents?: number | null;
+  promoStart?: string | null; // ISO 8601 ; absent = actif dès maintenant
+  promoEnd?: string | null; // ISO 8601 ; absent = sans fin
+  /** Vendu au poids : la caisse demande la pesée (kg) ou lit le code-barres balance. sellingPriceCents = prix au kg. */
+  soldByWeight?: boolean;
   taxRate: TaxRate;
   isPerishable: boolean;
   lowStockThreshold?: number;
@@ -261,17 +267,20 @@ export interface CustomerDTO {
   phone?: string;
   active: boolean;
   balanceCents: number; // > 0 = ce client nous doit de l'argent ("Karna")
+  creditLimitCents?: number; // plafond de crédit autorisé ; absent = illimité
 }
 
 export interface CreateCustomerInput {
   name: string;
   phone?: string;
+  creditLimitCents?: number;
 }
 
 export interface UpdateCustomerInput {
   name?: string;
   phone?: string;
   active?: boolean;
+  creditLimitCents?: number | null; // null = retirer le plafond
 }
 
 // --- Back-office ventes / rapports ---
@@ -559,4 +568,428 @@ export interface TaxReturnDTO {
   cashCents: number;
   salesCount: number;
   refundsCount: number;
+}
+
+// --- Documents commerciaux (devis, bon de commande, proforma, bon de livraison, facture) ---
+
+export type DocumentKind = 'quote' | 'order' | 'proforma' | 'delivery_note' | 'invoice';
+
+export const DOCUMENT_KINDS: DocumentKind[] = ['quote', 'order', 'proforma', 'delivery_note', 'invoice'];
+
+/** Préfixe du numéro : DV-2026-00001. Un compteur par (commerce, type, année), jamais réutilisé. */
+export const DOCUMENT_PREFIX: Record<DocumentKind, string> = {
+  quote: 'DV',
+  order: 'BC',
+  proforma: 'PF',
+  delivery_note: 'BL',
+  invoice: 'FA',
+};
+
+/** Transformations autorisées : un document n'est jamais modifié, on en émet un nouveau qui le référence. */
+export const DOCUMENT_CONVERSIONS: Record<DocumentKind, DocumentKind[]> = {
+  quote: ['order', 'proforma', 'delivery_note', 'invoice'],
+  order: ['delivery_note', 'invoice'],
+  proforma: ['order', 'delivery_note', 'invoice'],
+  delivery_note: ['invoice'],
+  invoice: [],
+};
+
+export function formatDocumentNumber(kind: DocumentKind, year: number, sequence: number): string {
+  return `${DOCUMENT_PREFIX[kind]}-${year}-${String(sequence).padStart(5, '0')}`;
+}
+
+/** Année civile à l'heure d'Alger (UTC+1 toute l'année) : une facture émise le 31/12 à 23h30 reste de l'année en cours. */
+export function documentYear(date: Date): number {
+  return new Date(date.getTime() + 60 * 60 * 1000).getUTCFullYear();
+}
+
+/** Statut 'cancelled' = annulé mais numéro conservé (jamais de trou dans la séquence). */
+export type DocumentStatus = 'issued' | 'cancelled';
+
+/** Identité figée sur le document (vendeur comme acheteur) : ne change pas si la fiche tiers est modifiée ensuite. */
+export interface DocumentParty {
+  name: string;
+  address?: string;
+  nif?: string;
+  rc?: string;
+  nis?: string;
+  ai?: string;
+  customerId?: string;
+}
+
+export interface DocumentLineInput {
+  productId?: string;
+  designation: string;
+  quantity: number;
+  unit?: string;
+  /** Prix unitaire hors taxe. */
+  unitPriceHtCents: number;
+  /** Remise sur la ligne, en centimes HT. */
+  discountCents?: number;
+  taxRate: TaxRate;
+}
+
+export interface DocumentLine extends DocumentLineInput {
+  discountCents: number;
+  totalHtCents: number;
+  taxCents: number;
+  totalTtcCents: number;
+}
+
+export interface DocumentVatBucket {
+  taxRate: number;
+  baseHtCents: number;
+  taxCents: number;
+}
+
+export interface DocumentTotals {
+  totalHtCents: number;
+  vatByRate: DocumentVatBucket[];
+  totalTaxCents: number;
+  totalTtcCents: number;
+  stampDutyCents: number;
+  netToPayCents: number;
+}
+
+/**
+ * Statut de la facturation électronique : le modèle est prêt, la transmission ne l'est pas encore.
+ * Tant que l'administration n'a pas publié de format/API définitif, tout document reste 'not_submitted'.
+ */
+export type EInvoiceStatus = 'not_submitted' | 'pending' | 'submitted' | 'accepted' | 'rejected';
+
+export interface EInvoiceInfo {
+  status: EInvoiceStatus;
+  /** Identifiant universel du document (UUID v4), stable et indépendant du numéro séquentiel — attendu par la plupart des schémas e-facture. */
+  uuid: string;
+  /** Référence attribuée par la plateforme de l'administration à l'acceptation. */
+  externalReference?: string;
+  submittedAt?: string;
+  errorMessage?: string;
+  /** Contenu du QR code de vérification, renseigné au retour de la plateforme. */
+  qrPayload?: string;
+}
+
+export interface DocumentIntegrity {
+  /** SHA-256 du contenu canonique du document (voir canonicalDocumentContent). */
+  hash: string;
+  /** Hash du document précédent de la même séquence : toute modification ou suppression rétroactive casse la chaîne. */
+  previousHash?: string;
+}
+
+export interface BusinessDocumentDTO {
+  id: string;
+  kind: DocumentKind;
+  number: string;
+  year: number;
+  sequence: number;
+  status: DocumentStatus;
+  issueDate: string;
+  /** Devis / proforma : date limite de validité. Facture : échéance. */
+  validUntil?: string;
+  currency: 'DZD';
+  seller: DocumentParty;
+  buyer: DocumentParty;
+  storeId?: string;
+  lines: DocumentLine[];
+  totals: DocumentTotals;
+  paymentMethod?: PaymentMethod;
+  /** Détail des règlements lorsque le document est issu d'une vente de caisse. */
+  payments?: SalePayment[];
+  notes?: string;
+  /** Vente de caisse d'origine (facture / BL / proforma tirés d'un ticket). */
+  saleId?: string;
+  saleNumber?: string;
+  sourceDocumentId?: string;
+  sourceDocumentNumber?: string;
+  cancelledAt?: string;
+  cancelReason?: string;
+  createdBy?: string;
+  integrity: DocumentIntegrity;
+  einvoice: EInvoiceInfo;
+}
+
+export interface DocumentListItemDTO {
+  id: string;
+  kind: DocumentKind;
+  number: string;
+  status: DocumentStatus;
+  issueDate: string;
+  buyerName: string;
+  totalTtcCents: number;
+  saleNumber?: string;
+  sourceDocumentNumber?: string;
+}
+
+export interface CreateDocumentInput {
+  kind: DocumentKind;
+  buyer: DocumentParty;
+  lines: DocumentLineInput[];
+  storeId?: string;
+  paymentMethod?: PaymentMethod;
+  validUntil?: string;
+  notes?: string;
+}
+
+export interface CreateDocumentFromSaleInput {
+  saleId: string;
+  kind: DocumentKind;
+  buyer: DocumentParty;
+}
+
+export interface ConvertDocumentInput {
+  kind: DocumentKind;
+  /** Date de validité / échéance du nouveau document (facultatif). */
+  validUntil?: string;
+  /** Mode de règlement, utile pour le timbre d'une facture issue d'un devis ou d'une commande. */
+  paymentMethod?: PaymentMethod;
+}
+
+export interface CancelDocumentInput {
+  reason: string;
+}
+
+const taxOfTtc = (ttcCents: number, rate: number) => Math.round((ttcCents * rate) / (100 + rate));
+
+/** Calcule les montants d'une ligne saisie en HT (devis, commande, facture libre). */
+export function computeDocumentLine(input: DocumentLineInput): DocumentLine {
+  const discountCents = Math.max(0, Math.round(input.discountCents ?? 0));
+  const totalHtCents = Math.max(0, Math.round(input.quantity * input.unitPriceHtCents) - discountCents);
+  const taxCents = Math.round((totalHtCents * input.taxRate) / 100);
+  return { ...input, discountCents, totalHtCents, taxCents, totalTtcCents: totalHtCents + taxCents };
+}
+
+/**
+ * Convertit une ligne de ticket de caisse (prix TTC, remise déjà déduite) en ligne de document.
+ * Le TTC du ticket est conservé à l'identique : la TVA en est extraite, jamais recalculée par-dessus.
+ */
+export function documentLineFromSaleLine(line: SaleLine, locale: 'fr' | 'ar' = 'fr'): DocumentLine {
+  const taxCents = taxOfTtc(line.lineTotalCents, line.taxRate);
+  const totalHtCents = line.lineTotalCents - taxCents;
+  return {
+    productId: line.productId,
+    designation: (locale === 'ar' && line.name.ar) || line.name.fr,
+    quantity: line.quantity,
+    unitPriceHtCents: line.quantity ? Math.round(totalHtCents / line.quantity) : 0,
+    discountCents: 0,
+    taxRate: line.taxRate,
+    totalHtCents,
+    taxCents,
+    totalTtcCents: line.lineTotalCents,
+  };
+}
+
+/**
+ * Droit de timbre sur paiement en espèces (Code du timbre, barème par tranche de 100 DA ou fraction) :
+ *  - <= 300 DA : exonéré
+ *  - jusqu'à 30 000 DA : 1 DA / 100 DA  ·  30 000 – 100 000 DA : 1,5 DA / 100 DA  ·  > 100 000 DA : 2 DA / 100 DA
+ *  - minimum de perception : 5 DA
+ * ⚠ Barème à faire valider par le comptable du commerce : les taux changent avec les lois de finances.
+ */
+export function computeStampDutyCents(cashAmountCents: number): number {
+  if (cashAmountCents <= 30_000) return 0;
+  const units = Math.ceil(cashAmountCents / 10_000); // tranches de 100 DA
+  const perUnitCents = cashAmountCents <= 3_000_000 ? 100 : cashAmountCents <= 10_000_000 ? 150 : 200;
+  return Math.max(500, units * perUnitCents);
+}
+
+/** Totaux d'un document. Le timbre ne concerne que la part payée en espèces d'une facture. */
+export function computeDocumentTotals(lines: DocumentLine[], stampDutyCents = 0): DocumentTotals {
+  const buckets = new Map<number, DocumentVatBucket>();
+  for (const l of lines) {
+    const b = buckets.get(l.taxRate) ?? { taxRate: l.taxRate, baseHtCents: 0, taxCents: 0 };
+    b.baseHtCents += l.totalHtCents;
+    b.taxCents += l.taxCents;
+    buckets.set(l.taxRate, b);
+  }
+  const vatByRate = [...buckets.values()].sort((a, b) => b.taxRate - a.taxRate);
+  const totalHtCents = vatByRate.reduce((s, b) => s + b.baseHtCents, 0);
+  const totalTaxCents = vatByRate.reduce((s, b) => s + b.taxCents, 0);
+  const totalTtcCents = totalHtCents + totalTaxCents;
+  return { totalHtCents, vatByRate, totalTaxCents, totalTtcCents, stampDutyCents, netToPayCents: totalTtcCents + stampDutyCents };
+}
+
+/**
+ * Sérialisation déterministe (clés triées) du contenu fiscalement significatif d'un document —
+ * c'est elle qui est hachée. Les champs de statut (annulation, e-facture) en sont exclus : ils
+ * évoluent légitimement après l'émission sans altérer le document lui-même.
+ */
+export function canonicalDocumentContent(doc: Pick<BusinessDocumentDTO, 'kind' | 'number' | 'issueDate' | 'seller' | 'buyer' | 'lines' | 'totals' | 'saleNumber' | 'sourceDocumentNumber' | 'einvoice'>): string {
+  const sort = (v: unknown): unknown => {
+    if (Array.isArray(v)) return v.map(sort);
+    if (v && typeof v === 'object') {
+      return Object.fromEntries(Object.entries(v as Record<string, unknown>).filter(([, x]) => x !== undefined).sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, x]) => [k, sort(x)]));
+    }
+    return v;
+  };
+  return JSON.stringify(sort({
+    kind: doc.kind, number: doc.number, issueDate: doc.issueDate, seller: doc.seller, buyer: doc.buyer,
+    lines: doc.lines, totals: doc.totals, saleNumber: doc.saleNumber, sourceDocumentNumber: doc.sourceDocumentNumber,
+    uuid: doc.einvoice.uuid,
+  }));
+}
+
+// --- Export comptable (journal des ventes / récapitulatif TVA) ---
+
+export type JournalEntryKind = 'sale' | 'refund' | 'invoice';
+
+/**
+ * Une écriture du journal : ticket de caisse, retour (montants négatifs) ou facture libre émise
+ * hors caisse. Les factures tirées d'un ticket n'y figurent pas — le ticket est déjà dans le journal.
+ */
+export interface JournalEntryDTO {
+  date: string;
+  kind: JournalEntryKind;
+  number: string;
+  /** Numéro du document fiscal associé (facture tirée d'un ticket), s'il existe. */
+  documentNumber?: string;
+  storeId?: string;
+  customerName?: string;
+  customerNif?: string;
+  vat: DocumentVatBucket[];
+  totalHtCents: number;
+  totalTaxCents: number;
+  totalTtcCents: number;
+  stampDutyCents: number;
+  cashCents: number;
+  paymentMethods: PaymentMethod[];
+}
+
+// --- Règles de validation communes aux deux backends (API cloud Mongo / serveur local SQLite) ---
+
+/** Erreur métier d'un document : `status` est relayé tel quel au client (400 validation, 404 introuvable, 409 conflit). */
+export class DocumentError extends Error {
+  constructor(public status: 400 | 404 | 409, message: string) {
+    super(message);
+  }
+}
+
+const DOC_VALID_RATES = new Set<number>([19, 9, 0]);
+const DOC_PAYMENT_METHODS = new Set<string>(['cash', 'cib', 'edahabia', 'cheque', 'credit', 'voucher']);
+const docClean = (s: unknown) => (typeof s === 'string' && s.trim() ? s.trim() : undefined);
+
+/** Validité par défaut d'un devis / d'une proforma, en jours. */
+export const DEFAULT_DOCUMENT_VALIDITY_DAYS = 15;
+
+export function assertDocumentKind(kind: unknown): asserts kind is DocumentKind {
+  if (!DOCUMENT_KINDS.includes(kind as DocumentKind)) throw new DocumentError(400, 'Type de document invalide.');
+}
+
+export function assertPaymentMethod(method: unknown): void {
+  if (method !== undefined && method !== null && method !== '' && !DOC_PAYMENT_METHODS.has(method as string)) {
+    throw new DocumentError(400, 'Mode de règlement invalide.');
+  }
+}
+
+export function cleanDocumentParty(raw: Partial<DocumentParty> | undefined): DocumentParty {
+  return {
+    name: docClean(raw?.name) ?? 'Client de passage',
+    address: docClean(raw?.address),
+    nif: docClean(raw?.nif),
+    rc: docClean(raw?.rc),
+    nis: docClean(raw?.nis),
+    ai: docClean(raw?.ai),
+    customerId: docClean(raw?.customerId),
+  };
+}
+
+export function validateDocumentLines(raw: unknown): DocumentLine[] {
+  if (!Array.isArray(raw) || raw.length === 0) throw new DocumentError(400, 'Le document doit contenir au moins une ligne.');
+  return raw.map((l, i) => {
+    const n = i + 1;
+    const designation = docClean(l?.designation);
+    if (!designation) throw new DocumentError(400, `Ligne ${n} : désignation requise.`);
+    if (!(typeof l.quantity === 'number' && l.quantity > 0)) throw new DocumentError(400, `Ligne ${n} : quantité invalide.`);
+    if (!(Number.isInteger(l.unitPriceHtCents) && l.unitPriceHtCents >= 0)) throw new DocumentError(400, `Ligne ${n} : prix unitaire invalide.`);
+    if (!DOC_VALID_RATES.has(l.taxRate)) throw new DocumentError(400, `Ligne ${n} : taux de TVA invalide (19, 9 ou 0).`);
+    return computeDocumentLine({
+      productId: docClean(l.productId),
+      designation,
+      quantity: l.quantity,
+      unit: docClean(l.unit),
+      unitPriceHtCents: l.unitPriceHtCents,
+      discountCents: Number.isInteger(l.discountCents) && l.discountCents > 0 ? l.discountCents : 0,
+      taxRate: l.taxRate,
+    });
+  });
+}
+
+export function parseDocumentDate(raw: unknown, label: string): Date | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  const d = new Date(String(raw));
+  if (Number.isNaN(d.getTime())) throw new DocumentError(400, `${label} invalide.`);
+  return d;
+}
+
+export function cleanDocumentText(s: unknown): string | undefined {
+  return docClean(s);
+}
+
+/** Le timbre ne s'applique qu'à une facture réglée (en tout ou partie) en espèces. */
+export function documentStampDuty(kind: DocumentKind, ttcCents: number, paymentMethod?: PaymentMethod, payments?: SalePayment[]): number {
+  if (kind !== 'invoice') return 0;
+  if (payments?.length) {
+    return computeStampDutyCents(payments.filter((p) => p.method === 'cash').reduce((s, p) => s + p.amountCents, 0));
+  }
+  return paymentMethod === 'cash' ? computeStampDutyCents(ttcCents) : 0;
+}
+
+/** Document tirable d'un ticket de caisse. */
+export const SALE_DERIVED_KINDS: DocumentKind[] = ['invoice', 'delivery_note', 'proforma'];
+
+/** Écriture de journal d'un ticket de caisse (retour = montants négatifs). */
+export function journalEntryFromSale(s: {
+  date: string;
+  type: 'sale' | 'refund';
+  number: string;
+  storeId?: string;
+  lines: SaleLine[];
+  payments: SalePayment[];
+  stampDutyCents?: number;
+  documentNumber?: string;
+}): JournalEntryDTO {
+  const sign = s.type === 'refund' ? -1 : 1;
+  const map = new Map<number, DocumentVatBucket>();
+  for (const l of s.lines) {
+    const tax = taxOfTtc(l.lineTotalCents, l.taxRate);
+    const b = map.get(l.taxRate) ?? { taxRate: l.taxRate, baseHtCents: 0, taxCents: 0 };
+    b.baseHtCents += sign * (l.lineTotalCents - tax);
+    b.taxCents += sign * tax;
+    map.set(l.taxRate, b);
+  }
+  const vat = [...map.values()].sort((a, b) => b.taxRate - a.taxRate);
+  const totalHtCents = vat.reduce((a, b) => a + b.baseHtCents, 0);
+  const totalTaxCents = vat.reduce((a, b) => a + b.taxCents, 0);
+  return {
+    date: s.date,
+    kind: s.type,
+    number: s.number,
+    documentNumber: s.documentNumber,
+    storeId: s.storeId,
+    vat,
+    totalHtCents,
+    totalTaxCents,
+    totalTtcCents: totalHtCents + totalTaxCents,
+    stampDutyCents: sign * (s.stampDutyCents ?? 0),
+    cashCents: sign * s.payments.filter((p) => p.method === 'cash').reduce((a, p) => a + p.amountCents, 0),
+    paymentMethods: s.payments.map((p) => p.method),
+  };
+}
+
+/** Écriture de journal d'une facture libre (émise hors caisse). */
+export function journalEntryFromInvoice(d: Pick<BusinessDocumentDTO, 'issueDate' | 'number' | 'storeId' | 'buyer' | 'totals' | 'paymentMethod'>): JournalEntryDTO {
+  return {
+    date: d.issueDate,
+    kind: 'invoice',
+    number: d.number,
+    storeId: d.storeId,
+    customerName: d.buyer.name,
+    customerNif: d.buyer.nif,
+    vat: d.totals.vatByRate,
+    totalHtCents: d.totals.totalHtCents,
+    totalTaxCents: d.totals.totalTaxCents,
+    totalTtcCents: d.totals.totalTtcCents,
+    stampDutyCents: d.totals.stampDutyCents,
+    cashCents: d.paymentMethod === 'cash' ? d.totals.totalTtcCents : 0,
+    paymentMethods: d.paymentMethod ? [d.paymentMethod] : [],
+  };
 }

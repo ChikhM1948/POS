@@ -23,7 +23,7 @@ interface TableSpec {
   /** Table SQLite source. */
   table: string;
   /** Colonne d'horodatage servant de curseur (référentiel : updated_at ; journal : created_at). */
-  ts: 'updated_at' | 'created_at';
+  ts: 'updated_at' | 'created_at' | 'deleted_at';
   batch: number;
   /** Ligne → [collection cloud, document]. */
   map: (r: any) => [string, any];
@@ -60,6 +60,8 @@ const TABLES: TableSpec[] = [
       _id: oid(r.id), sku: r.sku, barcode: r.barcode ?? undefined, name: { fr: r.name_fr, ar: r.name_ar ?? undefined },
       category: r.category ?? undefined, imageUrl: r.image_url ?? undefined, unit: r.unit, variants: json(r.variants),
       sellingPriceCents: r.selling_price_cents, costPriceCents: r.cost_price_cents, minSellingPriceCents: r.min_selling_price_cents ?? undefined,
+      promoPriceCents: r.promo_price_cents ?? undefined, promoStart: r.promo_start ?? undefined,
+      promoEnd: r.promo_end ?? undefined, soldByWeight: !!r.sold_by_weight,
       taxRate: r.tax_rate, isPerishable: !!r.is_perishable, lowStockThreshold: r.low_stock_threshold ?? undefined, active: !!r.active,
       createdAt: r.created_at, updatedAt: r.updated_at,
     }],
@@ -67,7 +69,8 @@ const TABLES: TableSpec[] = [
   {
     table: 'customers', ts: 'updated_at', batch: 200,
     map: (r) => ['customers', {
-      _id: oid(r.id), name: r.name, phone: r.phone ?? undefined, active: !!r.active, createdAt: r.created_at, updatedAt: r.updated_at,
+      _id: oid(r.id), name: r.name, phone: r.phone ?? undefined, active: !!r.active, creditLimitCents: r.credit_limit_cents ?? undefined,
+      createdAt: r.created_at, updatedAt: r.updated_at,
     }],
   },
   {
@@ -108,6 +111,11 @@ const TABLES: TableSpec[] = [
       sourceDocument: r.source_type && r.source_id ? { type: r.source_type, id: oid(r.source_id) } : undefined,
       clientGeneratedId: r.client_generated_id, createdAtLocal: r.created_at_local, createdAt: r.created_at, updatedAt: r.created_at,
     }],
+  },
+  {
+    // Suppressions définitives (produits) : rejouées côté cloud après les référentiels — voir replicate.service.ts.
+    table: 'deleted_records', ts: 'deleted_at', batch: 100,
+    map: (r) => ['deletedProducts', { _id: oid(r.id), refId: oid(r.ref_id), deletedAt: r.deleted_at }],
   },
 ];
 

@@ -10,6 +10,7 @@ import { Sale } from '../../models/Sale';
 import { StockMovement } from '../../models/StockMovement';
 import { CustomerLedgerEntry } from '../../models/CustomerLedgerEntry';
 import { SupplierLedgerEntry } from '../../models/SupplierLedgerEntry';
+import { deleteProductPermanently } from '../products/products.service';
 
 /**
  * Réplication poste installé → cloud. Le poste (SQLite) envoie ses enregistrements avec des
@@ -32,7 +33,7 @@ export const REPLICATION_SPECS: Record<string, Spec> = {
   tenants: { model: Tenant, oids: ['_id'], dates: TS },
   stores: { model: Store, oids: ['_id', 'tenantId'], dates: TS },
   users: { model: User, oids: ['_id', 'tenantId', 'storeId'], dates: TS },
-  products: { model: Product, oids: ['_id', 'tenantId'], dates: TS },
+  products: { model: Product, oids: ['_id', 'tenantId'], dates: [...TS, 'promoStart', 'promoEnd'] },
   customers: { model: Customer, oids: ['_id', 'tenantId'], dates: TS },
   suppliers: { model: Supplier, oids: ['_id', 'tenantId'], dates: TS },
   customerLedgerEntries: {
@@ -142,6 +143,21 @@ export async function replicate(tenantId: string, records: Record<string, any[]>
       }
     }
     result[name] = { received: docs.length, rejected };
+  }
+
+  // Suppressions définitives faites sur le poste : même garde-fous que côté poste (historique cloud compris),
+  // et la pierre tombale créée sert ensuite aux autres caisses reliées au cloud.
+  const deleted = records.deletedProducts;
+  if (Array.isArray(deleted) && deleted.length > 0) {
+    let rejected = 0;
+    for (const d of deleted) {
+      try {
+        await deleteProductPermanently(tenantId, String(d.refId));
+      } catch {
+        rejected++;
+      }
+    }
+    result.deletedProducts = { received: deleted.length, rejected };
   }
   return result;
 }

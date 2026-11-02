@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import type { TaxReturnDTO, DebtorDTO, DebtsSummaryDTO, ProfitSummaryDTO, SalesSummaryDTO, TopProductDTO } from '@pos-dz/shared';
-import { Ctx, handler, toIso } from '../util';
+import { journalEntryFromInvoice, journalEntryFromSale } from '@pos-dz/shared';
+import type { JournalEntryDTO, SaleLine, SalePayment, TaxReturnDTO, DebtorDTO, DebtsSummaryDTO, ProfitSummaryDTO, SalesSummaryDTO, TopProductDTO } from '@pos-dz/shared';
+import { Ctx, HttpError, handler, toIso } from '../util';
 
 /** Algérie = UTC+1 toute l'année (pas d'heure d'été) — les journées commerciales se regroupent sur ce décalage. */
 const DAY_OFFSET = '+1 hours';
@@ -103,6 +104,43 @@ export function reportsRouter({ db }: Ctx) {
   }));
 
   /** Base G50 / G12 : ventes moins retours par taux de TVA et par mois. Même formule que /profit (TVA extraite d'un TTC). */
+  /** Écritures de la période (tickets, retours, factures libres) : base des exports CSV/XLSX et du récapitulatif TVA côté web. */
+  router.get('/accounting-journal', handler((req, res) => {
+    const range = parseRange(req.query as any);
+    if (Number.isNaN(Date.parse(range.from)) || Number.isNaN(Date.parse(range.to))) throw new HttpError(400, 'Période invalide.');
+    const tid = req.auth!.tenantId;
+    const store = range.storeId ? ' AND store_id = ?' : '';
+    const storeArg = range.storeId ? [range.storeId] : [];
+
+    const invoices = db.prepare(`SELECT * FROM business_documents WHERE tenant_id = ? AND kind = 'invoice' AND status = 'issued' AND issue_date >= ? AND issue_date <= ?${store} ORDER BY issue_date LIMIT 50000`)
+      .all(tid, range.from, range.to, ...storeArg) as any[];
+    const sales = db.prepare(`SELECT * FROM sales WHERE tenant_id = ? AND status = 'completed' AND created_at_local >= ? AND created_at_local <= ?${store} ORDER BY created_at_local LIMIT 50000`)
+      .all(tid, range.from, range.to, ...storeArg) as any[];
+
+    // Facture tirée d'un ticket : rattachée à son ticket (déjà au journal), pas recomptée.
+    const linked = new Map<string, string>();
+    for (const r of db.prepare("SELECT sale_id, number FROM business_documents WHERE tenant_id = ? AND kind = 'invoice' AND status = 'issued' AND sale_id IS NOT NULL").all(tid) as any[]) linked.set(r.sale_id, r.number);
+
+    const entries: JournalEntryDTO[] = sales.map((s) => journalEntryFromSale({
+      date: s.created_at_local,
+      type: s.type === 'refund' ? 'refund' : 'sale',
+      number: s.number,
+      storeId: s.store_id,
+      lines: JSON.parse(s.lines) as SaleLine[],
+      payments: JSON.parse(s.payments) as SalePayment[],
+      stampDutyCents: s.stamp_duty_cents,
+      documentNumber: linked.get(s.id),
+    }));
+    for (const r of invoices.filter((i) => !i.sale_id)) {
+      entries.push(journalEntryFromInvoice({
+        issueDate: r.issue_date, number: r.number, storeId: r.store_id ?? undefined,
+        buyer: JSON.parse(r.buyer), totals: JSON.parse(r.totals), paymentMethod: r.payment_method ?? undefined,
+      }));
+    }
+    entries.sort((a, b) => a.date.localeCompare(b.date));
+    res.json({ entries });
+  }));
+
   router.get('/tax-return', handler((req, res) => {
     const range = parseRange(req.query as any);
     const tid = req.auth!.tenantId;

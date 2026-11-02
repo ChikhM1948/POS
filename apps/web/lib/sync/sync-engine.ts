@@ -110,10 +110,17 @@ export class SyncEngine {
     );
     if (!res.ok) return;
 
-    const { products, customers, serverTime } = await res.json();
+    const { products, customers, deletedProductIds, serverTime } = await res.json();
 
     await this.db.transaction('rw', this.db.products, this.db.customers, this.db.meta, async () => {
+      // Suppressions définitives : le produit n'existe plus côté serveur, on purge le cache hors-ligne.
+      for (const id of (deletedProductIds as string[] | undefined) ?? []) await this.db.products.delete(id);
       for (const p of products) {
+        // Produit désactivé (suppression douce côté back-office) : retiré du cache de la caisse, sinon il resterait vendable.
+        if (p.active === false) {
+          await this.db.products.delete(p._id);
+          continue;
+        }
         await this.db.products.put({
           id: p._id,
           sku: p.sku,
@@ -126,13 +133,17 @@ export class SyncEngine {
           costPriceCents: p.costPriceCents ?? 0,
           minSellingPriceCents: p.minSellingPriceCents,
           taxRate: p.taxRate,
+          promoPriceCents: p.promoPriceCents ?? undefined,
+          promoStart: p.promoStart ? new Date(p.promoStart).toISOString() : undefined,
+          promoEnd: p.promoEnd ? new Date(p.promoEnd).toISOString() : undefined,
+          soldByWeight: p.soldByWeight ?? false,
           unit: p.unit,
           nearestExpiry: p.nearestExpiry,
           updatedAt: p.updatedAt,
         });
       }
       for (const c of customers ?? []) {
-        await this.db.customers.put({ id: c._id, name: c.name, phone: c.phone });
+        await this.db.customers.put({ id: c._id, name: c.name, phone: c.phone, creditLimitCents: c.creditLimitCents, balanceCents: c.balanceCents });
       }
       await this.db.meta.put({ key: 'lastSyncedAt', value: serverTime });
     });

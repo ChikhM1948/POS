@@ -19,7 +19,7 @@ const balanceSql = `(SELECT COALESCE(SUM(amount_cents),0) FROM ledger_entries l 
 export function customersRouter({ db }: Ctx) {
   const router = Router();
   const admins = requireRole('store_admin', 'super_admin');
-  const dto = (r: any): CustomerDTO => ({ id: r.id, name: r.name, phone: r.phone ?? undefined, active: Boolean(r.active), balanceCents: r.balance });
+  const dto = (r: any): CustomerDTO => ({ id: r.id, name: r.name, phone: r.phone ?? undefined, active: Boolean(r.active), balanceCents: r.balance, creditLimitCents: r.credit_limit_cents ?? undefined });
   const one = (id: string) => db.prepare(`SELECT t.*, ${balanceSql} AS balance FROM customers t WHERE t.id = ?`).get('customer', id);
 
   router.get('/', handler((req, res) => {
@@ -35,8 +35,8 @@ export function customersRouter({ db }: Ctx) {
     if (!input?.name?.trim()) throw new HttpError(400, 'Le nom du client est requis.');
     const id = newId();
     const now = nowIso();
-    db.prepare('INSERT INTO customers (id, tenant_id, name, phone, created_at, updated_at) VALUES (?,?,?,?,?,?)')
-      .run(id, req.auth!.tenantId, input.name.trim(), input.phone?.trim() || null, now, now);
+    db.prepare('INSERT INTO customers (id, tenant_id, name, phone, credit_limit_cents, created_at, updated_at) VALUES (?,?,?,?,?,?,?)')
+      .run(id, req.auth!.tenantId, input.name.trim(), input.phone?.trim() || null, input.creditLimitCents && input.creditLimitCents > 0 ? Math.round(input.creditLimitCents) : null, now, now);
     res.status(201).json({ customer: dto(one(id)) });
   }));
 
@@ -44,8 +44,9 @@ export function customersRouter({ db }: Ctx) {
     const input = (req.body ?? {}) as UpdateCustomerInput;
     const c: any = db.prepare('SELECT * FROM customers WHERE tenant_id = ? AND id = ?').get(req.auth!.tenantId, req.params.id);
     if (!c) throw new HttpError(404, 'Client introuvable.');
-    db.prepare('UPDATE customers SET name=?, phone=?, active=?, updated_at=? WHERE id=?').run(
-      input.name ?? c.name, input.phone !== undefined ? input.phone || null : c.phone, input.active !== undefined ? bool(input.active) : c.active, nowIso(), c.id);
+    db.prepare('UPDATE customers SET name=?, phone=?, active=?, credit_limit_cents=?, updated_at=? WHERE id=?').run(
+      input.name ?? c.name, input.phone !== undefined ? input.phone || null : c.phone, input.active !== undefined ? bool(input.active) : c.active,
+      input.creditLimitCents === undefined ? c.credit_limit_cents : input.creditLimitCents === null ? null : Math.round(input.creditLimitCents), nowIso(), c.id);
     res.json({ customer: dto(one(c.id)) });
   }));
 

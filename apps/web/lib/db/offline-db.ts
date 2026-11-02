@@ -13,6 +13,10 @@ export interface LocalProduct {
   costPriceCents: number;
   minSellingPriceCents?: number;
   taxRate: 19 | 9 | 0;
+  promoPriceCents?: number;
+  promoStart?: string;
+  promoEnd?: string;
+  soldByWeight?: boolean;
   unit: string;
   /** Péremption la plus proche parmi les lots en stock (ISO) — avertissement à la caisse. */
   nearestExpiry?: string;
@@ -23,6 +27,8 @@ export interface LocalCustomer {
   id: string; // Mongo _id (string)
   name: string;
   phone?: string;
+  creditLimitCents?: number; // plafond de dette ; absent = illimité
+  balanceCents?: number; // dette connue au dernier pull (ventes déjà synchronisées)
 }
 
 export interface LocalSale {

@@ -14,6 +14,7 @@ import { storesRouter, tenantRouter, usersRouter } from './routes/misc';
 import { customersRouter, suppliersRouter } from './routes/parties';
 import { syncRouter } from './routes/sync';
 import { salesRouter } from './routes/sales';
+import { documentsRouter } from './routes/documents';
 import { reportsRouter } from './routes/reports';
 import { cloudRouter } from './routes/cloud';
 import { backupRouter } from './routes/backup';
@@ -67,6 +68,7 @@ export function createApi(ctx: Ctx) {
   api.use('/stock', auth, stockRouter(ctx));
   api.use('/stores', auth, storesRouter(ctx));
   api.use('/sales', auth, admins, salesRouter(ctx));
+  api.use('/documents', auth, admins, documentsRouter(ctx));
   api.use('/reports', auth, admins, reportsRouter(ctx));
   api.use('/users', auth, usersRouter(ctx));
   api.use('/tenant', auth, tenantRouter(ctx));

@@ -110,12 +110,29 @@ export async function pullChangesSince(tenantId: string, since: Date) {
 
   const [updatedProducts, updatedCustomers] = await Promise.all([
     Product.find({ tenantId: tenantObjectId, updatedAt: { $gt: since } }).lean(),
-    Customer.find({ tenantId: tenantObjectId, active: true, updatedAt: { $gt: since } }).lean(),
+    // Les clients avec plafond sont toujours renvoyés : leur solde bouge via le ledger sans toucher updatedAt.
+    Customer.find({
+      tenantId: tenantObjectId, active: true,
+      $or: [{ updatedAt: { $gt: since } }, { creditLimitCents: { $gt: 0 } }],
+    }).lean(),
   ]);
+  const limited = updatedCustomers.filter((c: any) => c.creditLimitCents > 0).map((c: any) => c._id);
+  const balRows = limited.length
+    ? await CustomerLedgerEntry.aggregate([
+        { $match: { tenantId: tenantObjectId, customerId: { $in: limited } } },
+        { $group: { _id: '$customerId', balanceCents: { $sum: '$amountCents' } } },
+      ])
+    : [];
+  const balances = new Map(balRows.map((r: any) => [String(r._id), r.balanceCents as number]));
+
+  // Produits supprimés définitivement depuis le dernier pull : la caisse les retire de son cache hors-ligne.
+  const { DeletedRecord } = await import('../../models/DeletedRecord');
+  const deletedProductIds = (await DeletedRecord.find({ tenantId: tenantObjectId, kind: 'product', deletedAt: { $gt: since } }).lean()).map((d) => String(d.refId));
 
   return {
+    deletedProductIds,
     products: updatedProducts,
-    customers: updatedCustomers,
+    customers: updatedCustomers.map((c: any) => ({ ...c, balanceCents: balances.get(String(c._id)) ?? 0 })),
     serverTime: new Date().toISOString(),
   };
 }
