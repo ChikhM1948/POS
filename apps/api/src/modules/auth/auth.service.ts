@@ -91,16 +91,22 @@ export async function signupTenant(input: SignupInput): Promise<AuthResult> {
 
 /** Login back-office standard : email + mot de passe, tous rôles. */
 export async function loginWithPassword(tenantId: string | undefined, email: string, password: string) {
-  const filter: Record<string, unknown> = { email: email.toLowerCase(), active: true };
+  const filter: Record<string, unknown> = { email: email.trim().toLowerCase(), active: true };
   if (tenantId) filter.tenantId = tenantId;
   // Sans tenantId (login par email seul), le plugin tenantScope refuserait la requête : on l'ignore
   // explicitement ici, l'email étant unique globalement.
   const matches = await User.find(filter).setOptions({ skipTenantScope: !tenantId }).limit(2);
-  if (matches.length !== 1) return null; // introuvable, ou ambigu sans tenantId
+  if (matches.length !== 1) {
+    console.warn(`[auth] %s: %d compte(s) pour %s (tenant=%s)`, 'loginWithPassword', matches.length, email, tenantId ?? '-');
+    return null;
+  }
   const user = matches[0];
 
   const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) return null;
+  if (!valid) {
+    console.warn(`[auth] %s: mot de passe incorrect pour %s`, 'loginWithPassword', email);
+    return null;
+  }
 
   const claims: JwtClaims = {
     sub: String(user._id),
@@ -119,16 +125,22 @@ export async function loginWithPassword(tenantId: string | undefined, email: str
  */
 export async function loginCashierWithPassword(tenantId: string | undefined, email: string, password: string) {
   // tenantId optionnel : l'email est unique (voir signup), comme pour loginWithPassword.
-  const filter: Record<string, unknown> = { email: email.toLowerCase(), role: 'cashier', active: true };
+  const filter: Record<string, unknown> = { email: email.trim().toLowerCase(), role: 'cashier', active: true };
   if (tenantId) filter.tenantId = tenantId;
   // Sans tenantId (login par email seul), le plugin tenantScope refuserait la requête : on l'ignore
   // explicitement ici, l'email étant unique globalement.
   const matches = await User.find(filter).setOptions({ skipTenantScope: !tenantId }).limit(2);
-  if (matches.length !== 1) return null;
+  if (matches.length !== 1) {
+    console.warn(`[auth] %s: %d compte(s) pour %s (tenant=%s)`, 'loginCashierWithPassword', matches.length, email, tenantId ?? '-');
+    return null;
+  }
   const user = matches[0];
 
   const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) return null;
+  if (!valid) {
+    console.warn(`[auth] %s: mot de passe incorrect pour %s`, 'loginCashierWithPassword', email);
+    return null;
+  }
 
   const claims: JwtClaims = {
     sub: String(user._id),

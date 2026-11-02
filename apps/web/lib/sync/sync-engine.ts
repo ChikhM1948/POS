@@ -101,6 +101,19 @@ export class SyncEngine {
   }
 
   private async pullChanges(): Promise<void> {
+    // La base locale est liée à l'appareil, pas au commerce : si ce poste a servi à un autre tenant,
+    // son catalogue et son curseur `lastSyncedAt` (donc le `since` du pull) ne valent rien pour celui-ci.
+    // On repart de zéro, sinon les produits plus anciens que ce curseur n'arrivent jamais.
+    const lastTenant = await this.db.meta.get('syncedTenantId');
+    if (lastTenant && lastTenant.value !== this.tenantId) {
+      await this.db.transaction('rw', this.db.products, this.db.customers, this.db.meta, async () => {
+        await this.db.products.clear();
+        await this.db.customers.clear();
+        await this.db.meta.delete('lastSyncedAt');
+      });
+    }
+    if (lastTenant?.value !== this.tenantId) await this.db.meta.put({ key: 'syncedTenantId', value: this.tenantId });
+
     const lastSync = await this.db.meta.get('lastSyncedAt');
     const since = lastSync?.value ?? new Date(0).toISOString();
 
