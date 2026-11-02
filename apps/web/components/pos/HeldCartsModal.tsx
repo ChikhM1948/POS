@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { HeldCart, OfflineDB } from '../../lib/db/offline-db';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
-import { formatCurrency } from '../../lib/format';
+import { formatCurrency, formatTime } from '../../lib/format';
 import { IconCart, IconTrash, IconX } from '../icons';
 
 interface Props {
@@ -52,7 +52,7 @@ export function HeldCartsModal({ db, onResume, onClose }: Props) {
             {carts.map((c, i) => {
               const total = c.lines.reduce((s, l) => s + l.lineTotalCents, 0);
               const count = c.lines.reduce((s, l) => s + l.quantity, 0);
-              const time = new Date(c.heldAt).toLocaleTimeString(locale === 'ar' ? 'ar-DZ' : 'fr-DZ', { hour: '2-digit', minute: '2-digit' });
+              const time = formatTime(c.heldAt, locale);
               return (
                 <li
                   key={c.id}

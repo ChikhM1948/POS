@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAdminAuth } from '../../../lib/adminAuth';
 import { adminFetch } from '../../../lib/adminApi';
 import { useTranslation } from '../../../lib/i18n/LanguageContext';
-import { formatCurrency } from '../../../lib/format';
+import { formatCurrency, formatDate } from '../../../lib/format';
 import { monthRange, yearRange } from '../../../lib/taxDeclarations';
 import { StatTile } from '../../../components/admin/reports/StatTile';
 import {
@@ -220,7 +220,7 @@ export default function AccountingPage() {
                 <tbody>
                   {entries!.slice(0, JOURNAL_PREVIEW_ROWS).map((e) => (
                     <tr key={`${e.kind}-${e.number}`} className="border-b border-neutral-100">
-                      <td className="py-1">{new Date(e.date).toLocaleDateString(locale === 'ar' ? 'ar-DZ-u-nu-latn' : 'fr-DZ')}</td>
+                      <td className="py-1">{formatDate(e.date, locale)}</td>
                       <td className="py-1">{kindLabel(e.kind)}</td>
                       <td className="py-1 font-mono text-xs">{e.number}</td>
                       <td className="py-1 font-mono text-xs">{e.documentNumber ?? ''}</td>

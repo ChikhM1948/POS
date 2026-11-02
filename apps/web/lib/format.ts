@@ -8,12 +8,28 @@ const LOCALE_TAG: Record<Locale, string> = {
   ar: 'ar-DZ-u-nu-latn',
 };
 
+// Intl en arabe entoure montants et dates de marques RLM (U+200F) : dans une page RTL, les groupes
+// de chiffres et les segments de date s'affichent alors à l'envers (2026/11/2). On retire ces
+// marques et on isole la valeur en LTR (LRI…PDI) pour que les chiffres restent dans le bon sens.
+const RLM = /‏/g;
+function ltr(value: string, locale: Locale): string {
+  return locale === 'ar' ? `⁦${value.replace(RLM, '')}⁩` : value;
+}
+
 export function formatCurrency(cents: number, locale: Locale, options?: Intl.NumberFormatOptions): string {
-  return new Intl.NumberFormat(LOCALE_TAG[locale], { style: 'currency', currency: 'DZD', ...options }).format(cents / 100);
+  return ltr(new Intl.NumberFormat(LOCALE_TAG[locale], { style: 'currency', currency: 'DZD', ...options }).format(cents / 100), locale);
 }
 
 export function formatDateTime(iso: string, locale: Locale): string {
-  return new Date(iso).toLocaleString(LOCALE_TAG[locale]);
+  return ltr(new Date(iso).toLocaleString(LOCALE_TAG[locale]), locale);
+}
+
+export function formatDate(iso: string | Date, locale: Locale): string {
+  return ltr(new Date(iso).toLocaleDateString(LOCALE_TAG[locale]), locale);
+}
+
+export function formatTime(iso: string | Date, locale: Locale): string {
+  return ltr(new Date(iso).toLocaleTimeString(LOCALE_TAG[locale], { hour: '2-digit', minute: '2-digit' }), locale);
 }
 
 export function formatDayLabel(iso: string, locale: Locale): string {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAdminAuth } from '../../lib/adminAuth';
 import { adminFetch } from '../../lib/adminApi';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
-import { formatCurrency } from '../../lib/format';
+import { formatCurrency, formatDate } from '../../lib/format';
 import { IconPrinter } from '../icons';
 import type { ReorderGroupDTO } from '@pos-dz/shared';
 
@@ -43,7 +43,7 @@ export function ReorderPanel({ storeId }: { storeId: string }) {
   async function copyOrder(g: ReorderGroupDTO) {
     const text = [
       `${t('inventory.orderTitle')} — ${g.supplierName ?? t('inventory.noSupplier')}`,
-      new Date().toLocaleDateString(locale === 'ar' ? 'ar-DZ' : 'fr-DZ'),
+      formatDate(new Date(), locale),
       '',
       ...lines(g).map((l) => `• ${l.item.name.fr} (${l.item.sku}) × ${l.quantity} ${l.item.unit}`),
     ].join('\n');
@@ -89,7 +89,7 @@ export function ReorderPanel({ storeId }: { storeId: string }) {
                 </h3>
                 <p className="text-xs text-neutral-500">
                   {g.supplierPhone && `${g.supplierPhone} · `}
-                  <span className="hidden print:inline">{t('inventory.orderDate')} : {new Date().toLocaleDateString(locale === 'ar' ? 'ar-DZ' : 'fr-DZ')}</span>
+                  <span className="hidden print:inline">{t('inventory.orderDate')} : {formatDate(new Date(), locale)}</span>
                 </p>
               </div>
               <div className="flex gap-2 print:hidden">

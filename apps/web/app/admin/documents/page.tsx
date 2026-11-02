@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAdminAuth } from '../../../lib/adminAuth';
 import { adminFetch } from '../../../lib/adminApi';
 import { useTranslation } from '../../../lib/i18n/LanguageContext';
-import { formatCurrency } from '../../../lib/format';
+import { formatCurrency, formatDate } from '../../../lib/format';
 import { DOC_LABEL_KEY } from '../../../lib/documentKinds';
 import { DocumentForm } from '../../../components/admin/DocumentForm';
 import { DocumentViewer } from '../../../components/admin/DocumentViewer';
@@ -111,7 +111,7 @@ export default function DocumentsPage() {
               <tr key={d.id} onClick={() => view(d.id)} className="cursor-pointer border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
                 <td className="px-3 py-2 font-mono text-xs">{d.number}</td>
                 <td className="px-3 py-2">{t(`docs.${DOC_LABEL_KEY[d.kind]}`)}</td>
-                <td className="px-3 py-2">{new Date(d.issueDate).toLocaleDateString(locale === 'ar' ? 'ar-DZ-u-nu-latn' : 'fr-DZ')}</td>
+                <td className="px-3 py-2">{formatDate(d.issueDate, locale)}</td>
                 <td className="px-3 py-2">{d.buyerName}</td>
                 <td className="px-3 py-2 text-xs text-neutral-500">{d.sourceDocumentNumber ?? d.saleNumber ?? ''}</td>
                 <td className="px-3 py-2 text-end tabular-nums">{formatCurrency(d.totalTtcCents, locale)}</td>
