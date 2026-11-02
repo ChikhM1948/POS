@@ -7,7 +7,7 @@ import { Schema, model, Document, Types } from 'mongoose';
  */
 export interface ILicense extends Document {
   key: string;
-  kind: 'trial' | 'paid';
+  kind: 'trial' | 'paid' | 'lifetime';
   durationDays: number;
   note?: string;
   revoked: boolean;
@@ -22,7 +22,7 @@ export interface ILicense extends Document {
 const LicenseSchema = new Schema<ILicense>(
   {
     key: { type: String, required: true, unique: true, uppercase: true, trim: true },
-    kind: { type: String, enum: ['trial', 'paid'], default: 'trial' },
+    kind: { type: String, enum: ['trial', 'paid', 'lifetime'], default: 'trial' },
     durationDays: { type: Number, required: true },
     note: String,
     revoked: { type: Boolean, default: false },

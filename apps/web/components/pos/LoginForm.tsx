@@ -269,6 +269,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
         </button>
 
         {!config && <p className="text-center text-xs text-neutral-400">{t('login.setupFooter')}</p>}
+        <p className="text-center text-xs text-neutral-400">Developed by DevLab</p>
 
         {!LOCAL_MODE && config && (
           <button

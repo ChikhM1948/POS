@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from '../lib/i18n/LanguageContext';
-import { LICENSE_EXPIRED_EVENT, activateLicense, fetchLicenseStatus } from '../lib/license';
+import { LICENSE_EXPIRED_EVENT, activateLicense, fetchLicensePrice, fetchLicenseStatus, startLicenseCheckout, verifyLicenseCheckout, type LicensePrice } from '../lib/license';
 import type { LicenseStatusDTO } from '@pos-dz/shared';
 
 const TEXT = {
@@ -20,6 +20,11 @@ const TEXT = {
     activating: 'Activation…',
     close: 'Fermer',
     ok: 'Licence activée.',
+    payOnline: (p: string) => `Payer ${p} en ligne (CIB / Dahabia)`,
+    redirecting: 'Redirection…',
+    paidOk: 'Paiement confirmé : licence à vie activée.',
+    paidPending: "Paiement non encore confirmé. Réessayez dans un instant.",
+    or: 'ou',
   },
   ar: {
     trialLeft: (n: number) => `فترة تجريبية: ${n} يوم متبقٍ`,
@@ -35,6 +40,11 @@ const TEXT = {
     activating: 'جارٍ التفعيل…',
     close: 'إغلاق',
     ok: 'تم تفعيل الترخيص.',
+    payOnline: (p: string) => `ادفع ${p} عبر الإنترنت (CIB / الذهبية)`,
+    redirecting: 'جارٍ التحويل…',
+    paidOk: 'تم تأكيد الدفع: تم تفعيل الترخيص مدى الحياة.',
+    paidPending: 'لم يتم تأكيد الدفع بعد. أعد المحاولة بعد لحظات.',
+    or: 'أو',
   },
 } as const;
 
@@ -57,12 +67,43 @@ export function LicenseGate({ token, canActivate }: Props) {
   const [key, setKey] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [price, setPrice] = useState<LicensePrice | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!token) return;
     const s = await fetchLicenseStatus(token);
     if (s) setStatus(s);
   }, [token]);
+
+  useEffect(() => {
+    void fetchLicensePrice().then(setPrice);
+  }, []);
+
+  // Retour de SofizPay (?license_order=...) : on confirme auprès du serveur puis on nettoie l'URL.
+  useEffect(() => {
+    if (!token) return;
+    const orderId = new URLSearchParams(window.location.search).get('license_order');
+    if (!orderId) return;
+    void verifyLicenseCheckout(token, orderId).then((r) => {
+      if (r.paid && r.license) setStatus(r.license);
+      setNotice(r.paid ? tx.paidOk : tx.paidPending);
+      if (r.paid) window.history.replaceState(null, '', window.location.pathname);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  async function payOnline() {
+    if (!token) return;
+    setBusy(true);
+    setError(null);
+    try {
+      window.location.href = await startLicenseCheckout(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     void refresh();
@@ -92,8 +133,18 @@ export function LicenseGate({ token, canActivate }: Props) {
 
   if (!status) return null;
 
+  const payButton = price?.onlinePayment && token ? (
+    <>
+      <button type="button" disabled={busy} onClick={payOnline} className="rounded-lg bg-amber-500 py-2 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-50">
+        {busy ? tx.redirecting : tx.payOnline(`${price.lifetime.amount.toLocaleString('fr-DZ')} ${price.lifetime.currency}`)}
+      </button>
+      <p className="text-center text-xs text-neutral-400">{tx.or}</p>
+    </>
+  ) : null;
+
   const keyForm = (
     <form onSubmit={submit} className="flex flex-col gap-3">
+      {payButton}
       <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
         {tx.keyLabel}
         <input
@@ -107,6 +158,7 @@ export function LicenseGate({ token, canActivate }: Props) {
           required
         />
       </label>
+      {notice && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800" role="status">{notice}</p>}
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{error}</p>}
       <div className="flex gap-2">
         <button disabled={busy} type="submit" className="flex-1 rounded-lg bg-brand-600 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
@@ -144,7 +196,7 @@ export function LicenseGate({ token, canActivate }: Props) {
 
   // Bandeau : visible pendant l'essai, et pour une licence payante seulement dans ses 14 derniers jours.
   const days = status.daysLeft ?? 0;
-  if (status.kind === 'paid' && days > 14) return null;
+  if (status.kind === 'lifetime' || (status.kind === 'paid' && days > 14)) return null;
   const urgent = days <= 3;
   return (
     <div className={`print:hidden border-b px-4 py-2 text-sm ${urgent ? 'border-red-200 bg-red-50 text-red-800' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>

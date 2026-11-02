@@ -1,9 +1,11 @@
 import { randomBytes, createPrivateKey, sign } from 'node:crypto';
 import { License } from '../../models/License';
 import { Tenant } from '../../models/Tenant';
+import { LicensePayment } from '../../models/LicensePayment';
+import { createSofizpayOrder, checkSofizpayPayment } from './sofizpay';
 import { env } from '../../config/env';
-import { TRIAL_DAYS } from '@pos-dz/shared';
-import type { LicenseStatusDTO, SignedLicense } from '@pos-dz/shared';
+import { TRIAL_DAYS, LIFETIME_DAYS } from '@pos-dz/shared';
+import type { LicenseKind, LicenseStatusDTO, SignedLicense } from '@pos-dz/shared';
 
 const DAY_MS = 86_400_000;
 // Sans I/O/0/1 : les clés sont dictées par téléphone / recopiées à la main.
@@ -19,15 +21,15 @@ export function newKey(): string {
   return `POS-${groups.join('-')}`;
 }
 
-export async function generateKeys(count: number, kind: 'trial' | 'paid', durationDays: number | undefined, note?: string) {
-  const days = durationDays ?? (kind === 'trial' ? TRIAL_DAYS : 365);
+export async function generateKeys(count: number, kind: LicenseKind, durationDays: number | undefined, note?: string) {
+  const days = durationDays ?? (kind === 'trial' ? TRIAL_DAYS : kind === 'lifetime' ? LIFETIME_DAYS : 365);
   const docs = Array.from({ length: Math.min(Math.max(count, 1), 200) }, () => ({ key: newKey(), kind, durationDays: days, note }));
   await License.insertMany(docs);
   return docs.map((d) => ({ key: d.key, kind: d.kind, durationDays: d.durationDays }));
 }
 
 /** Signature Ed25519 du contenu de la licence — vérifiée hors-ligne par le poste desktop. */
-export function signLicense(l: { key: string; kind: 'trial' | 'paid'; activatedAt: Date; expiresAt: Date }): SignedLicense {
+export function signLicense(l: { key: string; kind: LicenseKind; activatedAt: Date; expiresAt: Date }): SignedLicense {
   if (!env.licensePrivateKey) fail(503, 'Serveur de licences non configuré (LICENSE_PRIVATE_KEY).');
   const payload = { key: l.key, kind: l.kind, activatedAt: l.activatedAt.toISOString(), expiresAt: l.expiresAt.toISOString() };
   const signature = sign(null, Buffer.from(JSON.stringify(payload)), createPrivateKey(env.licensePrivateKey)).toString('base64');
@@ -57,11 +59,14 @@ export async function redeemKey(rawKey: string, boundTo: string, tenantId?: stri
 }
 
 /** Lie la clé au tenant : en cas de prolongation par une clé payante, on garde la plus lointaine expiration. */
-export async function applyLicenseToTenant(tenantId: string, lic: { key: string; kind: 'trial' | 'paid'; activatedAt: Date; expiresAt: Date }) {
-  await Tenant.updateOne({ _id: tenantId }, { $set: { license: lic, status: lic.kind === 'paid' ? 'active' : 'trial' } });
+export async function applyLicenseToTenant(tenantId: string, lic: { key: string; kind: LicenseKind; activatedAt: Date; expiresAt: Date }) {
+  // Ne jamais raccourcir : une clé d'essai ne remplace pas une licence plus longue (ex. à vie).
+  const current = await Tenant.findById(tenantId).select('license').lean();
+  if (current?.license?.expiresAt && current.license.expiresAt >= lic.expiresAt) return;
+  await Tenant.updateOne({ _id: tenantId }, { $set: { license: lic, status: lic.kind === 'trial' ? 'trial' : 'active' } });
 }
 
-export function statusOf(license?: { kind?: 'trial' | 'paid'; expiresAt?: Date } | null): LicenseStatusDTO {
+export function statusOf(license?: { kind?: LicenseKind; expiresAt?: Date } | null): LicenseStatusDTO {
   if (!license?.expiresAt) return { activated: false, expired: true };
   const ms = license.expiresAt.getTime() - Date.now();
   return { activated: true, kind: license.kind, expiresAt: license.expiresAt.toISOString(), daysLeft: Math.max(0, Math.ceil(ms / DAY_MS)), expired: ms <= 0 };
@@ -88,4 +93,55 @@ export async function activateForTenant(tenantId: string, rawKey: string): Promi
   const lic = await redeemKey(rawKey, `tenant:${tenantId}`, tenantId);
   await applyLicenseToTenant(tenantId, lic);
   return statusOf(lic);
+}
+
+/** Démarre un paiement SofizPay pour une licence à vie ; renvoie l'URL de paiement hébergée (CIB / Dahabia). */
+export async function startCheckout(tenantId: string, customer: { name?: string; email?: string; phone?: string }) {
+  const amount = env.lifetimePriceDzd;
+  const orderId = `POS-${tenantId.slice(-6).toUpperCase()}-${Date.now()}`;
+  const gw = await createSofizpayOrder({ amount, orderId, label: 'Licence POS a vie', ...customer });
+  if (!gw.ok) fail(gw.status, gw.code === 'not_configured' ? 'Paiement en ligne non configuré.' : 'Le paiement en ligne est momentanément indisponible.');
+  await LicensePayment.create({ orderId, tenantId, amount, cibOrderId: gw.cibOrderId });
+  return { orderId, paymentUrl: gw.paymentUrl, amount };
+}
+
+/**
+ * Marque la commande payée et émet la licence, une seule fois (transition atomique pending → paid :
+ * webhook et vérification au retour peuvent arriver en même temps sans double émission).
+ */
+export async function fulfillPayment(orderId: string, paidAmount: number | undefined, sofizTxId?: string): Promise<LicenseStatusDTO | null> {
+  const order = await LicensePayment.findOne({ orderId });
+  if (!order) return null;
+  if (paidAmount !== undefined && paidAmount !== order.amount) {
+    console.warn('[license] montant incohérent pour', orderId);
+    return null;
+  }
+  const claimed = await LicensePayment.findOneAndUpdate(
+    { orderId, status: { $ne: 'paid' } },
+    { $set: { status: 'paid', paidAt: new Date(), sofizTxId: sofizTxId ?? '' } },
+    { new: true },
+  );
+  if (claimed) {
+    const [issued] = await generateKeys(1, 'lifetime', undefined, `SofizPay ${orderId}`);
+    const lic = await redeemKey(issued.key, `tenant:${order.tenantId}`, String(order.tenantId));
+    await applyLicenseToTenant(String(order.tenantId), lic);
+    await LicensePayment.updateOne({ orderId }, { $set: { licenseKey: lic.key } });
+  }
+  return getTenantLicenseStatus(String(order.tenantId));
+}
+
+export async function markPaymentFailed(orderId: string) {
+  await LicensePayment.updateOne({ orderId, status: 'pending' }, { $set: { status: 'failed' } });
+}
+
+/** Retour client : on interroge SofizPay (la source de vérité) plutôt que de croire l'URL de retour. */
+export async function verifyCheckout(tenantId: string, orderId: string) {
+  const order = await LicensePayment.findOne({ orderId, tenantId });
+  if (!order) fail(404, 'Commande introuvable.');
+  if (order.status === 'paid') return { paid: true, license: await getTenantLicenseStatus(tenantId) };
+  if (!order.cibOrderId) return { paid: false };
+  const check = await checkSofizpayPayment(order.cibOrderId);
+  if (!check?.paid) return { paid: false };
+  const license = await fulfillPayment(orderId, check.amount, order.cibOrderId);
+  return { paid: !!license, license: license ?? undefined };
 }

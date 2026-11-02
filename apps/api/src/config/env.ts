@@ -24,4 +24,11 @@ export const env = {
   licenseAdminKey: process.env.LICENSE_ADMIN_KEY,
   // Dossier des mises à jour desktop publiées (latest.yml + installeur), servi sur /updates.
   updatesDir: process.env.UPDATES_DIR ?? './updates',
+  // Paiement en ligne des licences via SofizPay (CIB / Dahabia) — même compte et mêmes variables que la webapp Lingolab.
+  sofizpayApiKey: process.env.SOFIZPAY_API_KEY ?? '',
+  sofizpayWebhookSecret: process.env.SOFIZPAY_WEBHOOK_SECRET ?? '',
+  // URL publique du front web : SofizPay y renvoie le client après le paiement.
+  webBaseUrl: (process.env.NEXT_PUBLIC_BASE_URL ?? process.env.WEB_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, ''),
+  // Prix de la licence à vie (DZD).
+  lifetimePriceDzd: parseInt(process.env.LICENSE_LIFETIME_PRICE_DZD ?? '8000', 10),
 };

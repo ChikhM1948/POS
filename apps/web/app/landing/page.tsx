@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import { LANDING_LOCALES, landingContent, type LandingLocale } from '../../lib/landing/content';
 
 const STORAGE_KEY = 'landing-language';
+/** Numéro WhatsApp au format international sans « + » (ex. 213555123456), fixé au build. */
+const WHATSAPP_NUMBER = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '').replace(/\D/g, '');
 
 function Arrow() {
   return (
@@ -304,6 +306,61 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Marque blanche */}
+        <section id="whitelabel" className="scroll-mt-16 border-b border-neutral-200 bg-white py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <p className="text-sm font-semibold text-blue-700">{c.whitelabel.eyebrow}</p>
+            <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{c.whitelabel.title}</h2>
+            <p className="mt-4 max-w-2xl leading-relaxed text-neutral-600">{c.whitelabel.text}</p>
+            <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {c.whitelabel.items.map((f) => (
+                <li key={f.title} className="border-t-2 border-brand-600 pt-4">
+                  <h3 className="font-semibold text-brand-800">{f.title}</h3>
+                  <p className="mt-1 text-sm text-neutral-600">{f.text}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* Tarif */}
+        <section id="pricing" className="scroll-mt-16 border-b border-neutral-200 bg-neutral-50 py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <p className="text-sm font-semibold text-blue-700">{c.pricing.eyebrow}</p>
+            <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{c.pricing.title}</h2>
+            <div className="mt-10 grid gap-6 md:grid-cols-2">
+              <div className="rounded-lg border border-neutral-200 bg-white p-6">
+                <p className="text-sm font-semibold text-neutral-500">{c.pricing.trialLabel}</p>
+                <p className="mt-2 text-4xl font-bold text-brand-800">{c.pricing.trialValue}</p>
+                <p className="mt-3 text-sm text-neutral-600">{c.pricing.trialText}</p>
+              </div>
+              <div className="rounded-lg border-2 border-brand-600 bg-white p-6">
+                <p className="text-sm font-semibold text-neutral-500">{c.pricing.lifetimeLabel}</p>
+                <p className="mt-2 flex items-baseline gap-2 text-4xl font-bold text-brand-800">
+                  {c.pricing.price} <span className="text-lg">{c.pricing.currency}</span>
+                  <span className="text-sm font-medium text-neutral-500">· {c.pricing.once}</span>
+                </p>
+                <p className="mt-3 text-sm text-neutral-600">{c.pricing.lifetimeText}</p>
+                <ul className="mt-4 space-y-2 text-sm text-neutral-700">
+                  {c.pricing.points.map((p) => (
+                    <li key={p} className="flex items-start gap-2"><Tick />{p}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="mt-8">
+              <a
+                href={WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(c.pricing.whatsappMessage)}` : '/'}
+                target={WHATSAPP_NUMBER ? '_blank' : undefined}
+                rel="noopener noreferrer"
+                className={btnPrimary}
+              >
+                {c.pricing.cta} <Arrow />
+              </a>
+            </div>
+          </div>
+        </section>
+
         {/* Comment ça marche */}
         <section id="how" className="scroll-mt-16 border-b border-neutral-200 bg-white py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -381,7 +438,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-6">
             <Link href="/" className="hover:text-neutral-900">{c.footer.pos}</Link>
             <Link href="/admin" className="hover:text-neutral-900">{c.footer.admin}</Link>
-            <span className="text-neutral-400">© {new Date().getFullYear()} · {c.footer.rights}</span>
+            <span className="text-neutral-400">© {new Date().getFullYear()} · {c.footer.rights} · Developed by DevLab</span>
           </div>
         </div>
       </footer>

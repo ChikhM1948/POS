@@ -25,3 +25,33 @@ export async function activateLicense(token: string | undefined, key: string): P
   if (!res.ok) throw new Error(body.error ?? `Erreur ${res.status}`);
   return body.license as LicenseStatusDTO;
 }
+
+export interface LicensePrice { lifetime: { amount: number; currency: string }; onlinePayment: boolean }
+
+export async function fetchLicensePrice(): Promise<LicensePrice | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/license/price`);
+    return res.ok ? ((await res.json()) as LicensePrice) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Crée la commande SofizPay et renvoie l'URL de paiement hébergée (CIB / Dahabia). */
+export async function startLicenseCheckout(token: string, customer: { name?: string; email?: string; phone?: string } = {}): Promise<string> {
+  const res = await fetch(`${API_BASE_URL}/license/checkout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(customer),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || !body.paymentUrl) throw new Error(body.error ?? `Erreur ${res.status}`);
+  return body.paymentUrl as string;
+}
+
+/** Au retour de SofizPay : confirme le paiement côté serveur et renvoie le statut de licence mis à jour. */
+export async function verifyLicenseCheckout(token: string, orderId: string): Promise<{ paid: boolean; license?: LicenseStatusDTO }> {
+  const res = await fetch(`${API_BASE_URL}/license/checkout/${encodeURIComponent(orderId)}`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) return { paid: false };
+  return res.json();
+}

@@ -521,10 +521,14 @@ export default function PosPage() {
               {t(label)}
             </span>
           ))}
-          <button onClick={() => setShowLegend(false)} className="ms-auto text-neutral-400 hover:text-neutral-700" aria-label={t('shortcuts.toggle')}>
+          <span className="ms-auto text-neutral-400">Developed by DevLab</span>
+          <button onClick={() => setShowLegend(false)} className=" text-neutral-400 hover:text-neutral-700" aria-label={t('shortcuts.toggle')}>
             ×
           </button>
         </footer>
+      )}
+      {!showLegend && (
+        <span className="absolute bottom-2 start-3 text-xs text-neutral-400">Developed by DevLab</span>
       )}
       {!showLegend && (
         <button onClick={() => setShowLegend(true)} className="absolute bottom-2 end-2 rounded-md bg-white px-2 py-1 text-xs text-neutral-500 shadow-sm ring-1 ring-neutral-200 hover:text-neutral-800">

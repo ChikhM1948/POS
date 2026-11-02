@@ -3,34 +3,27 @@
 import { useTranslation } from '../lib/i18n/LanguageContext';
 import type { Locale } from '../lib/i18n/translations';
 
-const OPTIONS: Locale[] = ['fr', 'ar'];
-
 interface Props {
   className?: string;
 }
 
 export function LanguageSwitcher({ className = '' }: Props) {
   const { locale, setLocale, t } = useTranslation();
+  const next: Locale = locale === 'fr' ? 'ar' : 'fr';
 
   return (
-    <div
-      role="group"
-      aria-label={t('languageSwitcher.label')}
-      className={`flex items-center gap-0.5 rounded-lg bg-neutral-100 p-0.5 text-xs font-semibold ${className}`}
+    <button
+      type="button"
+      onClick={() => setLocale(next)}
+      aria-label={`${t('languageSwitcher.label')}: ${t(`languageSwitcher.${next}`)}`}
+      title={t(`languageSwitcher.${next}`)}
+      className={`flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 transition hover:bg-neutral-200 hover:text-neutral-900 ${className}`}
     >
-      {OPTIONS.map((option) => (
-        <button
-          key={option}
-          type="button"
-          onClick={() => setLocale(option)}
-          aria-pressed={locale === option}
-          className={`rounded-md px-2.5 py-1.5 transition ${
-            locale === option ? 'bg-white text-neutral-900 shadow-card' : 'text-neutral-500 hover:text-neutral-700'
-          }`}
-        >
-          {t(`languageSwitcher.${option}`)}
-        </button>
-      ))}
-    </div>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3 12h18" />
+        <path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z" />
+      </svg>
+    </button>
   );
 }

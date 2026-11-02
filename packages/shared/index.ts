@@ -434,9 +434,13 @@ export interface SignupInput {
 /** Licence d'un commerce : essai de 14 jours (clé `trial`) ou licence payante (clé `paid`). */
 export const TRIAL_DAYS = 14;
 
+/** `lifetime` = achat unique (8 000 DZD) : expiration repoussée à ~100 ans, jamais affichée comme un compte à rebours. */
+export type LicenseKind = 'trial' | 'paid' | 'lifetime';
+export const LIFETIME_DAYS = 36_500;
+
 export interface LicenseDTO {
   key: string;
-  kind: 'trial' | 'paid';
+  kind: LicenseKind;
   activatedAt: string;
   expiresAt: string;
 }
@@ -449,7 +453,7 @@ export interface SignedLicense extends LicenseDTO {
 export interface LicenseStatusDTO {
   /** false = aucune clé activée sur ce commerce. */
   activated: boolean;
-  kind?: 'trial' | 'paid';
+  kind?: LicenseKind;
   expiresAt?: string;
   /** Jours entiers restants (0 le dernier jour), négatif non renvoyé : voir `expired`. */
   daysLeft?: number;

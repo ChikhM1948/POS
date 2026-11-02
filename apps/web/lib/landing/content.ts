@@ -9,6 +9,8 @@ export interface LandingDict {
   hero: { title: string; text: string; cta: string; ctaSecondary: string; note: string; alt: string };
   showcase: { pos: Showcase; stock: Showcase; reports: Showcase };
   features: { eyebrow: string; title: string; items: Item[] };
+  whitelabel: { eyebrow: string; title: string; text: string; items: Item[] };
+  pricing: { eyebrow: string; title: string; trialLabel: string; trialValue: string; trialText: string; lifetimeLabel: string; price: string; currency: string; once: string; lifetimeText: string; points: string[]; cta: string; whatsappMessage: string };
   how: { eyebrow: string; title: string; steps: Item[] };
   offline: { eyebrow: string; title: string; text: string; points: string[] };
   faq: { eyebrow: string; title: string; items: { q: string; a: string }[] };
@@ -46,6 +48,32 @@ const fr: LandingDict = {
       { title: 'Crédit client', text: 'Suivi des ventes à crédit et des soldes clients.' },
       { title: 'Sauvegarde et synchronisation', text: 'Sauvegardes locales et synchronisation entre postes.' },
     ],
+  },
+  whitelabel: {
+    eyebrow: 'Marque blanche',
+    title: 'Votre marque, votre caisse',
+    text: 'Revendez ou déployez la solution sous votre propre identité, et adaptez-la aux besoins de chaque commerce.',
+    items: [
+      { title: 'Marque blanche', text: 'Votre nom, votre logo et vos couleurs à la place des nôtres.' },
+      { title: 'Personnalisation sur mesure', text: 'Tickets, documents, champs et fonctionnalités adaptés à votre métier.' },
+      { title: 'Multi-boutiques', text: 'Une identité propre pour chaque client, boutique ou franchise.' },
+      { title: 'Accompagnement', text: 'Mise en place, formation et évolutions à la demande.' },
+    ],
+  },
+  pricing: {
+    eyebrow: 'Tarif',
+    title: 'Un seul paiement, pour toujours',
+    trialLabel: 'Essai gratuit',
+    trialValue: '14 jours',
+    trialText: 'Testez toutes les fonctionnalités, sans engagement.',
+    lifetimeLabel: 'Licence à vie',
+    price: '8 000',
+    currency: 'DZD',
+    once: 'paiement unique',
+    lifetimeText: 'Payez une fois, utilisez sans limite de durée.',
+    points: ['Toutes les fonctionnalités incluses', 'Aucun abonnement mensuel', 'Fonctionne hors-ligne'],
+    cta: 'Commencer l’essai de 14 jours',
+    whatsappMessage: 'Bonjour, je souhaite démarrer l’essai gratuit de 14 jours de POS Algérie.',
   },
   how: {
     eyebrow: 'Comment ça marche',
@@ -108,6 +136,32 @@ const ar: LandingDict = {
       { title: 'نسخ احتياطي ومزامنة', text: 'نسخ احتياطية محلية ومزامنة بين الأجهزة.' },
     ],
   },
+  whitelabel: {
+    eyebrow: 'علامة بيضاء',
+    title: 'علامتك التجارية، صندوقك الخاص',
+    text: 'أعد بيع الحل أو انشره باسمك وهويتك، وطوّعه لاحتياجات كل متجر.',
+    items: [
+      { title: 'علامة بيضاء', text: 'اسمك وشعارك وألوانك بدل علامتنا.' },
+      { title: 'تخصيص حسب الطلب', text: 'تذاكر ووثائق وحقول وميزات مناسبة لنشاطك.' },
+      { title: 'متعدد المتاجر', text: 'هوية خاصة لكل زبون أو متجر أو فرع.' },
+      { title: 'مرافقة', text: 'تركيب وتدريب وتطويرات عند الطلب.' },
+    ],
+  },
+  pricing: {
+    eyebrow: 'الأسعار',
+    title: 'دفعة واحدة، مدى الحياة',
+    trialLabel: 'تجربة مجانية',
+    trialValue: '14 يومًا',
+    trialText: 'جرّب جميع الميزات دون أي التزام.',
+    lifetimeLabel: 'ترخيص مدى الحياة',
+    price: '8 000',
+    currency: 'دج',
+    once: 'دفعة واحدة',
+    lifetimeText: 'ادفع مرة واحدة واستعمل دون حد زمني.',
+    points: ['جميع الميزات مشمولة', 'بدون اشتراك شهري', 'يعمل دون إنترنت'],
+    cta: 'ابدأ التجربة لمدة 14 يومًا',
+    whatsappMessage: 'مرحبًا، أريد بدء التجربة المجانية لمدة 14 يومًا لنظام POS الجزائر.',
+  },
   how: {
     eyebrow: 'كيف يعمل',
     title: 'جاهز في ثلاث خطوات',
@@ -168,6 +222,32 @@ const en: LandingDict = {
       { title: 'Customer credit', text: 'Track credit sales and customer balances.' },
       { title: 'Backup & sync', text: 'Local backups and sync across devices.' },
     ],
+  },
+  whitelabel: {
+    eyebrow: 'White label',
+    title: 'Your brand, your POS',
+    text: "Resell or deploy the solution under your own identity, and tailor it to each store's needs.",
+    items: [
+      { title: 'White label', text: 'Your name, logo and colors in place of ours.' },
+      { title: 'Custom tailoring', text: 'Receipts, documents, fields and features adapted to your trade.' },
+      { title: 'Multi-store', text: 'A dedicated identity for each client, store or franchise.' },
+      { title: 'Support', text: 'Setup, training and changes on request.' },
+    ],
+  },
+  pricing: {
+    eyebrow: 'Pricing',
+    title: 'One payment, for life',
+    trialLabel: 'Free trial',
+    trialValue: '14 days',
+    trialText: 'Try every feature, no commitment.',
+    lifetimeLabel: 'Lifetime license',
+    price: '8,000',
+    currency: 'DZD',
+    once: 'one-time payment',
+    lifetimeText: 'Pay once, use with no time limit.',
+    points: ['All features included', 'No monthly subscription', 'Works offline'],
+    cta: 'Start the 14-day trial',
+    whatsappMessage: 'Hello, I would like to start the 14-day free trial of POS Algérie.',
   },
   how: {
     eyebrow: 'How it works',

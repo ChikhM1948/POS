@@ -5,7 +5,8 @@ import { requireAuth, requireRole, type AuthenticatedRequest } from '../../middl
 import { env } from '../../config/env';
 import { License } from '../../models/License';
 import { Tenant } from '../../models/Tenant';
-import { activateForTenant, generateKeys, getTenantLicenseStatus, redeemKey, signLicense } from './license.service';
+import { activateForTenant, fulfillPayment, generateKeys, getTenantLicenseStatus, markPaymentFailed, redeemKey, signLicense, startCheckout, verifyCheckout } from './license.service';
+import { PAID_STATUSES, verifyWebhookSignature } from './sofizpay';
 
 export const licenseRouter = Router();
 
@@ -19,7 +20,7 @@ function adminKeyOk(req: Request): boolean {
 licenseRouter.post('/generate', asyncHandler(async (req: Request, res: Response) => {
   if (!adminKeyOk(req)) return res.status(403).json({ error: 'Accès refusé.' });
   const { count = 1, kind = 'trial', durationDays, note } = req.body ?? {};
-  if (kind !== 'trial' && kind !== 'paid') return res.status(400).json({ error: "kind doit valoir 'trial' ou 'paid'." });
+  if (kind !== 'trial' && kind !== 'paid' && kind !== 'lifetime') return res.status(400).json({ error: "kind doit valoir 'trial', 'paid' ou 'lifetime'." });
   res.status(201).json({ keys: await generateKeys(Number(count) || 1, kind, durationDays ? Number(durationDays) : undefined, note) });
 }));
 
@@ -54,4 +55,31 @@ licenseRouter.get('/status', requireAuth, asyncHandler(async (req: Authenticated
 /** Active ou prolonge la licence du commerce (admin) avec une nouvelle clé. */
 licenseRouter.post('/activate', requireAuth, requireRole('store_admin', 'super_admin'), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   res.json({ license: await activateForTenant(req.auth!.tenantId, req.body?.key) });
+}));
+
+/** Prix public de la licence à vie (affichage du bouton « Payer en ligne »). */
+licenseRouter.get('/price', (_req: Request, res: Response) => {
+  res.json({ lifetime: { amount: env.lifetimePriceDzd, currency: 'DZD' }, onlinePayment: !!env.sofizpayApiKey });
+});
+
+/** Paiement en ligne (SofizPay, CIB / Dahabia) d'une licence à vie pour le commerce authentifié. */
+licenseRouter.post('/checkout', requireAuth, requireRole('store_admin', 'super_admin'), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { name, email, phone } = req.body ?? {};
+  res.status(201).json(await startCheckout(req.auth!.tenantId, { name, email, phone }));
+}));
+
+/** Retour de paiement : vérifie auprès de SofizPay et active la licence si payée. */
+licenseRouter.get('/checkout/:orderId', requireAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  res.json(await verifyCheckout(req.auth!.tenantId, String(req.params.orderId)));
+}));
+
+/** Callback SofizPay (signature HMAC dans x-sofizpay-signature). Public mais authentifié par signature. */
+licenseRouter.post('/sofizpay/webhook', asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body ?? {};
+  if (!verifyWebhookSignature(body, req.get('x-sofizpay-signature'))) return res.status(401).json({ error: 'Signature invalide.' });
+  const { order_id, transaction_id, status, amount } = body;
+  if (typeof order_id !== 'string' || !order_id.startsWith('POS-')) return res.json({ received: true }); // pas une commande de licence
+  if (PAID_STATUSES.has(status)) await fulfillPayment(order_id, Number(amount), transaction_id ? String(transaction_id) : undefined);
+  else await markPaymentFailed(order_id);
+  res.json({ received: true });
 }));
