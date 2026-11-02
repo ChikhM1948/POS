@@ -65,8 +65,8 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
 
   async function handleLoginSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Premier lancement : seuls tenant + email + mot de passe sont saisis, la boutique vient du compte caissier.
-    const cfg: RegisterConfig | null = config ?? (tenantId.trim() ? { tenantId: tenantId.trim(), storeId: '' } : null);
+    // Premier lancement : seuls email + mot de passe sont saisis, tenant et boutique viennent du compte caissier.
+    const cfg: RegisterConfig | null = config ?? { tenantId: '', storeId: '' };
     if (!cfg) return;
     setError(null);
     setLoading(true);
@@ -78,7 +78,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
       const body =
         usePin
           ? { tenantId: cfg.tenantId, storeId: cfg.storeId, pinCode }
-          : { tenantId: cfg.tenantId, email, password };
+          : { tenantId: cfg.tenantId || undefined, email, password };
 
       const res = await fetch(`${API_BASE_URL}${path}`, {
         method: 'POST',
@@ -108,6 +108,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
 
       // Première configuration : le poste n'est mémorisé qu'une fois les identifiants validés.
       if (!config) {
+        cfg.tenantId = user.tenantId ?? '';
         cfg.storeId = user.storeId ?? '';
         saveRegisterConfig(cfg);
         setConfig(cfg);
@@ -183,21 +184,6 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
           </div>
         </div>
 
-        {!config && (
-          <>
-            <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-              {t('login.tenantLabel')}
-              <input
-                value={tenantId}
-                onChange={(e) => setTenantId(e.target.value)}
-                placeholder={t('login.tenantPlaceholder')}
-                autoFocus
-                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
-                required
-              />
-            </label>
-          </>
-        )}
 
         {config && (
         <div className="grid grid-cols-2 gap-1 rounded-lg bg-neutral-100 p-1">
@@ -232,7 +218,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
               type="password"
               inputMode="numeric"
               maxLength={8}
-              autoFocus={!!config}
+              autoFocus
               className="rounded-lg border border-neutral-300 px-3 py-2.5 text-center text-lg tracking-[0.6em] text-neutral-900 placeholder:tracking-normal placeholder:text-neutral-400"
               required
             />
@@ -246,7 +232,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('login.emailPlaceholder')}
                 type="email"
-                autoFocus={!!config}
+                autoFocus
                 className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
                 required
               />
