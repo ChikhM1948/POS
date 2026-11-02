@@ -5,7 +5,7 @@
   "main": "src/server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p .",
+    "build": "npm run build -w @pos-dz/shared && tsc -p .",
     "start": "node dist/apps/api/src/server.js",
     "seed": "tsx src/scripts/seed.ts",
     "dev:mongo": "tsx src/scripts/dev-mongo.ts",
