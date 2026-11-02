@@ -11,7 +11,7 @@
     "dev:web": "npm run dev --workspace @pos-dz/web",
     "dev:desktop": "NEXT_DEV_URL=${NEXT_DEV_URL:-http://localhost:3000} npm run dev --workspace @pos-dz/desktop",
     "build:web:export": "BUILD_TARGET=desktop NEXT_PUBLIC_LOCAL_MODE=1 NEXT_PUBLIC_API_URL=/api npm run build --workspace @pos-dz/web",
-    "build:desktop:win": "npm run build:web:export && npm run build --workspace @pos-dz/desktop -- --win portable",
+    "build:desktop:win": "npm run build:web:export && npm run build --workspace @pos-dz/desktop -- --win nsis portable",
     "seed": "npm run seed --workspace @pos-dz/api",
     "typecheck": "npm run typecheck --workspace @pos-dz/api && npm run typecheck --workspace @pos-dz/web && npm run typecheck --workspace @pos-dz/desktop",
     "db:up": "docker compose up -d mongo",
