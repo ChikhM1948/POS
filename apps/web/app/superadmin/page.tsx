@@ -81,6 +81,75 @@ function Login({ onToken }: { onToken: (t: string) => void }) {
 }
 
 function Console({ token, onSignOut }: { token: string; onSignOut: () => void }) {
+  const [tab, setTab] = useState<'keys' | 'stores'>('keys');
+  return (
+    <div className="flex flex-col gap-6">
+      <nav className="flex gap-2 border-b border-neutral-200 text-sm">
+        {([['keys', "Clés d'activation"], ['stores', 'Magasins']] as const).map(([id, label]) => (
+          <button key={id} onClick={() => setTab(id)} className={`-mb-px border-b-2 px-3 py-2 ${tab === id ? 'border-brand-600 font-medium text-neutral-900' : 'border-transparent text-neutral-500'}`}>{label}</button>
+        ))}
+        <button onClick={onSignOut} className="ms-auto px-3 py-2 text-neutral-500 underline underline-offset-2">Déconnexion</button>
+      </nav>
+      {tab === 'keys' ? <KeysPanel token={token} onSignOut={onSignOut} /> : <StoresPanel token={token} onSignOut={onSignOut} />}
+    </div>
+  );
+}
+
+interface StoreRow {
+  id: string; name: string; slug: string; status: string; plan: string; createdAt: string;
+  license?: { kind: Kind; expiresAt: string };
+  keys: { key: string; kind: Kind; revoked: boolean; expiresAt?: string; used: boolean }[];
+}
+
+function StoresPanel({ token, onSignOut }: { token: string; onSignOut: () => void }) {
+  const [stores, setStores] = useState<StoreRow[]>([]);
+  const [q, setQ] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      call<{ stores: StoreRow[] }>(token, `/admin/stores?q=${encodeURIComponent(q)}`)
+        .then((r) => setStores(r.stores))
+        .catch((err) => (err as { status?: number }).status === 401 ? onSignOut() : setError(err instanceof Error ? err.message : String(err)));
+    }, 200);
+    return () => clearTimeout(t);
+  }, [token, q, onSignOut]);
+
+  const kindLabel = (k: Kind) => (k === 'lifetime' ? 'À vie' : k === 'paid' ? 'Payante' : 'Essai');
+  return (
+    <div className="flex flex-col gap-4">
+      <h1 className="text-xl font-semibold text-neutral-900">Magasins enregistrés</h1>
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher par nom" className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900" />
+      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{error}</p>}
+      <div className="overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
+        <table className="w-full text-start text-sm">
+          <thead className="bg-neutral-50 text-xs uppercase text-neutral-500">
+            <tr>{['Magasin', 'Statut', 'Licence', 'Expire', 'Clés', 'Créé le'].map((h) => <th key={h} className="px-3 py-2 text-start font-medium">{h}</th>)}</tr>
+          </thead>
+          <tbody>
+            {stores.map((s) => (
+              <tr key={s.id} className="border-t border-neutral-100 align-top">
+                <td className="px-3 py-2"><div className="font-medium text-neutral-900">{s.name}</div><div className="text-xs text-neutral-400">{s.slug}</div></td>
+                <td className="px-3 py-2">{s.status}</td>
+                <td className="px-3 py-2">{s.license ? kindLabel(s.license.kind) : '—'}</td>
+                <td className="px-3 py-2">{fmt(s.license?.expiresAt)}</td>
+                <td dir="ltr" className="px-3 py-2 font-mono text-xs">
+                  {s.keys.length === 0 ? <span className="text-neutral-400">—</span> : s.keys.map((k) => (
+                    <div key={k.key} className={k.revoked ? 'text-neutral-400 line-through' : ''}>{k.key} <span className="font-sans text-neutral-500">· {k.used ? 'utilisée' : 'réservée'}</span></div>
+                  ))}
+                </td>
+                <td className="px-3 py-2">{fmt(s.createdAt)}</td>
+              </tr>
+            ))}
+            {stores.length === 0 && <tr><td colSpan={6} className="px-3 py-6 text-center text-neutral-400">Aucun magasin.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void }) {
   const [keys, setKeys] = useState<KeyRow[]>([]);
   const [filter, setFilter] = useState({ kind: '', state: '', q: '' });
   const [form, setForm] = useState({ kind: 'paid' as Kind, count: 1, durationDays: '', note: '' });
@@ -130,10 +199,7 @@ function Console({ token, onSignOut }: { token: string; onSignOut: () => void })
   const input = 'rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900';
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900">Clés d'activation</h1>
-        <button onClick={onSignOut} className="text-sm text-neutral-500 underline underline-offset-2">Déconnexion</button>
-      </header>
+      <h1 className="text-xl font-semibold text-neutral-900">Clés d'activation</h1>
 
       <form onSubmit={generate} className="grid gap-3 rounded-2xl border border-neutral-200 bg-white p-5 sm:grid-cols-5">
         <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as Kind })} className={input}>

@@ -262,3 +262,21 @@ export async function handleSofizpayCallback(orderId: string) {
   const order = await LicensePayment.findOne({ orderId });
   if (order) await confirmWithGateway(order);
 }
+
+/** Liste des commerces pour le super admin : licence en cours et clés qui leur sont rattachées. */
+export async function listTenantsOverview(q?: string, limit = 200) {
+  const term = q?.trim();
+  const query = term ? { $or: ['name', 'slug'].map((f) => ({ [f]: new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') })) } : {};
+  const tenants = await Tenant.find(query).select('name slug status plan license createdAt').sort({ createdAt: -1 }).limit(Math.min(limit, 500)).lean();
+  const ids = tenants.map((t) => t._id);
+  const keys = await License.find({ $or: [{ tenantId: { $in: ids } }, { assignedTenantId: { $in: ids } }] }).select('key kind revoked expiresAt tenantId assignedTenantId').lean();
+  return tenants.map((t) => {
+    const id = String(t._id);
+    return {
+      id, name: t.name, slug: t.slug, status: t.status, plan: t.plan, createdAt: t.createdAt,
+      license: t.license ? { kind: t.license.kind, expiresAt: t.license.expiresAt } : undefined,
+      keys: keys.filter((k) => String(k.tenantId) === id || String(k.assignedTenantId) === id)
+        .map((k) => ({ key: k.key, kind: k.kind, revoked: k.revoked, expiresAt: k.expiresAt, used: String(k.tenantId) === id })),
+    };
+  });
+}
