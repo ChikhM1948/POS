@@ -49,8 +49,10 @@ export function authRouter({ db, jwtSecret, license }: Ctx) {
       throw new HttpError(409, 'Un commerce est déjà enregistré sur ce poste. Connectez-vous.');
     }
 
-    // Première activation : échange de la clé contre la licence signée (Internet requis, une seule fois).
-    const licenseStatus = await license.activate(activationKey ?? '');
+    // Clé fournie : échange contre la licence signée (Internet requis, une seule fois), avant de créer quoi que ce soit.
+    // Sans clé : essai gratuit de 14 jours, 100 % hors-ligne — il démarre une fois le compte créé (voir plus bas).
+    const hasKey = Boolean(String(activationKey ?? '').trim());
+    if (hasKey) await license.activate(activationKey!);
     const passwordHash = await bcrypt.hash(password, 10);
     const now = nowIso();
     const tenantId = newId();
@@ -74,12 +76,13 @@ export function authRouter({ db, jwtSecret, license }: Ctx) {
       );
     })();
 
+    if (!hasKey) license.startTrial();
     const result: AuthResult = {
       token: sign({ sub: userId, tenantId, storeId, role: 'store_admin' }),
       tenantId,
       storeId,
       user: { id: userId, name, role: 'store_admin' },
-      license: licenseStatus,
+      license: license.status(),
     };
     res.status(201).json(result);
   }));

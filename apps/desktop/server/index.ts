@@ -96,9 +96,12 @@ export async function startLocalServer(opts: LocalServerOptions): Promise<{ clos
   applyPendingRestore(dbFile); // restauration préparée à la session précédente, avant d'ouvrir la base
   const db = openDatabase(dbFile, opts.nativeBinding);
   const backup = new BackupManager(db, dbFile, opts.nativeBinding, opts.onRestartRequired ?? (() => undefined));
-  const cloud = new CloudSync(db);
-  const ctx: Ctx = { db, jwtSecret: loadJwtSecret(db), cloud, backup, license: new LicenseManager(db, () => cloud.status().url) };
+  // CloudSync et LicenseManager se référencent mutuellement (URL du serveur / données d'essai) : liaison paresseuse.
+  const cloud = new CloudSync(db, () => license.trialInfo());
+  const license: LicenseManager = new LicenseManager(db, () => cloud.status().url);
+  const ctx: Ctx = { db, jwtSecret: loadJwtSecret(db), cloud, backup, license };
   ctx.cloud.start();
+  license.start();
   backup.start();
 
   const app = express();
@@ -151,6 +154,7 @@ export async function startLocalServer(opts: LocalServerOptions): Promise<{ clos
       new Promise<void>((resolve) => {
         server.closeAllConnections();
         ctx.cloud.stop();
+        license.stop();
         backup.stop();
         server.close(() => {
           db.close();

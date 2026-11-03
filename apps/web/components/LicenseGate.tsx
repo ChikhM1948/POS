@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from '../lib/i18n/LanguageContext';
-import { LICENSE_EXPIRED_EVENT, activateLicense, fetchLicensePrice, fetchLicenseStatus, startLicenseCheckout, verifyLicenseCheckout, type LicensePrice } from '../lib/license';
+import { LICENSE_EXPIRED_EVENT, activateLicense, fetchLicensePrice, fetchLicenseStatus, renewLicense, startLicenseCheckout, verifyLicenseCheckout, type LicensePrice } from '../lib/license';
 import type { LicenseStatusDTO } from '@pos-dz/shared';
 
 const TEXT = {
@@ -25,6 +25,10 @@ const TEXT = {
     paidOk: 'Paiement confirmé : licence à vie activée.',
     paidPending: "Paiement non encore confirmé. Réessayez dans un instant.",
     or: 'ou',
+    needsOnline: 'Ce poste doit se connecter à Internet pour renouveler sa licence. Vos données sont conservées.',
+    denied: "Cette clé n'est plus valide sur ce poste (révoquée ou déplacée vers un autre poste). Contactez votre fournisseur ou saisissez une autre clé.",
+    renew: 'Renouveler maintenant',
+    renewing: 'Renouvellement…',
   },
   ar: {
     trialLeft: (n: number) => `فترة تجريبية: ${n} يوم متبقٍ`,
@@ -45,6 +49,10 @@ const TEXT = {
     paidOk: 'تم تأكيد الدفع: تم تفعيل الترخيص مدى الحياة.',
     paidPending: 'لم يتم تأكيد الدفع بعد. أعد المحاولة بعد لحظات.',
     or: 'أو',
+    needsOnline: 'يجب ربط هذا الجهاز بالإنترنت لتجديد الترخيص. بياناتك محفوظة.',
+    denied: 'هذا المفتاح لم يعد صالحًا على هذا الجهاز (ملغى أو منقول إلى جهاز آخر). اتصل بالمورّد أو أدخل مفتاحًا آخر.',
+    renew: 'جدّد الآن',
+    renewing: 'جارٍ التجديد…',
   },
 } as const;
 
@@ -116,6 +124,18 @@ export function LicenseGate({ token, canActivate }: Props) {
     };
   }, [refresh]);
 
+  async function renewNow() {
+    setBusy(true);
+    setError(null);
+    try {
+      setStatus(await renewLicense(token));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -179,12 +199,20 @@ export function LicenseGate({ token, canActivate }: Props) {
         <div className="flex w-full max-w-sm flex-col gap-4 rounded-2xl bg-white p-8">
           <div>
             <h2 className="text-lg font-semibold text-neutral-900">{tx.expiredTitle}</h2>
-            <p className="mt-1 text-sm text-neutral-600">{status.kind === 'paid' ? tx.expiredPaid : tx.expiredTrial}</p>
+            <p className="mt-1 text-sm text-neutral-600">
+              {status.denied ? tx.denied : status.needsOnline ? tx.needsOnline : status.kind === 'trial' ? tx.expiredTrial : tx.expiredPaid}
+            </p>
           </div>
           {canActivate ? (
             <>
-              <p className="text-sm text-neutral-500">{tx.expiredBody}</p>
-              {keyForm}
+              {status.needsOnline && (
+                <button type="button" disabled={busy} onClick={renewNow} className="rounded-lg bg-brand-600 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
+                  {busy ? tx.renewing : tx.renew}
+                </button>
+              )}
+              {error && status.needsOnline && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{error}</p>}
+              {!status.needsOnline && <p className="text-sm text-neutral-500">{tx.expiredBody}</p>}
+              {!status.needsOnline && keyForm}
             </>
           ) : (
             <p className="text-sm text-neutral-500">{tx.cashierBody}</p>

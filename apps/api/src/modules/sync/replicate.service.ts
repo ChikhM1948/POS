@@ -12,6 +12,7 @@ import { StockMovement } from '../../models/StockMovement';
 import { CustomerLedgerEntry } from '../../models/CustomerLedgerEntry';
 import { SupplierLedgerEntry } from '../../models/SupplierLedgerEntry';
 import { deleteProductPermanently } from '../products/products.service';
+import { TRIAL_DAYS } from '@pos-dz/shared';
 
 /**
  * Réplication poste installé → cloud. Le poste (SQLite) envoie ses enregistrements avec des
@@ -167,7 +168,7 @@ export async function replicate(tenantId: string, records: Record<string, any[]>
  * Première connexion d'un poste : crée commerce + boutique + compte admin s'ils n'existent pas
  * (jamais de modification d'un commerce existant — il faut alors s'authentifier).
  */
-export async function bootstrapTenant(input: { tenant: any; store: any; user: any; licenseKey?: string }): Promise<{ created: boolean }> {
+export async function bootstrapTenant(input: { tenant: any; store: any; user: any; licenseKey?: string; trial?: { deviceId?: string; startedAt?: string } }): Promise<{ created: boolean }> {
   const tenantDoc = convert(input.tenant, REPLICATION_SPECS.tenants);
   if (await Tenant.collection.findOne({ _id: tenantDoc._id })) return { created: false };
 
@@ -178,19 +179,56 @@ export async function bootstrapTenant(input: { tenant: any; store: any; user: an
   const userDoc = convert(input.user, REPLICATION_SPECS.users);
   storeDoc.tenantId = userDoc.tenantId = tenantDoc._id;
 
-  // Le poste a déjà échangé sa clé (POST /license/redeem) : on rattache cette licence au commerce cloud.
-  // Route non authentifiée : sans clé redeemée et libre, on refuse (sinon essai gratuit illimité en créant des commerces).
-  const lic = input.licenseKey
-    ? await License.findOne({ key: String(input.licenseKey).toUpperCase(), redeemedAt: { $exists: true }, revoked: false })
-    : null;
-  if (!lic || lic.tenantId) {
-    throw Object.assign(new Error("Clé d'activation invalide ou déjà rattachée à un commerce."), { status: 403 });
+  // Deux cas : (1) le poste a déjà échangé une clé (POST /license/redeem) -> on la rattache au commerce ;
+  // (2) essai sans clé : le poste a créé son compte hors-ligne et démarré un essai local -> on le reprend ici.
+  // Route non authentifiée : sans clé redeemée et libre ni essai valide, on refuse.
+  let lic;
+  if (input.licenseKey) {
+    // Rattachement atomique : une clé ne peut être reliée qu'à UN commerce, même sous requêtes concurrentes.
+    lic = await License.findOneAndUpdate(
+      { key: String(input.licenseKey).toUpperCase(), redeemedAt: { $exists: true }, revoked: false, tenantId: { $exists: false } },
+      { $set: { tenantId: tenantDoc._id } },
+      { new: true },
+    );
+    if (!lic) {
+      throw Object.assign(new Error("Clé d'activation invalide ou déjà rattachée à un commerce."), { status: 403 });
+    }
+  } else {
+    lic = await adoptDeviceTrial(input.trial, tenantDoc._id);
   }
-  lic.tenantId = tenantDoc._id;
-  await lic.save();
   tenantDoc.license = { key: lic.key, kind: lic.kind, activatedAt: lic.redeemedAt, expiresAt: lic.expiresAt };
   await Tenant.collection.insertOne(tenantDoc);
   await Store.collection.insertOne(storeDoc);
   await User.collection.insertOne(userDoc);
   return { created: true };
+}
+
+/**
+ * Essai gratuit d'un poste desktop, sans clé. Un poste (deviceId) n'a droit qu'à UN essai : l'enregistrement
+ * est une vraie License (kind 'trial', liée à `device:<id>`), donc il apparaît dans la liste du super admin
+ * et peut être révoqué. La date de départ est celle du poste (jamais dans le futur) : se connecter au cloud
+ * ne rallonge pas l'essai.
+ */
+async function adoptDeviceTrial(trial: { deviceId?: string; startedAt?: string } | undefined, tenantId: unknown) {
+  const deviceId = String(trial?.deviceId ?? '').trim();
+  if (!/^[0-9a-f-]{16,64}$/i.test(deviceId)) {
+    throw Object.assign(new Error("Clé d'activation ou essai valide requis pour relier ce poste au cloud."), { status: 403 });
+  }
+  const boundTo = `device:${deviceId}`;
+  if (await License.exists({ boundTo, kind: 'trial', tenantId: { $exists: true } })) {
+    throw Object.assign(new Error("L'essai gratuit de ce poste est déjà rattaché à un commerce."), { status: 403 });
+  }
+  const parsed = trial?.startedAt ? new Date(trial.startedAt) : new Date();
+  const now = new Date();
+  const startedAt = Number.isNaN(parsed.getTime()) || parsed > now ? now : parsed;
+  return License.create({
+    key: `TRIAL-${deviceId.replace(/-/g, '').slice(0, 12).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
+    kind: 'trial',
+    durationDays: TRIAL_DAYS,
+    note: 'Essai desktop sans clé',
+    redeemedAt: startedAt,
+    expiresAt: new Date(startedAt.getTime() + TRIAL_DAYS * 86_400_000),
+    boundTo,
+    tenantId,
+  });
 }

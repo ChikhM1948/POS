@@ -3,9 +3,8 @@ import { timingSafeEqual } from 'node:crypto';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import { requireAuth, requireRole, type AuthenticatedRequest } from '../../middleware/auth';
 import { env } from '../../config/env';
-import { License } from '../../models/License';
-import { Tenant } from '../../models/Tenant';
-import { activateForTenant, generateKeys, getTenantLicenseStatus, handleSofizpayCallback, redeemKey, signLicense, startCheckout, verifyCheckout } from './license.service';
+import { activateForTenant, generateKeys, getTenantLicenseStatus, handleSofizpayCallback, listKeys, redeemKey, renewLease, resetKeyBinding, revokeKey, signLicense, startCheckout, verifyCheckout } from './license.service';
+import { loginPlatformAdmin, requirePlatformAdmin } from './platformAdmin.service';
 
 export const licenseRouter = Router();
 
@@ -26,12 +25,43 @@ licenseRouter.post('/generate', asyncHandler(async (req: Request, res: Response)
 /** Éditeur : révoque une clé (le commerce concerné est bloqué à l'expiration du jeton de statut). */
 licenseRouter.post('/revoke', asyncHandler(async (req: Request, res: Response) => {
   if (!adminKeyOk(req)) return res.status(403).json({ error: 'Accès refusé.' });
-  const key = String(req.body?.key ?? '').trim().toUpperCase();
-  const lic = await License.findOneAndUpdate({ key }, { revoked: true, expiresAt: new Date() }, { new: true });
-  if (!lic) return res.status(404).json({ error: 'Clé introuvable.' });
-  if (lic.tenantId) {
-    await Tenant.updateOne({ _id: lic.tenantId, 'license.key': lic.key }, { $set: { 'license.expiresAt': lic.expiresAt } });
-  }
+  await revokeKey(req.body?.key);
+  res.json({ revoked: true });
+}));
+
+// --- Compte super admin (éditeur) : émission / suivi des clés depuis l'interface web ---
+
+function parseGenerate(body: any) {
+  const { count = 1, kind = 'trial', durationDays, note } = body ?? {};
+  if (kind !== 'trial' && kind !== 'paid' && kind !== 'lifetime') throw Object.assign(new Error("kind doit valoir 'trial', 'paid' ou 'lifetime'."), { status: 400 });
+  const days = durationDays ? Number(durationDays) : undefined;
+  if (days !== undefined && (!Number.isInteger(days) || days < 1 || days > 36_500)) throw Object.assign(new Error('durationDays doit être un entier entre 1 et 36500.'), { status: 400 });
+  return { count: Number(count) || 1, kind, days, note: typeof note === 'string' ? note.slice(0, 200) : undefined };
+}
+
+licenseRouter.post('/admin/login', asyncHandler(async (req: Request, res: Response) => {
+  const { email, password } = req.body ?? {};
+  if (!email || !password) return res.status(400).json({ error: 'email et password sont requis.' });
+  res.json(await loginPlatformAdmin(String(email), String(password), req.ip ?? ''));
+}));
+
+licenseRouter.get('/admin/keys', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { kind, state, q } = req.query as Record<string, string | undefined>;
+  res.json({ keys: await listKeys({ kind, state, q }) });
+}));
+
+licenseRouter.post('/admin/generate', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { count, kind, days, note } = parseGenerate(req.body);
+  res.status(201).json({ keys: await generateKeys(count, kind, days, note) });
+}));
+
+licenseRouter.post('/admin/reset-binding', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {
+  await resetKeyBinding(req.body?.key);
+  res.json({ reset: true });
+}));
+
+licenseRouter.post('/admin/revoke', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {
+  await revokeKey(req.body?.key);
   res.json({ revoked: true });
 }));
 
@@ -44,6 +74,13 @@ licenseRouter.post('/redeem', asyncHandler(async (req: Request, res: Response) =
   if (!deviceId) return res.status(400).json({ error: 'deviceId requis.' });
   const lic = await redeemKey(key, `device:${deviceId}`);
   res.json({ license: signLicense(lic) });
+}));
+
+/** Poste desktop : renouvelle le bail de sa licence signée (appel périodique en arrière-plan). */
+licenseRouter.post('/renew', asyncHandler(async (req: Request, res: Response) => {
+  const { key, deviceId } = req.body ?? {};
+  if (!deviceId) return res.status(400).json({ error: 'deviceId requis.' });
+  res.json({ license: signLicense(await renewLease(key, String(deviceId))) });
 }));
 
 /** Statut de la licence du commerce authentifié. */

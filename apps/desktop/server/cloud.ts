@@ -137,7 +137,7 @@ export class CloudSync {
   private timer: ReturnType<typeof setInterval> | null = null;
   private running = false;
 
-  constructor(private db: Db) {}
+  constructor(private db: Db, private trialInfo: () => { deviceId: string; startedAt: string } | undefined = () => undefined) {}
 
   /** Licence signée du poste, envoyée avec le bootstrap pour la rattacher au commerce cloud. */
   licenseKey(): string | undefined {
@@ -218,7 +218,7 @@ export class CloudSync {
       const [, tenant] = TABLES[0].map(this.db.prepare('SELECT * FROM tenants WHERE id = ?').get(user.tenant_id));
       const [, store] = TABLES[1].map(this.db.prepare('SELECT * FROM stores WHERE tenant_id = ? AND is_main_store = 1').get(user.tenant_id) ?? this.db.prepare('SELECT * FROM stores WHERE tenant_id = ? LIMIT 1').get(user.tenant_id));
       const [, cloudUser] = TABLES[2].map(user);
-      const boot = await this.http('/auth/replicate-bootstrap', { tenant, store: { ...store, tenantId: tenant._id }, user: { ...cloudUser, tenantId: tenant._id }, license: { key: this.licenseKey() } });
+      const boot = await this.http('/auth/replicate-bootstrap', { tenant, store: { ...store, tenantId: tenant._id }, user: { ...cloudUser, tenantId: tenant._id }, license: { key: this.licenseKey() }, trial: this.licenseKey() ? undefined : this.trialInfo() });
       if (boot.status !== 200) throw new Error(boot.data.error ?? `Serveur injoignable ou incompatible (${boot.status}).`);
       await this.login();
     } catch (err) {

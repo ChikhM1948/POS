@@ -438,11 +438,22 @@ export const TRIAL_DAYS = 14;
 export type LicenseKind = 'trial' | 'paid' | 'lifetime';
 export const LIFETIME_DAYS = 36_500;
 
+/**
+ * Bail de licence : le serveur signe une licence valable `LICENSE_LEASE_DAYS` jours à la fois (`validUntil`) ;
+ * le poste la renouvelle en ligne en arrière-plan. Une clé révoquée ou déliée n'est donc plus renouvelée et le
+ * poste se verrouille — la licence ne reste jamais valide « à vie » hors-ligne.
+ */
+export const LICENSE_LEASE_DAYS = 30;
+/** Le poste tente de renouveler dès qu'il reste moins que ça sur le bail (marge hors-ligne avant verrouillage). */
+export const LICENSE_RENEW_BELOW_DAYS = 23;
+
 export interface LicenseDTO {
   key: string;
   kind: LicenseKind;
   activatedAt: string;
   expiresAt: string;
+  /** Fin du bail courant (≤ expiresAt). Absent sur les anciennes licences : valables jusqu'à expiresAt. */
+  validUntil?: string;
 }
 
 /** Licence signée par le serveur (Ed25519) : le poste hors-ligne vérifie la signature avec la clé publique embarquée. */
@@ -458,6 +469,10 @@ export interface LicenseStatusDTO {
   /** Jours entiers restants (0 le dernier jour), négatif non renvoyé : voir `expired`. */
   daysLeft?: number;
   expired: boolean;
+  /** true = la durée de la licence n'est pas écoulée mais le bail a expiré : se connecter à Internet pour renouveler. */
+  needsOnline?: boolean;
+  /** true = le serveur a refusé le renouvellement (clé révoquée ou liée à un autre poste). */
+  denied?: boolean;
 }
 
 export interface AuthResult {

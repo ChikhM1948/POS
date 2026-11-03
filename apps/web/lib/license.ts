@@ -55,3 +55,14 @@ export async function verifyLicenseCheckout(token: string, orderId: string): Pro
   if (!res.ok) return { paid: false };
   return res.json();
 }
+
+/** Poste local : renouvelle le bail de la licence auprès du serveur (Internet requis). */
+export async function renewLicense(token: string | undefined): Promise<LicenseStatusDTO> {
+  const res = await fetch(`${API_BASE_URL}/license/renew`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error ?? `Erreur ${res.status}`);
+  return body.license as LicenseStatusDTO;
+}

@@ -4,7 +4,7 @@ import { Tenant } from '../../models/Tenant';
 import { LicensePayment } from '../../models/LicensePayment';
 import { createSofizpayOrder, checkSofizpayPayment } from './sofizpay';
 import { env } from '../../config/env';
-import { TRIAL_DAYS, LIFETIME_DAYS } from '@pos-dz/shared';
+import { TRIAL_DAYS, LIFETIME_DAYS, LICENSE_LEASE_DAYS } from '@pos-dz/shared';
 import type { LicenseKind, LicenseStatusDTO, SignedLicense } from '@pos-dz/shared';
 
 const DAY_MS = 86_400_000;
@@ -28,12 +28,72 @@ export async function generateKeys(count: number, kind: LicenseKind, durationDay
   return docs.map((d) => ({ key: d.key, kind: d.kind, durationDays: d.durationDays }));
 }
 
-/** Signature Ed25519 du contenu de la licence — vérifiée hors-ligne par le poste desktop. */
+/** Révoque une clé et, si elle est déjà liée à un commerce, l'expire immédiatement chez lui. */
+export async function revokeKey(rawKey: string) {
+  const key = String(rawKey ?? '').trim().toUpperCase();
+  const lic = await License.findOneAndUpdate({ key }, { revoked: true, expiresAt: new Date() }, { new: true });
+  if (!lic) fail(404, 'Clé introuvable.');
+  if (lic.tenantId) await Tenant.updateOne({ _id: lic.tenantId, 'license.key': lic.key }, { $set: { 'license.expiresAt': lic.expiresAt } });
+  return lic;
+}
+
+/**
+ * Délie une clé de son poste (réinstallation, nouveau PC). Réservé aux clés liées à un poste : une clé liée à un
+ * commerce cloud, ou un essai, ne se déplace pas. L'expiration reste celle du premier usage.
+ */
+export async function resetKeyBinding(rawKey: string) {
+  const key = String(rawKey ?? '').trim().toUpperCase();
+  const lic = await License.findOneAndUpdate(
+    { key, revoked: false, kind: { $ne: 'trial' }, boundTo: /^device:/ },
+    { $unset: { boundTo: 1 } },
+    { new: true },
+  );
+  if (!lic) fail(409, "Cette clé ne peut pas être déliée (inconnue, révoquée, essai, ou non liée à un poste).");
+  return lic;
+}
+
+/** Liste des clés pour le tableau de bord super admin (les plus récentes d'abord). */
+export async function listKeys(filter: { kind?: string; state?: string; q?: string }, limit = 200) {
+  const query: Record<string, unknown> = {};
+  if (filter.kind === 'trial' || filter.kind === 'paid' || filter.kind === 'lifetime') query.kind = filter.kind;
+  if (filter.state === 'unused') Object.assign(query, { redeemedAt: { $exists: false }, revoked: false });
+  else if (filter.state === 'used') Object.assign(query, { redeemedAt: { $exists: true }, revoked: false });
+  else if (filter.state === 'revoked') query.revoked = true;
+  const q = filter.q?.trim();
+  if (q) {
+    const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    query.$or = [{ key: rx }, { note: rx }];
+  }
+  const rows = await License.find(query).sort({ createdAt: -1 }).limit(Math.min(limit, 500)).lean();
+  return rows.map((l) => ({
+    key: l.key, kind: l.kind, durationDays: l.durationDays, note: l.note, revoked: l.revoked,
+    redeemedAt: l.redeemedAt, expiresAt: l.expiresAt, boundTo: l.boundTo, createdAt: l.createdAt,
+  }));
+}
+
+/**
+ * Signature Ed25519 du contenu de la licence — vérifiée hors-ligne par le poste desktop.
+ * Le bail (`validUntil`) est borné par l'expiration réelle ; l'ordre des champs fait partie de la signature.
+ */
 export function signLicense(l: { key: string; kind: LicenseKind; activatedAt: Date; expiresAt: Date }): SignedLicense {
   if (!env.licensePrivateKey) fail(503, 'Serveur de licences non configuré (LICENSE_PRIVATE_KEY).');
-  const payload = { key: l.key, kind: l.kind, activatedAt: l.activatedAt.toISOString(), expiresAt: l.expiresAt.toISOString() };
+  // Licence à vie : activation en ligne UNE fois, puis aucun renouvellement obligatoire (bail = expiration réelle).
+  const validUntil = l.kind === 'lifetime' ? l.expiresAt : new Date(Math.min(l.expiresAt.getTime(), Date.now() + LICENSE_LEASE_DAYS * DAY_MS));
+  const payload = { key: l.key, kind: l.kind, activatedAt: l.activatedAt.toISOString(), expiresAt: l.expiresAt.toISOString(), validUntil: validUntil.toISOString() };
   const signature = sign(null, Buffer.from(JSON.stringify(payload)), createPrivateKey(env.licensePrivateKey)).toString('base64');
   return { ...payload, signature };
+}
+
+/**
+ * Renouvelle le bail d'un poste. Refusé (404/409) si la clé est inconnue, révoquée, ou n'est plus liée à CE poste
+ * (déliée par le super admin ou reprise par un autre) : le poste se verrouille alors.
+ */
+export async function renewLease(rawKey: string, deviceId: string) {
+  const key = String(rawKey ?? '').trim().toUpperCase();
+  const lic = await License.findOne({ key });
+  if (!lic || lic.revoked || !lic.redeemedAt || !lic.expiresAt) fail(404, "Clé d'activation invalide ou révoquée.");
+  if (lic.boundTo !== `device:${deviceId}`) fail(409, "Cette clé n'est plus liée à ce poste.");
+  return { key: lic.key, kind: lic.kind, activatedAt: lic.redeemedAt, expiresAt: lic.expiresAt };
 }
 
 /**
@@ -43,18 +103,32 @@ export function signLicense(l: { key: string; kind: LicenseKind; activatedAt: Da
 export async function redeemKey(rawKey: string, boundTo: string, tenantId?: string) {
   const key = String(rawKey ?? '').trim().toUpperCase();
   if (!key) fail(400, "Clé d'activation requise.");
-  const lic = await License.findOne({ key });
-  if (!lic || lic.revoked) fail(404, "Clé d'activation invalide.");
-  if (lic.boundTo && lic.boundTo !== boundTo) fail(409, "Cette clé est déjà utilisée par un autre commerce ou poste.");
-
-  if (!lic.redeemedAt) {
-    const now = new Date();
-    lic.redeemedAt = now;
-    lic.expiresAt = new Date(now.getTime() + lic.durationDays * DAY_MS);
-    lic.boundTo = boundTo;
+  const now = new Date();
+  // Prise de possession atomique : une clé neuve est liée au premier appelant, même si deux requêtes arrivent
+  // en même temps (un seul `findOneAndUpdate` peut matcher `redeemedAt` absent). Une clé = un seul commerce/poste.
+  let lic = await License.findOneAndUpdate(
+    { key, revoked: false, redeemedAt: { $exists: false } },
+    [{ $set: { redeemedAt: now, boundTo, expiresAt: { $add: [now, { $multiply: ['$durationDays', DAY_MS] }] } } }],
+    { new: true },
+  );
+  if (!lic && boundTo.startsWith('device:')) {
+    // Clé « déliée » par le super admin (réinstallation) : le premier poste qui la ressaisit la reprend, atomiquement.
+    // L'expiration d'origine est conservée : délier ne prolonge jamais une licence.
+    lic = await License.findOneAndUpdate(
+      { key, revoked: false, redeemedAt: { $exists: true }, boundTo: { $exists: false } },
+      { $set: { boundTo } },
+      { new: true },
+    );
   }
-  if (tenantId) lic.tenantId = tenantId as any;
-  await lic.save();
+  if (!lic) {
+    lic = await License.findOne({ key });
+    if (!lic || lic.revoked) fail(404, "Clé d'activation invalide.");
+    if (lic.boundTo !== boundTo) fail(409, "Cette clé est déjà utilisée par un autre commerce ou poste.");
+  }
+  if (tenantId && !lic.tenantId) {
+    lic.tenantId = tenantId as any;
+    await lic.save();
+  }
   return { key: lic.key, kind: lic.kind, activatedAt: lic.redeemedAt!, expiresAt: lic.expiresAt! };
 }
 

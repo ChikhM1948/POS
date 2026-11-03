@@ -8,6 +8,7 @@
     "build": "npm run build -w @pos-dz/shared && tsc -p .",
     "start": "node dist/apps/api/src/server.js",
     "seed": "tsx src/scripts/seed.ts",
+    "create:superadmin": "tsx src/scripts/create-superadmin.ts",
     "dev:mongo": "tsx src/scripts/dev-mongo.ts",
     "migrate:tenant": "tsx src/scripts/migrate-tenant-to-cloud.ts",
     "typecheck": "tsc -p . --noEmit"
