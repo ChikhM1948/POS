@@ -8,10 +8,20 @@ function required(name: string, fallback?: string): string {
   return value;
 }
 
+const isProd = process.env.NODE_ENV === 'production' || !!process.env.VERCEL || !!process.env.RENDER;
+
+/** En production, aucun secret ne doit retomber sur une valeur par défaut publique (code source ouvert à l'attaquant). */
+function secret(name: string, devFallback: string): string {
+  const value = process.env[name];
+  if (value && value.length >= 32 && value !== devFallback && !/change-?me/i.test(value)) return value;
+  if (isProd) throw new Error(`${name} doit être défini en production (32 caractères minimum, valeur non par défaut).`);
+  return value ?? devFallback;
+}
+
 export const env = {
   port: parseInt(process.env.PORT ?? '4000', 10),
   mongodbUri: required('MONGODB_URI', 'mongodb://localhost:27017/pos-dz'),
-  jwtSecret: required('JWT_SECRET', 'dev-secret-change-me'),
+  jwtSecret: secret('JWT_SECRET', 'dev-secret-change-me'),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '12h',
   // Liste séparée par des virgules — l'app desktop packagée (Electron) sert son build depuis un
   // serveur local à port fixe (voir apps/desktop/main.ts, RENDERER_PORT) et compte comme une

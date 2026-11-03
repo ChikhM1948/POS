@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
 import { User } from '../../models/User';
 import { Store } from '../../models/Store';
+import { invalidateAuthCache } from '../../middleware/auth';
 import { PERMISSION_VIEW_PURCHASE_PRICE } from '@pos-dz/shared';
 import type { CreateUserInput, UpdateUserInput, UserDTO } from '@pos-dz/shared';
 
@@ -59,12 +60,16 @@ export async function updateUser(tenantId: string, id: string, input: UpdateUser
   if (input.name !== undefined) user.name = input.name.trim();
   if (input.storeId !== undefined) user.storeId = new Types.ObjectId(input.storeId);
   if (input.active !== undefined) user.active = input.active;
+  // Tout changement qui touche à la session/aux droits révoque les jetons déjà émis pour ce compte.
+  const revoke = input.password || input.pinCode || input.storeId !== undefined || input.canViewPurchasePrice !== undefined || input.active === false;
+  if (revoke) user.tokenVersion = (user.tokenVersion ?? 0) + 1;
   if (input.password) user.passwordHash = await bcrypt.hash(input.password, 10);
   if (input.pinCode) user.pinCodeHash = await bcrypt.hash(input.pinCode, 10);
   if (input.canViewPurchasePrice !== undefined) {
     user.permissions = input.canViewPurchasePrice ? [PERMISSION_VIEW_PURCHASE_PRICE] : [];
   }
   await user.save();
+  invalidateAuthCache(String(user._id));
   return toDTO(user);
 }
 
@@ -72,7 +77,8 @@ export async function updateUser(tenantId: string, id: string, input: UpdateUser
 export async function deactivateUser(tenantId: string, id: string): Promise<boolean> {
   const result = await User.updateOne(
     { tenantId: new Types.ObjectId(tenantId), _id: id },
-    { $set: { active: false } },
+    { $set: { active: false }, $inc: { tokenVersion: 1 } },
   );
+  if (Types.ObjectId.isValid(id)) invalidateAuthCache(id);
   return result.matchedCount > 0;
 }

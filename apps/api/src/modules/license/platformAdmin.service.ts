@@ -53,7 +53,7 @@ export async function requirePlatformAdmin(req: PlatformRequest, res: Response, 
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) return res.status(401).json({ error: 'Authentification requise.' });
   try {
-    const claims = jwt.verify(header.slice(7), PLATFORM_SECRET) as PlatformClaims;
+    const claims = jwt.verify(header.slice(7), PLATFORM_SECRET, { algorithms: ['HS256'] }) as PlatformClaims;
     if (claims.scope !== 'platform_admin' || !(await PlatformAdmin.exists({ _id: claims.sub, active: true }))) throw new Error('revoked');
     req.platformAdmin = claims;
     next();

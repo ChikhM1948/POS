@@ -8,6 +8,18 @@ const STORAGE_KEY = 'landing-language';
 /** Numéro WhatsApp au format international sans « + » (ex. 213555123456), fixé au build. */
 const WHATSAPP_NUMBER = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '').replace(/\D/g, '');
 
+function waLink(text: string) {
+  return WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}` : undefined;
+}
+
+function WhatsAppIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M12.04 2a9.9 9.9 0 0 0-8.5 14.9L2 22l5.25-1.5A9.95 9.95 0 1 0 12.04 2Zm0 18.1c-1.5 0-2.9-.4-4.1-1.1l-.3-.2-3.1.9.9-3-.2-.3a8.1 8.1 0 1 1 6.8 3.7Zm4.5-6.1c-.25-.12-1.45-.72-1.68-.8-.22-.08-.39-.12-.55.12-.16.25-.63.8-.77.96-.14.17-.28.18-.53.06-.25-.12-1.04-.38-1.98-1.22-.73-.65-1.22-1.46-1.37-1.7-.14-.25-.02-.38.1-.5.11-.11.25-.28.37-.42.12-.14.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.55-1.33-.76-1.82-.2-.48-.4-.41-.55-.42h-.47c-.16 0-.43.06-.65.31-.22.25-.86.84-.86 2.05s.88 2.38 1 2.55c.12.16 1.73 2.65 4.2 3.72.59.25 1.05.4 1.4.52.59.19 1.13.16 1.55.1.47-.07 1.45-.6 1.65-1.17.2-.58.2-1.07.14-1.17-.06-.1-.22-.16-.47-.28Z" />
+    </svg>
+  );
+}
+
 function Arrow() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 rtl:rotate-180" aria-hidden="true">
@@ -350,7 +362,7 @@ export default function LandingPage() {
             </div>
             <div className="mt-8">
               <a
-                href={WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(c.pricing.whatsappMessage)}` : '/'}
+                href={waLink(c.pricing.whatsappMessage) ?? '/'}
                 target={WHATSAPP_NUMBER ? '_blank' : undefined}
                 rel="noopener noreferrer"
                 className={btnPrimary}
@@ -416,6 +428,46 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Contact */}
+        <section id="contact" className="scroll-mt-16 border-b border-neutral-200 bg-neutral-50 py-16 sm:py-20">
+          <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-2">
+            <div>
+              <p className="text-sm font-semibold text-blue-700">{c.contact.eyebrow}</p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{c.contact.title}</h2>
+              <p className="mt-4 leading-relaxed text-neutral-600">{c.contact.text}</p>
+              <div className="mt-6">
+                {WHATSAPP_NUMBER ? (
+                  <a href={waLink(c.contact.message)} target="_blank" rel="noopener noreferrer" className={btnPrimary}>
+                    <WhatsAppIcon /> {c.contact.button}
+                  </a>
+                ) : (
+                  <p className="text-sm text-neutral-500">{c.contact.unavailable}</p>
+                )}
+              </div>
+            </div>
+            <dl className="divide-y divide-neutral-200 border-y border-neutral-200 bg-white px-5 text-sm">
+              <div className="py-4">
+                <dt className="font-semibold text-brand-800">{c.contact.hoursLabel}</dt>
+                <dd className="mt-1 text-neutral-600">{c.contact.hours}</dd>
+              </div>
+              <div className="py-4">
+                <dt className="font-semibold text-brand-800">{c.contact.replyLabel}</dt>
+                <dd className="mt-1 text-neutral-600">{c.contact.reply}</dd>
+              </div>
+              <div className="py-4">
+                <dt className="font-semibold text-brand-800">{c.contact.helpLabel}</dt>
+                <dd className="mt-2">
+                  <ul className="space-y-2 text-neutral-700">
+                    {c.contact.help.map((h) => (
+                      <li key={h} className="flex items-start gap-2"><Tick />{h}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
         {/* Appel à l'action */}
         <section className="bg-neutral-50 py-16 sm:py-20">
           <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 sm:px-6 md:flex-row md:items-center">
@@ -438,10 +490,26 @@ export default function LandingPage() {
           <div className="flex items-center gap-6">
             <Link href="/" className="hover:text-neutral-900">{c.footer.pos}</Link>
             <Link href="/admin" className="hover:text-neutral-900">{c.footer.admin}</Link>
+            {WHATSAPP_NUMBER && (
+              <a href={waLink(c.contact.message)} target="_blank" rel="noopener noreferrer" className="hover:text-neutral-900">{c.footer.contact}</a>
+            )}
             <span className="text-neutral-400">© {new Date().getFullYear()} · {c.footer.rights} · Developed by DevLab</span>
           </div>
         </div>
       </footer>
+
+      {WHATSAPP_NUMBER && (
+        <a
+          href={waLink(c.contact.message)}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={c.contact.floating}
+          title={c.contact.floating}
+          className="fixed bottom-5 end-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition hover:scale-105"
+        >
+          <WhatsAppIcon className="h-7 w-7" />
+        </a>
+      )}
     </div>
   );
 }

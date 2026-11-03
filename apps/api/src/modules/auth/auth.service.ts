@@ -131,6 +131,7 @@ export async function loginWithPassword(tenantId: string | undefined, email: str
     storeId: user.storeId ? String(user.storeId) : undefined,
     role: user.role,
     canViewPurchasePrice: canViewPurchasePrice(user),
+    tv: user.tokenVersion ?? 0,
   };
   const license = await getTenantLicenseStatus(claims.tenantId);
   return { token: signToken(claims), tenantId: String(user.tenantId), license, user: { id: user._id, name: user.name, role: user.role, canViewPurchasePrice: canViewPurchasePrice(user) } };
@@ -166,6 +167,7 @@ export async function loginCashierWithPassword(tenantId: string | undefined, ema
     storeId: user.storeId ? String(user.storeId) : undefined,
     role: user.role,
     canViewPurchasePrice: canViewPurchasePrice(user),
+    tv: user.tokenVersion ?? 0,
   };
   return { token: signToken(claims), user: { id: user._id, tenantId: claims.tenantId, storeId: claims.storeId, name: user.name, role: user.role, canViewPurchasePrice: canViewPurchasePrice(user) } };
 }
@@ -187,6 +189,7 @@ export async function loginWithPin(tenantId: string, storeId: string, pinCode: s
         storeId,
         role: user.role,
         canViewPurchasePrice: canViewPurchasePrice(user),
+        tv: user.tokenVersion ?? 0,
       };
       return {
         token: signToken(claims),

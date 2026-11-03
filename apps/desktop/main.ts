@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 // `escpos` + `escpos-usb` gèrent la découverte/écriture sur le port USB de l'imprimante.
@@ -116,6 +116,19 @@ async function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+
+  // Le renderer ne doit jamais naviguer hors de l'app ni ouvrir de fenêtre : liens externes -> navigateur système.
+  const isInternal = (url: string) => url.startsWith(`http://127.0.0.1:${RENDERER_PORT}`) || url.startsWith(`http://localhost:${RENDERER_PORT}`) || (!!process.env.NEXT_DEV_URL && url.startsWith(process.env.NEXT_DEV_URL));
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\//.test(url)) void shell.openExternal(url);
+    return { action: 'deny' };
+  });
+  mainWindow.webContents.on('will-navigate', (e, url) => {
+    if (!isInternal(url)) {
+      e.preventDefault();
+      if (/^https:\/\//.test(url)) void shell.openExternal(url);
+    }
   });
 
   // En prod, on sert l'app Next.js exportée statiquement (packagée dans dist/../renderer) ;

@@ -12,6 +12,8 @@ export interface IUser extends Document {
   role: UserRole;
   permissions: string[]; // dérogations fines au-delà du rôle
   active: boolean;
+  /** Incrémenté pour révoquer tous les jetons déjà émis (mot de passe/PIN/droits changés, compte désactivé). */
+  tokenVersion: number;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -28,6 +30,7 @@ const UserSchema = new Schema<IUser>(
     },
     permissions: { type: [String], default: [] },
     active: { type: Boolean, default: true },
+    tokenVersion: { type: Number, default: 0 },
   },
   { timestamps: true },
 );

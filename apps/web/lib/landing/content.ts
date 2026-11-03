@@ -15,7 +15,8 @@ export interface LandingDict {
   offline: { eyebrow: string; title: string; text: string; points: string[] };
   faq: { eyebrow: string; title: string; items: { q: string; a: string }[] };
   cta: { title: string; text: string; button: string };
-  footer: { tagline: string; pos: string; admin: string; rights: string };
+  contact: { eyebrow: string; title: string; text: string; button: string; floating: string; hoursLabel: string; hours: string; replyLabel: string; reply: string; helpLabel: string; help: string[]; message: string; unavailable: string };
+  footer: { tagline: string; pos: string; admin: string; rights: string; contact: string };
   lang: { label: string };
 }
 
@@ -102,7 +103,22 @@ const fr: LandingDict = {
     ],
   },
   cta: { title: 'Prêt à moderniser votre point de vente ?', text: 'Ouvrez la caisse et réalisez votre première vente en quelques minutes.', button: 'Ouvrir la caisse' },
-  footer: { tagline: 'Caisse et gestion de stock pour commerces algériens.', pos: 'Caisse', admin: 'Back-office', rights: 'Tous droits réservés.' },
+  contact: {
+    eyebrow: 'Contact',
+    title: 'Parlons de votre commerce',
+    text: 'Une question, une démonstration ou un devis ? Écrivez-nous directement sur WhatsApp : nous vous répondons personnellement.',
+    button: 'Discuter sur WhatsApp',
+    floating: 'Contacter la boutique sur WhatsApp',
+    hoursLabel: 'Horaires',
+    hours: 'Samedi – Jeudi, 9h – 18h (heure d’Alger)',
+    replyLabel: 'Délai de réponse',
+    reply: 'Généralement en moins d’une heure',
+    helpLabel: 'Nous pouvons vous aider pour',
+    help: ['Démarrer l’essai gratuit de 14 jours', 'Acheter la licence à vie (CIB / Edahabia)', 'Installation, formation et assistance', 'Marque blanche et personnalisation'],
+    message: 'Bonjour, j’ai une question sur POS Algérie.',
+    unavailable: 'Numéro WhatsApp bientôt disponible.',
+  },
+  footer: { tagline: 'Caisse et gestion de stock pour commerces algériens.', pos: 'Caisse', admin: 'Back-office', rights: 'Tous droits réservés.', contact: 'Contact WhatsApp' },
   lang: { label: 'Langue' },
 };
 
@@ -189,7 +205,22 @@ const ar: LandingDict = {
     ],
   },
   cta: { title: 'جاهز لتحديث نقطة البيع؟', text: 'افتح الصندوق وأنجز أول عملية بيع خلال دقائق.', button: 'فتح الصندوق' },
-  footer: { tagline: 'نقطة بيع وإدارة مخزون للمحلات الجزائرية.', pos: 'الصندوق', admin: 'لوحة الإدارة', rights: 'جميع الحقوق محفوظة.' },
+  contact: {
+    eyebrow: 'تواصل معنا',
+    title: 'لنتحدث عن محلّك',
+    text: 'لديك سؤال أو تريد عرضًا تجريبيًا أو عرض سعر؟ راسلنا مباشرة عبر واتساب وسنرد عليك شخصيًا.',
+    button: 'تواصل عبر واتساب',
+    floating: 'تواصل مع المتجر عبر واتساب',
+    hoursLabel: 'أوقات العمل',
+    hours: 'من السبت إلى الخميس، 9:00 – 18:00 (توقيت الجزائر)',
+    replyLabel: 'مدة الرد',
+    reply: 'عادةً خلال أقل من ساعة',
+    helpLabel: 'يمكننا مساعدتك في',
+    help: ['بدء التجربة المجانية لمدة 14 يومًا', 'شراء الرخصة مدى الحياة (CIB / الذهبية)', 'التركيب والتدريب والدعم', 'العلامة البيضاء والتخصيص'],
+    message: 'مرحبًا، لدي سؤال حول نظام POS الجزائر.',
+    unavailable: 'رقم واتساب سيتوفر قريبًا.',
+  },
+  footer: { tagline: 'نقطة بيع وإدارة مخزون للمحلات الجزائرية.', pos: 'الصندوق', admin: 'لوحة الإدارة', rights: 'جميع الحقوق محفوظة.', contact: 'تواصل عبر واتساب' },
   lang: { label: 'اللغة' },
 };
 
@@ -276,7 +307,22 @@ const en: LandingDict = {
     ],
   },
   cta: { title: 'Ready to modernise your point of sale?', text: 'Open the POS and ring up your first sale in minutes.', button: 'Open the POS' },
-  footer: { tagline: 'Point of sale and stock management for Algerian businesses.', pos: 'POS', admin: 'Back-office', rights: 'All rights reserved.' },
+  contact: {
+    eyebrow: 'Contact',
+    title: 'Let’s talk about your shop',
+    text: 'A question, a demo or a quote? Message us directly on WhatsApp — you’ll get a personal reply.',
+    button: 'Chat on WhatsApp',
+    floating: 'Contact the shop on WhatsApp',
+    hoursLabel: 'Opening hours',
+    hours: 'Saturday – Thursday, 9am – 6pm (Algiers time)',
+    replyLabel: 'Response time',
+    reply: 'Usually within an hour',
+    helpLabel: 'We can help you with',
+    help: ['Starting the 14-day free trial', 'Buying the lifetime licence (CIB / Edahabia)', 'Setup, training and support', 'White-label and customisation'],
+    message: 'Hello, I have a question about POS Algérie.',
+    unavailable: 'WhatsApp number coming soon.',
+  },
+  footer: { tagline: 'Point of sale and stock management for Algerian businesses.', pos: 'POS', admin: 'Back-office', rights: 'All rights reserved.', contact: 'WhatsApp contact' },
   lang: { label: 'Language' },
 };
 

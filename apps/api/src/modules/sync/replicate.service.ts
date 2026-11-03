@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { ObjectId } from 'mongodb';
 import type { Model } from 'mongoose';
 import { Tenant } from '../../models/Tenant';
@@ -168,8 +169,15 @@ export async function replicate(tenantId: string, records: Record<string, any[]>
  * Première connexion d'un poste : crée commerce + boutique + compte admin s'ils n'existent pas
  * (jamais de modification d'un commerce existant — il faut alors s'authentifier).
  */
-export async function bootstrapTenant(input: { tenant: any; store: any; user: any; licenseKey?: string; trial?: { deviceId?: string; startedAt?: string } }): Promise<{ created: boolean }> {
-  const tenantDoc = convert(input.tenant, REPLICATION_SPECS.tenants);
+export async function bootstrapTenant(input: { tenant: any; store: any; user: any; licenseKey?: string; trial?: { deviceId?: string; startedAt?: string }; ip?: string }): Promise<{ created: boolean }> {
+  // Route non authentifiée : on valide la forme avant tout (le corps vient d'un client non fiable).
+  const hash = String(input.user?.passwordHash ?? '');
+  if (!/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(hash)) {
+    throw Object.assign(new Error('Compte invalide.'), { status: 400 });
+  }
+  let tenantDoc: any;
+  try { tenantDoc = convert(input.tenant, REPLICATION_SPECS.tenants); } catch { throw Object.assign(new Error('Commerce invalide.'), { status: 400 }); }
+  if (typeof tenantDoc.slug !== 'string' || !tenantDoc.slug) throw Object.assign(new Error('Commerce invalide.'), { status: 400 });
   if (await Tenant.collection.findOne({ _id: tenantDoc._id })) return { created: false };
 
   if (await Tenant.exists({ slug: tenantDoc.slug })) {
@@ -178,6 +186,14 @@ export async function bootstrapTenant(input: { tenant: any; store: any; user: an
   const storeDoc = convert(input.store, REPLICATION_SPECS.stores);
   const userDoc = convert(input.user, REPLICATION_SPECS.users);
   storeDoc.tenantId = userDoc.tenantId = tenantDoc._id;
+  // Jamais de privilèges ni de plan choisis par le client : le poste crée UN compte admin de son propre commerce.
+  userDoc.role = 'store_admin';
+  userDoc.active = true;
+  userDoc.permissions = [];
+  userDoc.tokenVersion = 0;
+  delete userDoc.pinCodeHash;
+  tenantDoc.plan = 'starter';
+  delete tenantDoc.license;
 
   // Deux cas : (1) le poste a déjà échangé une clé (POST /license/redeem) -> on la rattache au commerce ;
   // (2) essai sans clé : le poste a créé son compte hors-ligne et démarré un essai local -> on le reprend ici.
@@ -194,10 +210,16 @@ export async function bootstrapTenant(input: { tenant: any; store: any; user: an
       throw Object.assign(new Error("Clé d'activation invalide ou déjà rattachée à un commerce."), { status: 403 });
     }
   } else {
-    lic = await adoptDeviceTrial(input.trial, tenantDoc._id);
+    lic = await adoptDeviceTrial(input.trial, tenantDoc._id, input.ip);
   }
   tenantDoc.license = { key: lic.key, kind: lic.kind, activatedAt: lic.redeemedAt, expiresAt: lic.expiresAt };
-  await Tenant.collection.insertOne(tenantDoc);
+  tenantDoc.status = lic.kind === 'trial' ? 'trial' : 'active';
+  try {
+    await Tenant.collection.insertOne(tenantDoc);
+  } catch (err: any) {
+    if (err?.code === 11000) return { created: false }; // course : un autre appel l'a créé entre-temps
+    throw err;
+  }
   await Store.collection.insertOne(storeDoc);
   await User.collection.insertOne(userDoc);
   return { created: true };
@@ -209,7 +231,9 @@ export async function bootstrapTenant(input: { tenant: any; store: any; user: an
  * et peut être révoqué. La date de départ est celle du poste (jamais dans le futur) : se connecter au cloud
  * ne rallonge pas l'essai.
  */
-async function adoptDeviceTrial(trial: { deviceId?: string; startedAt?: string } | undefined, tenantId: unknown) {
+const MAX_TRIALS_PER_IP_PER_DAY = 3;
+
+async function adoptDeviceTrial(trial: { deviceId?: string; startedAt?: string } | undefined, tenantId: unknown, ip?: string) {
   const deviceId = String(trial?.deviceId ?? '').trim();
   if (!/^[0-9a-f-]{16,64}$/i.test(deviceId)) {
     throw Object.assign(new Error("Clé d'activation ou essai valide requis pour relier ce poste au cloud."), { status: 403 });
@@ -217,6 +241,15 @@ async function adoptDeviceTrial(trial: { deviceId?: string; startedAt?: string }
   const boundTo = `device:${deviceId}`;
   if (await License.exists({ boundTo, kind: 'trial', tenantId: { $exists: true } })) {
     throw Object.assign(new Error("L'essai gratuit de ce poste est déjà rattaché à un commerce."), { status: 403 });
+  }
+  // Le deviceId est déclaré par le client (essai hors-ligne, non signable) : on plafonne donc aussi par IP source,
+  // sinon un script forgerait autant d'identifiants de poste que voulu pour obtenir autant d'essais.
+  const originIp = ip ? createHash('sha256').update(ip).digest('hex') : undefined;
+  if (originIp) {
+    const recent = await License.countDocuments({ originIp, kind: 'trial', createdAt: { $gt: new Date(Date.now() - 86_400_000) } });
+    if (recent >= MAX_TRIALS_PER_IP_PER_DAY) {
+      throw Object.assign(new Error("Trop d'essais gratuits demandés depuis cette adresse. Utilisez une clé d'activation."), { status: 429 });
+    }
   }
   const parsed = trial?.startedAt ? new Date(trial.startedAt) : new Date();
   const now = new Date();
@@ -230,5 +263,6 @@ async function adoptDeviceTrial(trial: { deviceId?: string; startedAt?: string }
     expiresAt: new Date(startedAt.getTime() + TRIAL_DAYS * 86_400_000),
     boundTo,
     tenantId,
+    originIp,
   });
 }

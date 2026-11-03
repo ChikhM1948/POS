@@ -3,13 +3,16 @@ import { asyncHandler } from '../../middleware/asyncHandler';
 import { User } from '../../models/User';
 import { bootstrapTenant } from '../sync/replicate.service';
 import { parseIdentifier } from '@pos-dz/shared';
+import { str, oid } from '../../middleware/sanitize';
 import { loginCashierWithPassword, loginWithPassword, loginWithPin, signupTenant } from './auth.service';
 
 export const authRouter = Router();
 
 /** Premier lancement : crée le commerce (tenant) et son premier compte administrateur. */
 authRouter.post('/setup', asyncHandler(async (req: Request, res: Response) => {
-  const { businessName, adminName, email, password, phone, syncEnabled, activationKey } = req.body ?? {};
+  const { syncEnabled } = req.body ?? {};
+  const businessName = str(req.body?.businessName), adminName = str(req.body?.adminName), phone = str(req.body?.phone);
+  const email = str(req.body?.email), password = str(req.body?.password), activationKey = str(req.body?.activationKey);
   if (!email || !password) {
     return res.status(400).json({ error: 'email (ou téléphone) et password sont requis.' });
   }
@@ -17,7 +20,7 @@ authRouter.post('/setup', asyncHandler(async (req: Request, res: Response) => {
   if (!identifier) {
     return res.status(400).json({ error: 'Saisissez une adresse email ou un numéro de téléphone valide.' });
   }
-  if (String(password).length < 6) {
+  if (password.length < 6) {
     return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 6 caractères.' });
   }
   if (!activationKey) {
@@ -38,12 +41,14 @@ authRouter.post('/replicate-bootstrap', asyncHandler(async (req: Request, res: R
   if (!tenant?._id || !tenant?.slug || !store?._id || !user?._id || !user?.email || !user?.passwordHash) {
     return res.status(400).json({ error: 'tenant, store et user sont requis.' });
   }
-  res.json(await bootstrapTenant({ tenant, store, user, licenseKey: license?.key, trial }));
+  res.json(await bootstrapTenant({ tenant, store, user, licenseKey: str(license?.key), trial, ip: req.ip ?? '' }));
 }));
 
 authRouter.post('/login', asyncHandler(async (req: Request, res: Response) => {
-  const { tenantId, email, password } = req.body ?? {};
-  if (!email || !password) {
+  const email = str(req.body?.email);
+  const password = str(req.body?.password);
+  const tenantId = oid(req.body?.tenantId);
+  if (!email || !password || (req.body?.tenantId != null && !tenantId)) {
     return res.status(400).json({ error: 'email et password sont requis.' });
   }
 
@@ -54,8 +59,10 @@ authRouter.post('/login', asyncHandler(async (req: Request, res: Response) => {
 
 /** Login caisse par email + mot de passe — alternative au PIN, réservée aux comptes cashier. */
 authRouter.post('/login-cashier', asyncHandler(async (req: Request, res: Response) => {
-  const { tenantId, email, password } = req.body ?? {};
-  if (!email || !password) {
+  const email = str(req.body?.email);
+  const password = str(req.body?.password);
+  const tenantId = oid(req.body?.tenantId);
+  if (!email || !password || (req.body?.tenantId != null && !tenantId)) {
     return res.status(400).json({ error: 'email et password sont requis.' });
   }
 
@@ -65,7 +72,9 @@ authRouter.post('/login-cashier', asyncHandler(async (req: Request, res: Respons
 }));
 
 authRouter.post('/login-pin', asyncHandler(async (req: Request, res: Response) => {
-  const { tenantId, storeId, pinCode } = req.body ?? {};
+  const tenantId = oid(req.body?.tenantId);
+  const storeId = oid(req.body?.storeId);
+  const pinCode = str(req.body?.pinCode);
   if (!tenantId || !storeId || !pinCode) {
     return res.status(400).json({ error: 'tenantId, storeId et pinCode sont requis.' });
   }

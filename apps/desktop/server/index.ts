@@ -65,6 +65,17 @@ export function createApi(ctx: Ctx) {
   const api = express.Router();
   api.use(express.json({ limit: '10mb' })); // logos / photos produit en data URL base64
   api.get('/health', (_req, res) => res.json({ status: 'ok' }));
+  // Anti brute-force local (PIN court) : 10 essais / 15 min par identifiant visé, tous clients confondus.
+  const attempts = new Map<string, { n: number; reset: number }>();
+  api.use(['/auth/login', '/auth/login-cashier', '/auth/login-pin'], (req, res, next) => {
+    if (req.method !== 'POST') return next();
+    const id = `${req.path}|${String(req.body?.email ?? req.body?.storeId ?? '').toLowerCase().slice(0, 100)}`;
+    const now = Date.now();
+    let a = attempts.get(id);
+    if (!a || a.reset <= now) attempts.set(id, (a = { n: 0, reset: now + 15 * 60_000 }));
+    if (++a.n > 10) return res.status(429).json({ error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
+    next();
+  });
   api.use('/auth', authRouter(ctx));
   api.use('/license', licenseRouter(ctx));
   // Licence expirée => 402 sur toute l'activité métier. /backup reste ouvert : les données du commerçant
@@ -110,6 +121,15 @@ export async function startLocalServer(opts: LocalServerOptions): Promise<{ clos
   // Le serveur n'écoute que sur 127.0.0.1, mais une page web quelconque ouverte sur la machine
   // pourrait quand même l'appeler : on refuse toute requête dont l'Origin n'est pas la nôtre.
   const allowed = [`http://127.0.0.1:${opts.port}`, `http://localhost:${opts.port}`, opts.devOrigin].filter(Boolean);
+  // Anti DNS-rebinding : une page distante re-résolue vers 127.0.0.1 enverrait un Host étranger (et pas d'Origin en GET).
+  const allowedHosts = new Set([`127.0.0.1:${opts.port}`, `localhost:${opts.port}`, ...(opts.devOrigin ? [new URL(opts.devOrigin).host] : [])]);
+  app.use((req, res, next) => {
+    if (!allowedHosts.has(String(req.headers.host ?? '').toLowerCase())) return res.status(403).json({ error: 'Hôte non autorisé.' });
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    next();
+  });
   app.use((req, res, next) => {
     const origin = req.headers.origin;
     if (origin && !allowed.includes(origin)) return res.status(403).json({ error: 'Origine non autorisée.' });

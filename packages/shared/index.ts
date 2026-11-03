@@ -94,6 +94,8 @@ export interface JwtClaims {
   role: UserRole;
   /** Uniquement pertinent pour role === 'cashier' — voir PERMISSION_VIEW_PURCHASE_PRICE. */
   canViewPurchasePrice?: boolean;
+  /** Version de session du compte (cloud) : incrémentée pour révoquer tous les jetons déjà émis. */
+  tv?: number;
 }
 
 /** Dérogation fine accordée à un caissier au-delà de son rôle : le droit de voir le prix d'achat des produits. */

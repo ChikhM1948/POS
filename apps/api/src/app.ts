@@ -16,11 +16,22 @@ import { customersRouter } from './modules/customers/customers.controller';
 import { requireAuth, requireRole } from './middleware/auth';
 import { requireLicense } from './middleware/license';
 import { licenseRouter } from './modules/license/license.controller';
+import { rateLimit } from './middleware/rateLimit';
 import { updatesRouter } from './modules/updates/updates.controller';
 
 /** Construit l'application Express (partagée entre le serveur Node classique et la fonction Vercel). */
 export function createApp(opts: { updates: boolean } = { updates: true }) {
   const app = express();
+  app.disable('x-powered-by');
+  app.set('trust proxy', 1); // derrière Vercel/Render : req.ip = vraie IP client (limiteurs de débit)
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+    next();
+  });
   app.use(cors({ origin: env.corsOrigin }));
   // Limite par défaut d'Express (100kb) trop basse : les logos/photos produit envoyés en data URL
   // base64 (voir ProductForm, TenantSettingsForm) la dépassent facilement et provoquaient un 500
@@ -29,6 +40,13 @@ export function createApp(opts: { updates: boolean } = { updates: true }) {
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
+  // Anti brute-force : connexions (par IP + identifiant visé), PIN plus strict, et routes de licence publiques.
+  const credKey = (req: express.Request) => String(req.body?.email ?? req.body?.storeId ?? '').toLowerCase().slice(0, 100);
+  app.use('/auth/login-pin', rateLimit({ windowMs: 15 * 60_000, max: 10, key: credKey, message: 'Trop de tentatives de PIN. Réessayez dans 15 minutes.' }));
+  app.use(['/auth/login', '/auth/login-cashier'], rateLimit({ windowMs: 15 * 60_000, max: 10, key: credKey, message: 'Trop de tentatives. Réessayez dans 15 minutes.' }));
+  app.use(['/auth/setup', '/auth/replicate-bootstrap'], rateLimit({ windowMs: 60 * 60_000, max: 20 }));
+  app.use('/license', rateLimit({ windowMs: 15 * 60_000, max: 60 }));
+  app.use('/updates/files', rateLimit({ windowMs: 15 * 60_000, max: 20 }));
   app.use('/auth', authRouter);
   app.use('/license', licenseRouter);
   // Sur Vercel, pas de disque persistant ni de corps > 4,5 Mo : les mises à jour desktop restent sur le serveur dédié.

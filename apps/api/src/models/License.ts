@@ -16,6 +16,8 @@ export interface ILicense extends Document {
   /** Commerce (cloud) ou poste (desktop) auquel la clé est liée au premier usage. */
   boundTo?: string;
   tenantId?: Types.ObjectId;
+  /** Empreinte (SHA-256) de l'IP ayant obtenu un essai sans clé — plafonne les essais par IP. */
+  originIp?: string;
   createdAt: Date;
 }
 
@@ -30,6 +32,7 @@ const LicenseSchema = new Schema<ILicense>(
     expiresAt: Date,
     boundTo: String,
     tenantId: Schema.Types.ObjectId,
+    originIp: { type: String, index: true },
   },
   { timestamps: true },
 );
