@@ -153,6 +153,7 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
   const [keys, setKeys] = useState<KeyRow[]>([]);
   const [filter, setFilter] = useState({ kind: '', state: '', q: '' });
   const [form, setForm] = useState({ kind: 'paid' as Kind, count: 1, durationDays: '', note: '' });
+  const [store, setStore] = useState<TenantOpt | null>(null);
   const [fresh, setFresh] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -173,9 +174,10 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
 
   async function generate(e: React.FormEvent) {
     e.preventDefault();
+    if (!store) { setError('Sélectionnez un magasin avant de générer la clé.'); return; }
     setBusy(true); setError(null);
     try {
-      const body = { kind: form.kind, count: form.count, note: form.note || undefined, durationDays: form.durationDays ? Number(form.durationDays) : undefined };
+      const body = { tenantId: store.id, kind: form.kind, count: form.count, note: form.note || undefined, durationDays: form.durationDays ? Number(form.durationDays) : undefined };
       const res = await call<{ keys: { key: string }[] }>(token, '/admin/generate', { method: 'POST', body: JSON.stringify(body) });
       setFresh(res.keys.map((k) => k.key));
       await load();
@@ -201,7 +203,8 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
     <div className="flex flex-col gap-6">
       <h1 className="text-xl font-semibold text-neutral-900">Clés d'activation</h1>
 
-      <form onSubmit={generate} className="grid gap-3 rounded-2xl border border-neutral-200 bg-white p-5 sm:grid-cols-5">
+      <form onSubmit={generate} className="grid gap-3 rounded-2xl border border-neutral-200 bg-white p-5 sm:grid-cols-6">
+        <StoreSelect token={token} value={store} onChange={setStore} className={input} />
         <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as Kind })} className={input}>
           <option value="trial">Essai (14 j)</option>
           <option value="paid">Payante (365 j)</option>
@@ -297,6 +300,39 @@ function TenantPicker({ token, current, disabled, onPick }: { token: string; cur
         {opts.length === 0 && <li className="px-3 py-2 text-neutral-400">Aucun résultat</li>}
         <li><button className="w-full border-t px-3 py-1.5 text-start text-neutral-500 hover:bg-neutral-50" onClick={() => setOpen(false)}>Annuler</button></li>
       </ul>
+    </div>
+  );
+}
+
+/** Sélecteur de magasin avec recherche par nom (obligatoire avant d'émettre une clé). */
+function StoreSelect({ token, value, onChange, className }: { token: string; value: TenantOpt | null; onChange: (t: TenantOpt | null) => void; className: string }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const [opts, setOpts] = useState<TenantOpt[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => {
+      call<{ tenants: TenantOpt[] }>(token, `/admin/tenants?q=${encodeURIComponent(q)}`).then((r) => setOpts(r.tenants)).catch(() => setOpts([]));
+    }, 200);
+    return () => clearTimeout(t);
+  }, [open, q, token]);
+
+  return (
+    <div className="relative">
+      {open ? (
+        <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)} placeholder="Nom du magasin…" className={`${className} w-full`} />
+      ) : (
+        <button type="button" onClick={() => setOpen(true)} className={`${className} w-full text-start ${value ? '' : 'text-neutral-400'}`}>{value ? value.name : 'Magasin (obligatoire)'}</button>
+      )}
+      {open && (
+        <ul className="absolute z-10 mt-1 max-h-56 w-full min-w-56 overflow-auto rounded-lg border border-neutral-200 bg-white shadow-lg">
+          {opts.map((t) => (
+            <li key={t.id}><button type="button" className="w-full px-3 py-1.5 text-start hover:bg-neutral-50" onClick={() => { onChange(t); setOpen(false); setQ(''); }}>{t.name} <span className="text-xs text-neutral-400">{t.slug}</span></button></li>
+          ))}
+          {opts.length === 0 && <li className="px-3 py-2 text-neutral-400">Aucun résultat</li>}
+        </ul>
+      )}
     </div>
   );
 }

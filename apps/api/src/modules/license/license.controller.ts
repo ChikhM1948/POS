@@ -1,3 +1,5 @@
+import { Types } from 'mongoose';
+import { Tenant } from '../../models/Tenant';
 import { Router, Request, Response } from 'express';
 import { timingSafeEqual } from 'node:crypto';
 import { asyncHandler } from '../../middleware/asyncHandler';
@@ -52,7 +54,9 @@ licenseRouter.get('/admin/keys', requirePlatformAdmin, asyncHandler(async (req: 
 
 licenseRouter.post('/admin/generate', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {
   const { count, kind, days, note } = parseGenerate(req.body);
-  res.status(201).json({ keys: await generateKeys(count, kind, days, note) });
+  const tenantId = String(req.body?.tenantId ?? '');
+  if (!Types.ObjectId.isValid(tenantId) || !(await Tenant.exists({ _id: tenantId }))) return res.status(400).json({ error: 'Sélectionnez le magasin auquel la clé est destinée.' });
+  res.status(201).json({ keys: await generateKeys(count, kind, days, note, tenantId) });
 }));
 
 licenseRouter.get('/admin/tenants', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {

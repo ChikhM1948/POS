@@ -22,9 +22,9 @@ export function newKey(): string {
   return `POS-${groups.join('-')}`;
 }
 
-export async function generateKeys(count: number, kind: LicenseKind, durationDays: number | undefined, note?: string) {
+export async function generateKeys(count: number, kind: LicenseKind, durationDays: number | undefined, note?: string, assignedTenantId?: string) {
   const days = durationDays ?? (kind === 'trial' ? TRIAL_DAYS : kind === 'lifetime' ? LIFETIME_DAYS : 365);
-  const docs = Array.from({ length: Math.min(Math.max(count, 1), 200) }, () => ({ key: newKey(), kind, durationDays: days, note }));
+  const docs = Array.from({ length: Math.min(Math.max(count, 1), 200) }, () => ({ key: newKey(), kind, durationDays: days, note, ...(assignedTenantId ? { assignedTenantId } : {}) }));
   await License.insertMany(docs);
   return docs.map((d) => ({ key: d.key, kind: d.kind, durationDays: d.durationDays }));
 }
