@@ -206,7 +206,7 @@ export class CloudSync {
     const url = String(input.url ?? '').trim().replace(/\/+$/, '');
     const email = normalizeIdentifier(input.email ?? '');
     const password = String(input.password ?? '');
-    if (!/^https?:\/\//.test(url) || !email || !password) throw new HttpError(400, 'Adresse du serveur, email et mot de passe sont requis.');
+    if (!/^https?:\/\//.test(url) || !email || !password) throw new HttpError(400, 'Adresse du serveur, email (ou téléphone) et mot de passe sont requis.');
 
     const user: any = this.db.prepare("SELECT * FROM users WHERE email = ? AND active = 1 AND role IN ('store_admin','super_admin')").get(email);
     if (!user || !(await bcrypt.compare(password, user.password_hash))) throw new HttpError(401, 'Identifiants administrateur invalides.');
