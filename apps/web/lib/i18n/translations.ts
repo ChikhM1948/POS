@@ -433,6 +433,12 @@ export interface TranslationDict {
     phonePlaceholder: string;
     primaryColor: string;
     secondaryColor: string;
+    palette: string;
+    palettePresets: string;
+    preview: string;
+    resetColors: string;
+    lowContrast: string;
+    invalidColor: string;
     syncEnabled: string;
     syncEnabledHint: string;
     saved: string;
@@ -1317,7 +1323,13 @@ const fr: TranslationDict = {
     phone: 'Téléphone',
     phonePlaceholder: '0555 12 34 56',
     primaryColor: 'Couleur principale',
-    secondaryColor: 'Couleur secondaire',
+    secondaryColor: 'Couleur secondaire (accent)',
+    palette: 'Palette de couleurs',
+    palettePresets: 'Palettes prêtes à l’emploi',
+    preview: 'Aperçu',
+    resetColors: 'Rétablir les couleurs par défaut',
+    lowContrast: 'Couleur trop claire : le texte blanc des boutons sera difficile à lire. Choisissez une teinte plus foncée.',
+    invalidColor: 'Couleur invalide (format #RRGGBB).',
     syncEnabled: 'Synchronisation en ligne',
     syncEnabledHint: 'Activée : les données sont accessibles depuis le web. Désactivée : le commerce reste local, aucune donnée ne quitte le poste.',
     saved: 'Paramètres enregistrés.',
@@ -2208,7 +2220,13 @@ const ar: TranslationDict = {
     phone: 'الهاتف',
     phonePlaceholder: '0555 12 34 56',
     primaryColor: 'اللون الأساسي',
-    secondaryColor: 'اللون الثانوي',
+    secondaryColor: 'اللون الثانوي (التمييز)',
+    palette: 'لوحة الألوان',
+    palettePresets: 'لوحات جاهزة',
+    preview: 'معاينة',
+    resetColors: 'استعادة الألوان الافتراضية',
+    lowContrast: 'اللون فاتح جدًا: سيصعب قراءة النص الأبيض على الأزرار. اختر درجة أغمق.',
+    invalidColor: 'لون غير صالح (الصيغة #RRGGBB).',
     syncEnabled: 'المزامنة عبر الإنترنت',
     syncEnabledHint: 'مفعّلة: يمكن الوصول إلى البيانات من الويب. معطّلة: يبقى المتجر محليًا، لا تغادر أي بيانات الجهاز.',
     saved: 'تم حفظ الإعدادات.',

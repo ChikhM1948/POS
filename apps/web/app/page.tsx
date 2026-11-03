@@ -17,6 +17,7 @@ import { effectivePriceCents, isPromoActive, lineTotalCents, parseScaleBarcode, 
 import { DiscountEditor } from '../components/pos/DiscountEditor';
 import { Receipt, type CompletedSale } from '../components/pos/Receipt';
 import { BrandMark } from '../components/BrandMark';
+import { useLoadBranding } from '../lib/branding';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useTranslation } from '../lib/i18n/LanguageContext';
 import { formatCurrency } from '../lib/format';
@@ -46,6 +47,8 @@ export default function PosPage() {
   const [showHeld, setShowHeld] = useState(false);
   const [weighTarget, setWeighTarget] = useState<{ product: LocalProduct; replace: boolean } | null>(null);
   const [showLegend, setShowLegend] = useState(true);
+
+  useLoadBranding(session?.token);
 
   const db = useMemo(() => (deviceId ? getOfflineDB(deviceId) : null), [deviceId]);
 

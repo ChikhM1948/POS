@@ -1,4 +1,20 @@
+'use client';
+
+import { useBranding } from '../lib/branding';
+
 export function BrandMark({ size = 36 }: { size?: number }) {
+  const { branding } = useBranding();
+  if (branding.logoUrl) {
+    return (
+      <div
+        className="flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white"
+        style={{ width: size, height: size }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={branding.logoUrl} alt="" className="h-full w-full object-contain" />
+      </div>
+    );
+  }
   return (
     <div
       className="flex shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white"

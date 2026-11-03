@@ -34,6 +34,10 @@ function tenantDTO(t: any): TenantSettingsDTO {
   };
 }
 
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+const LOGO_RE = /^data:image\/(png|jpeg|webp|gif);base64,[a-z0-9+/=]+$/i;
+const MAX_LOGO_CHARS = 1_500_000;
+
 export function tenantRouter({ db }: Ctx) {
   const router = Router();
   router.get('/', handler((req, res) => {
@@ -47,13 +51,21 @@ export function tenantRouter({ db }: Ctx) {
     if (!t) throw new HttpError(404, 'Commerce introuvable.');
     const branding = JSON.parse(t.branding);
     const legal = JSON.parse(t.legal);
+    for (const k of ['primaryColor', 'secondaryColor'] as const) {
+      const v = input.branding?.[k];
+      if (v !== undefined && !HEX_RE.test(v)) throw new HttpError(400, 'Couleur invalide (format #RRGGBB).');
+    }
+    const logo = input.branding?.logoUrl;
+    if (logo && (logo.length > MAX_LOGO_CHARS || !LOGO_RE.test(logo))) throw new HttpError(400, 'Logo invalide (PNG, JPEG, WebP ou GIF, 1 Mo maximum).');
     if (input.phone !== undefined) legal.phone = input.phone.trim();
     for (const k of ['address', 'rc', 'nif', 'nis', 'ai'] as const) {
       if (input.legal?.[k] !== undefined) legal[k] = input.legal[k]!.trim();
     }
     if (input.taxRegime === 'ifu' || input.taxRegime === 'real') legal.taxRegime = input.taxRegime;
     for (const k of ['logoUrl', 'primaryColor', 'secondaryColor'] as const) {
-      if (input.branding?.[k] !== undefined) branding[k] = input.branding[k];
+      if (input.branding?.[k] === undefined) continue;
+      if (input.branding[k] === '') delete branding[k]; // '' = logo retiré
+      else branding[k] = input.branding[k];
     }
     db.prepare('UPDATE tenants SET name = ?, branding = ?, legal = ?, sync_enabled = ?, updated_at = ? WHERE id = ?').run(
       input.name !== undefined ? input.name.trim() : t.name, JSON.stringify(branding), JSON.stringify(legal),

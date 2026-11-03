@@ -6,6 +6,7 @@ import { adminFetch } from '../../../lib/adminApi';
 import { TenantSettingsForm } from '../../../components/admin/TenantSettingsForm';
 import { CloudSyncPanel } from '../../../components/admin/CloudSyncPanel';
 import { BackupPanel } from '../../../components/admin/BackupPanel';
+import { useBranding } from '../../../lib/branding';
 import { LOCAL_MODE } from '../../../lib/localMode';
 import { useTranslation } from '../../../lib/i18n/LanguageContext';
 import type { TenantSettingsDTO, UpdateTenantSettingsInput } from '@pos-dz/shared';
@@ -13,6 +14,7 @@ import type { TenantSettingsDTO, UpdateTenantSettingsInput } from '@pos-dz/share
 export default function SettingsPage() {
   const { t } = useTranslation();
   const { session } = useAdminAuth();
+  const { setBranding } = useBranding();
   const [tenant, setTenant] = useState<TenantSettingsDTO | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +40,7 @@ export default function SettingsPage() {
       body: JSON.stringify(input),
     });
     setTenant(tenant);
+    setBranding(tenant.branding); // applique immédiatement logo + couleurs à toute l'interface
   }
 
   return (

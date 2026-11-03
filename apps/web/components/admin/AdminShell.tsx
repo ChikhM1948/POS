@@ -6,6 +6,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { adminFetch } from '../../lib/adminApi';
 import { useAdminAuth } from '../../lib/adminAuth';
 import { BrandMark } from '../BrandMark';
+import { useLoadBranding } from '../../lib/branding';
 import { LicenseGate } from '../LicenseGate';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
@@ -75,6 +76,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         alerts.expiringSoonCount > 0 && t('inventory.alertsExpiring', { n: alerts.expiringSoonCount }),
       ].filter(Boolean).join(' · ')
     : '';
+  useLoadBranding(session?.token);
   const visibleNav = NAV.filter((item) => !item.roles || (session && item.roles.includes(session.role)));
 
   return (

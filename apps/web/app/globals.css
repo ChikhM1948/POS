@@ -3,6 +3,21 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --brand-50: 246 247 249;
+    --brand-100: 236 238 242;
+    --brand-200: 217 221 228;
+    --brand-300: 180 187 200;
+    --brand-400: 139 149 167;
+    --brand-500: 75 86 106;
+    --brand-600: 31 41 55;
+    --brand-700: 17 24 39;
+    --brand-800: 11 18 32;
+    --brand-900: 7 12 24;
+    --brand-950: 4 7 15;
+    --accent: 75 86 106;
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -28,7 +43,7 @@
   textarea:focus-visible,
   button:focus-visible,
   a:focus-visible {
-    outline: 2px solid theme('colors.brand.500');
+    outline: 2px solid rgb(var(--accent));
     outline-offset: 1px;
   }
 }
