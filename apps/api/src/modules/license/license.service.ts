@@ -1,4 +1,5 @@
 import { randomBytes, createPrivateKey, sign } from 'node:crypto';
+import { Types } from 'mongoose';
 import { License } from '../../models/License';
 import { Tenant } from '../../models/Tenant';
 import { LicensePayment } from '../../models/LicensePayment';
@@ -65,10 +66,38 @@ export async function listKeys(filter: { kind?: string; state?: string; q?: stri
     query.$or = [{ key: rx }, { note: rx }];
   }
   const rows = await License.find(query).sort({ createdAt: -1 }).limit(Math.min(limit, 500)).lean();
+  const ids = [...new Set(rows.map((l) => l.assignedTenantId && String(l.assignedTenantId)).filter(Boolean))] as string[];
+  const names = new Map((await Tenant.find({ _id: { $in: ids } }).select('name').lean()).map((t) => [String(t._id), t.name]));
   return rows.map((l) => ({
     key: l.key, kind: l.kind, durationDays: l.durationDays, note: l.note, revoked: l.revoked,
     redeemedAt: l.redeemedAt, expiresAt: l.expiresAt, boundTo: l.boundTo, createdAt: l.createdAt,
+    assignedTenantId: l.assignedTenantId ? String(l.assignedTenantId) : undefined,
+    assignedTenantName: l.assignedTenantId ? names.get(String(l.assignedTenantId)) : undefined,
   }));
+}
+
+/** Recherche de commerces par nom / slug (liste déroulante du super admin). */
+export async function searchTenants(q?: string, limit = 20) {
+  const term = q?.trim();
+  const query = term ? { $or: ['name', 'slug'].map((f) => ({ [f]: new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') })) } : {};
+  const rows = await Tenant.find(query).select('name slug status').sort({ name: 1 }).limit(Math.min(limit, 50)).lean();
+  return rows.map((t) => ({ id: String(t._id), name: t.name, slug: t.slug, status: t.status }));
+}
+
+/** Réserve une clé à un commerce (ou lève la réservation avec tenantId = null). */
+export async function assignKeyToTenant(rawKey: string, tenantId: string | null) {
+  const key = String(rawKey ?? '').trim().toUpperCase();
+  if (tenantId) {
+    if (!Types.ObjectId.isValid(tenantId) || !(await Tenant.exists({ _id: tenantId }))) fail(404, 'Commerce introuvable.');
+    const lic = await License.findOne({ key });
+    if (!lic) fail(404, 'Clé introuvable.');
+    if (lic.revoked) fail(409, 'Clé révoquée.');
+    if (lic.tenantId && String(lic.tenantId) !== tenantId) fail(409, 'Cette clé est déjà utilisée par un autre commerce.');
+    lic.assignedTenantId = tenantId as any;
+    await lic.save();
+    return;
+  }
+  if (!(await License.findOneAndUpdate({ key }, { $unset: { assignedTenantId: 1 } }))) fail(404, 'Clé introuvable.');
 }
 
 /**
@@ -104,6 +133,10 @@ export async function redeemKey(rawKey: string, boundTo: string, tenantId?: stri
   const key = String(rawKey ?? '').trim().toUpperCase();
   if (!key) fail(400, "Clé d'activation requise.");
   const now = new Date();
+  if (tenantId) {
+    const reserved = await License.findOne({ key }).select('assignedTenantId').lean();
+    if (reserved?.assignedTenantId && String(reserved.assignedTenantId) !== String(tenantId)) fail(403, 'Cette clé est réservée à un autre commerce.');
+  }
   // Prise de possession atomique : une clé neuve est liée au premier appelant, même si deux requêtes arrivent
   // en même temps (un seul `findOneAndUpdate` peut matcher `redeemedAt` absent). Une clé = un seul commerce/poste.
   let lic = await License.findOneAndUpdate(

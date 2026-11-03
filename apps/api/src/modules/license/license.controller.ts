@@ -3,7 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import { requireAuth, requireRole, type AuthenticatedRequest } from '../../middleware/auth';
 import { env } from '../../config/env';
-import { activateForTenant, generateKeys, getTenantLicenseStatus, handleSofizpayCallback, listKeys, redeemKey, renewLease, resetKeyBinding, revokeKey, signLicense, startCheckout, verifyCheckout } from './license.service';
+import { activateForTenant, assignKeyToTenant, searchTenants, generateKeys, getTenantLicenseStatus, handleSofizpayCallback, listKeys, redeemKey, renewLease, resetKeyBinding, revokeKey, signLicense, startCheckout, verifyCheckout } from './license.service';
 import { loginPlatformAdmin, requirePlatformAdmin } from './platformAdmin.service';
 
 export const licenseRouter = Router();
@@ -53,6 +53,16 @@ licenseRouter.get('/admin/keys', requirePlatformAdmin, asyncHandler(async (req: 
 licenseRouter.post('/admin/generate', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {
   const { count, kind, days, note } = parseGenerate(req.body);
   res.status(201).json({ keys: await generateKeys(count, kind, days, note) });
+}));
+
+licenseRouter.get('/admin/tenants', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {
+  res.json({ tenants: await searchTenants(typeof req.query.q === 'string' ? req.query.q : undefined) });
+}));
+
+licenseRouter.post('/admin/assign', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { key, tenantId } = req.body ?? {};
+  await assignKeyToTenant(key, tenantId ? String(tenantId) : null);
+  res.json({ assigned: !!tenantId });
 }));
 
 licenseRouter.post('/admin/reset-binding', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {
