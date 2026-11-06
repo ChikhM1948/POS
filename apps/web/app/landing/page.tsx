@@ -212,6 +212,7 @@ export default function LandingPage() {
 
   const navLinks = [
     { href: '#features', label: c.nav.features },
+    { href: '#install', label: c.nav.install },
     { href: '#how', label: c.nav.how },
     { href: '#offline', label: c.nav.offline },
     { href: '#faq', label: c.nav.faq },
@@ -306,6 +307,49 @@ export default function LandingPage() {
             </div>
           </section>
         ))}
+
+        {/* Installation (démo pas à pas) */}
+        <section id="install" className="scroll-mt-16 border-b border-neutral-200 bg-neutral-50 py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <p className="text-sm font-semibold text-blue-700">{c.install.eyebrow}</p>
+            <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{c.install.title}</h2>
+            <p className="mt-4 max-w-2xl leading-relaxed text-neutral-600">{c.install.text}</p>
+            <ol className="mt-10 grid gap-8 md:grid-cols-2">
+              {c.install.steps.map((s, i) => (
+                <li key={s.title}>
+                  <figure className="overflow-hidden rounded-xl border border-neutral-300 bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/install/step-${i + 1}.svg`} alt={s.alt} width={960} height={600} loading="lazy" decoding="async" className="block h-auto w-full" />
+                  </figure>
+                  <div className="mt-4 flex items-start gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">{i + 1}</span>
+                    <div>
+                      <h3 className="text-lg font-semibold text-brand-800">{s.title}</h3>
+                      <p className="mt-1 text-sm leading-relaxed text-neutral-600">{s.text}</p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <div className="mt-10 grid gap-6 md:grid-cols-2">
+              <div className="rounded-lg border border-neutral-200 bg-white p-5">
+                <p className="font-semibold text-brand-800">{c.install.reqLabel}</p>
+                <ul className="mt-3 space-y-2 text-sm text-neutral-700">
+                  {c.install.req.map((r) => (
+                    <li key={r} className="flex items-start gap-2"><Tick />{r}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-lg border border-amber-300 bg-amber-50 p-5">
+                <p className="font-semibold text-amber-900">{c.install.warnTitle}</p>
+                <p className="mt-2 text-sm leading-relaxed text-amber-900/80">{c.install.warn}</p>
+              </div>
+            </div>
+            <div className="mt-8">
+              <a href={DOWNLOAD_URL} download className={btnPrimary}>{c.install.button} <Arrow /></a>
+            </div>
+          </div>
+        </section>
 
         {/* Fonctionnalités */}
         <section id="features" className="scroll-mt-16 border-b border-neutral-200 bg-neutral-50 py-16 sm:py-20">

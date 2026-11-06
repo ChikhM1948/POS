@@ -5,12 +5,13 @@ interface Showcase { eyebrow: string; title: string; text: string; points: strin
 
 export interface LandingDict {
   meta: { title: string };
-  nav: { features: string; how: string; offline: string; faq: string; open: string; backoffice: string; menu: string };
+  nav: { features: string; install: string; how: string; offline: string; faq: string; open: string; backoffice: string; menu: string };
   hero: { title: string; text: string; cta: string; ctaSecondary: string; download: string; note: string; alt: string };
   showcase: { pos: Showcase; stock: Showcase; reports: Showcase };
   features: { eyebrow: string; title: string; items: Item[] };
   whitelabel: { eyebrow: string; title: string; text: string; items: Item[] };
   pricing: { eyebrow: string; title: string; trialLabel: string; trialValue: string; trialText: string; lifetimeLabel: string; price: string; currency: string; once: string; lifetimeText: string; points: string[]; cta: string; whatsappMessage: string };
+  install: { eyebrow: string; title: string; text: string; steps: (Item & { alt: string })[]; reqLabel: string; req: string[]; warnTitle: string; warn: string; button: string };
   how: { eyebrow: string; title: string; steps: Item[] };
   offline: { eyebrow: string; title: string; text: string; points: string[] };
   faq: { eyebrow: string; title: string; items: { q: string; a: string }[] };
@@ -22,7 +23,7 @@ export interface LandingDict {
 
 const fr: LandingDict = {
   meta: { title: 'POS Algérie — Caisse & gestion de stock' },
-  nav: { features: 'Fonctionnalités', how: 'Comment ça marche', offline: 'Hors-ligne', faq: 'FAQ', open: 'Ouvrir la caisse', backoffice: 'Back-office', menu: 'Menu' },
+  nav: { features: 'Fonctionnalités', install: 'Installation', how: 'Comment ça marche', offline: 'Hors-ligne', faq: 'FAQ', open: 'Ouvrir la caisse', backoffice: 'Back-office', menu: 'Menu' },
   hero: {
     title: 'La caisse et le stock de votre commerce, dans un seul outil',
     text: 'Encaissez rapidement, suivez vos stocks et comprenez vos ventes. Fonctionne sans Internet, en français, en arabe et en anglais, avec le dinar et la TVA locale.',
@@ -77,6 +78,22 @@ const fr: LandingDict = {
     cta: 'Commencer l’essai de 14 jours',
     whatsappMessage: 'Bonjour, je souhaite démarrer l’essai gratuit de 14 jours de POS Algérie.',
   },
+  install: {
+    eyebrow: 'Installation',
+    title: 'Téléchargez et installez en 4 étapes',
+    text: 'Moins de cinq minutes, sans compétence technique. Aucune connexion Internet n’est nécessaire une fois le logiciel installé.',
+    steps: [
+      { title: 'Téléchargez l’archive', text: 'Cliquez sur « Télécharger pour Windows (.zip) » en haut de cette page. Le fichier POS-Algerie-Setup.zip arrive dans votre dossier Téléchargements.', alt: 'Navigateur avec le bouton de téléchargement Windows et le fichier .zip téléchargé' },
+      { title: 'Extrayez le fichier', text: 'Faites un clic droit sur le .zip, puis « Extraire tout… ». Vous obtenez l’installateur POS-Algerie-Setup.exe.', alt: 'Menu clic droit « Extraire tout » sur l’archive, qui donne un fichier .exe' },
+      { title: 'Lancez l’installation', text: 'Double-cliquez sur le .exe, choisissez le dossier d’installation (celui proposé convient) puis cliquez sur « Installer ».', alt: 'Assistant d’installation avec le choix du dossier et le bouton Installer' },
+      { title: 'Ouvrez et vendez', text: 'Un raccourci « POS Algérie » apparaît sur le Bureau. Ouvrez-le : votre essai gratuit de 14 jours démarre, sans carte bancaire.', alt: 'Raccourci sur le Bureau et application ouverte avec l’essai de 14 jours' },
+    ],
+    reqLabel: 'Configuration requise',
+    req: ['Windows 10 ou 11 (64 bits)', 'Environ 500 Mo d’espace disque', 'Internet seulement pour le téléchargement et la synchronisation'],
+    warnTitle: 'Windows affiche « Windows a protégé votre ordinateur » ?',
+    warn: 'C’est normal pour un logiciel récent. Cliquez sur « Informations complémentaires », puis sur « Exécuter quand même ».',
+    button: 'Télécharger pour Windows (.zip)',
+  },
   how: {
     eyebrow: 'Comment ça marche',
     title: 'Prêt en trois étapes',
@@ -125,7 +142,7 @@ const fr: LandingDict = {
 
 const ar: LandingDict = {
   meta: { title: 'POS الجزائر — نقطة بيع وإدارة مخزون' },
-  nav: { features: 'المميزات', how: 'كيف يعمل', offline: 'بدون إنترنت', faq: 'الأسئلة', open: 'فتح الصندوق', backoffice: 'لوحة الإدارة', menu: 'القائمة' },
+  nav: { features: 'المميزات', install: 'التثبيت', how: 'كيف يعمل', offline: 'بدون إنترنت', faq: 'الأسئلة', open: 'فتح الصندوق', backoffice: 'لوحة الإدارة', menu: 'القائمة' },
   hero: {
     title: 'صندوق محلك ومخزونه في أداة واحدة',
     text: 'حصّل بسرعة، تابع مخزونك وافهم مبيعاتك. يعمل بدون إنترنت، بالعربية والفرنسية والإنجليزية، وبالدينار والضريبة المحلية.',
@@ -180,6 +197,22 @@ const ar: LandingDict = {
     cta: 'ابدأ التجربة لمدة 14 يومًا',
     whatsappMessage: 'مرحبًا، أريد بدء التجربة المجانية لمدة 14 يومًا لنظام POS الجزائر.',
   },
+  install: {
+    eyebrow: 'التثبيت',
+    title: 'حمّل وثبّت في 4 خطوات',
+    text: 'أقل من خمس دقائق ودون أي خبرة تقنية. لا حاجة للإنترنت بعد تثبيت البرنامج.',
+    steps: [
+      { title: 'حمّل الأرشيف', text: 'اضغط على «تحميل نسخة Windows (.zip)» أعلى هذه الصفحة. سيصل الملف POS-Algerie-Setup.zip إلى مجلد التنزيلات.', alt: 'المتصفح مع زر تحميل Windows وملف zip الذي تم تنزيله' },
+      { title: 'فكّ الضغط', text: 'انقر بزر الفأرة الأيمن على ملف zip ثم «استخراج الكل…». ستحصل على مثبّت POS-Algerie-Setup.exe.', alt: 'قائمة النقر الأيمن «استخراج الكل» على الأرشيف للحصول على ملف exe' },
+      { title: 'ابدأ التثبيت', text: 'انقر مرتين على ملف exe، اختر مجلد التثبيت (المقترح مناسب) ثم اضغط «Install».', alt: 'معالج التثبيت مع اختيار المجلد وزر التثبيت' },
+      { title: 'افتح وابدأ البيع', text: 'سيظهر اختصار «POS Algérie» على سطح المكتب. افتحه: تبدأ تجربتك المجانية لمدة 14 يومًا دون بطاقة بنكية.', alt: 'اختصار على سطح المكتب والتطبيق مفتوح مع التجربة المجانية لمدة 14 يومًا' },
+    ],
+    reqLabel: 'المتطلبات',
+    req: ['Windows 10 أو 11 (64 بت)', 'حوالي 500 ميغابايت من المساحة', 'الإنترنت فقط للتحميل والمزامنة'],
+    warnTitle: 'ظهرت رسالة «Windows protected your PC»؟',
+    warn: 'هذا طبيعي للبرامج الحديثة. اضغط «More info» ثم «Run anyway».',
+    button: 'تحميل نسخة Windows (.zip)',
+  },
   how: {
     eyebrow: 'كيف يعمل',
     title: 'جاهز في ثلاث خطوات',
@@ -228,7 +261,7 @@ const ar: LandingDict = {
 
 const en: LandingDict = {
   meta: { title: 'POS Algeria — Point of sale & stock management' },
-  nav: { features: 'Features', how: 'How it works', offline: 'Offline', faq: 'FAQ', open: 'Open the POS', backoffice: 'Back-office', menu: 'Menu' },
+  nav: { features: 'Features', install: 'Install', how: 'How it works', offline: 'Offline', faq: 'FAQ', open: 'Open the POS', backoffice: 'Back-office', menu: 'Menu' },
   hero: {
     title: 'Your shop’s checkout and stock in one tool',
     text: 'Check out quickly, track your stock and understand your sales. Works without Internet, in French, Arabic and English, with the dinar and local VAT.',
@@ -282,6 +315,22 @@ const en: LandingDict = {
     points: ['All features included', 'No monthly subscription', 'Works offline'],
     cta: 'Start the 14-day trial',
     whatsappMessage: 'Hello, I would like to start the 14-day free trial of POS Algérie.',
+  },
+  install: {
+    eyebrow: 'Install',
+    title: 'Download and install in 4 steps',
+    text: 'Under five minutes, no technical skills needed. No Internet connection is required once the software is installed.',
+    steps: [
+      { title: 'Download the archive', text: 'Click “Download for Windows (.zip)” at the top of this page. POS-Algerie-Setup.zip lands in your Downloads folder.', alt: 'Browser showing the Windows download button and the downloaded .zip file' },
+      { title: 'Extract the file', text: 'Right-click the .zip, then “Extract all…”. You get the POS-Algerie-Setup.exe installer.', alt: 'Right-click “Extract all” menu on the archive, producing an .exe file' },
+      { title: 'Run the installer', text: 'Double-click the .exe, pick the install folder (the default is fine) and click “Install”.', alt: 'Setup wizard with the folder choice and the Install button' },
+      { title: 'Open it and sell', text: 'A “POS Algérie” shortcut appears on your Desktop. Open it: your free 14-day trial starts, no credit card needed.', alt: 'Desktop shortcut and the app open with the 14-day trial' },
+    ],
+    reqLabel: 'Requirements',
+    req: ['Windows 10 or 11 (64-bit)', 'About 500 MB of disk space', 'Internet only for the download and for syncing'],
+    warnTitle: 'Windows shows “Windows protected your PC”?',
+    warn: 'This is normal for new software. Click “More info”, then “Run anyway”.',
+    button: 'Download for Windows (.zip)',
   },
   how: {
     eyebrow: 'How it works',

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" font-family="Segoe UI, Arial, sans-serif">
+<rect width="960" height="600" fill="#eef2f7"/>
+<g><rect x="60" y="50" width="840" height="500" rx="10" fill="#fff" stroke="#cbd5e1" stroke-width="2"/><path d="M60 90V60a10 10 0 0 1 10-10H890a10 10 0 0 1 10 10V90Z" fill="#f1f5f9"/><circle cx="82" cy="70" r="6" fill="#cbd5e1"/><circle cx="102" cy="70" r="6" fill="#cbd5e1"/><circle cx="122" cy="70" r="6" fill="#cbd5e1"/><text x="144" y="75" font-size="14" fill="#475569">POS Algérie</text></g>
+<rect x="60" y="90" width="840" height="48" fill="#fff" stroke="#e2e8f0"/>
+<rect x="150" y="100" width="560" height="28" rx="14" fill="#f1f5f9"/><text x="172" y="120" font-size="14" fill="#64748b">pos-algerie.dz</text>
+<rect x="110" y="190" width="420" height="26" rx="6" fill="#1e3a8a"/><rect x="110" y="236" width="620" height="14" rx="5" fill="#cbd5e1"/><rect x="110" y="260" width="520" height="14" rx="5" fill="#cbd5e1"/>
+<rect x="110" y="320" width="150" height="46" rx="8" fill="#1d4ed8"/><rect x="276" y="320" width="150" height="46" rx="8" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="442" y="320" width="300" height="46" rx="8" fill="#fff" stroke="#2563eb" stroke-width="4"/>
+<path d="M470 336v14m-7-7 7 7 7-7M462 358h16" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="496" y="349" font-size="16" font-weight="600" fill="#1e293b">Windows (.zip)</text>
+<circle cx="742" cy="366" r="22" fill="#ef4444"/><text x="742" y="374" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+<path d="M642 366v50" stroke="#ef4444" stroke-width="3" stroke-dasharray="6 5"/>
+<rect x="560" y="440" width="320" height="86" rx="10" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+<rect x="578" y="458" width="38" height="46" rx="4" fill="#f59e0b"/><rect x="590" y="458" width="14" height="46" fill="#b45309"/>
+<text x="632" y="478" font-size="15" font-weight="600" fill="#1e293b">POS-Algerie-Setup.zip</text>
+<rect x="632" y="492" width="228" height="8" rx="4" fill="#e2e8f0"/><rect x="632" y="492" width="228" height="8" rx="4" fill="#22c55e"/>
+</svg>

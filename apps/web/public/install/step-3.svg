@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" font-family="Segoe UI, Arial, sans-serif">
+<rect width="960" height="600" fill="#eef2f7"/>
+<g><rect x="150" y="50" width="660" height="500" rx="10" fill="#fff" stroke="#cbd5e1" stroke-width="2"/><path d="M150 90V60a10 10 0 0 1 10-10H800a10 10 0 0 1 10 10V90Z" fill="#f1f5f9"/><circle cx="172" cy="70" r="6" fill="#cbd5e1"/><circle cx="192" cy="70" r="6" fill="#cbd5e1"/><circle cx="212" cy="70" r="6" fill="#cbd5e1"/><text x="234" y="75" font-size="14" fill="#475569">POS Algérie Setup</text></g>
+<rect x="150" y="90" width="660" height="80" fill="#1e3a8a"/><rect x="176" y="108" width="44" height="44" rx="10" fill="#fff"/><rect x="186" y="120" width="24" height="18" rx="3" fill="#1e3a8a"/>
+<rect x="240" y="116" width="240" height="14" rx="5" fill="#fff"/><rect x="240" y="140" width="170" height="10" rx="4" fill="#93c5fd"/>
+<text x="190" y="224" font-size="16" fill="#334155" font-weight="600">C:\Program Files\POS Algérie</text>
+<rect x="176" y="240" width="470" height="38" rx="6" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/><rect x="190" y="254" width="300" height="10" rx="4" fill="#cbd5e1"/>
+<rect x="662" y="240" width="120" height="38" rx="6" fill="#fff" stroke="#cbd5e1" stroke-width="2"/><text x="722" y="265" font-size="15" fill="#475569" text-anchor="middle">Browse…</text>
+<rect x="176" y="320" width="606" height="16" rx="8" fill="#e2e8f0"/><rect x="176" y="320" width="420" height="16" rx="8" fill="#22c55e"/>
+<rect x="176" y="352" width="300" height="10" rx="4" fill="#cbd5e1"/>
+<rect x="150" y="480" width="660" height="70" fill="#f1f5f9"/>
+<rect x="520" y="494" width="120" height="42" rx="6" fill="#fff" stroke="#cbd5e1" stroke-width="2"/><rect x="660" y="494" width="130" height="42" rx="6" fill="#1d4ed8" stroke="#ef4444" stroke-width="4"/>
+<text x="580" y="521" font-size="16" fill="#475569" text-anchor="middle">Back</text><text x="725" y="521" font-size="16" font-weight="600" fill="#fff" text-anchor="middle">Install</text>
+<circle cx="790" cy="500" r="22" fill="#ef4444"/><text x="790" y="508" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">3</text>
+</svg>
