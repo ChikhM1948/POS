@@ -8,6 +8,10 @@ const STORAGE_KEY = 'landing-language';
 /** Numéro WhatsApp au format international sans « + » (ex. 213555123456), fixé au build. */
 const WHATSAPP_NUMBER = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '').replace(/\D/g, '');
 
+// Archive du poste Windows publiée sur le serveur (npm run make:zip + publish:update) ; surchargeable.
+const DOWNLOAD_URL = process.env.NEXT_PUBLIC_DOWNLOAD_URL
+  ?? `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}/updates/POS-Algerie-Setup.zip`;
+
 function waLink(text: string) {
   return WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}` : undefined;
 }
@@ -273,6 +277,7 @@ export default function LandingPage() {
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link href="/" className={btnPrimary}>{c.hero.cta} <Arrow /></Link>
               <Link href="/admin" className={btnSecondary}>{c.hero.ctaSecondary}</Link>
+              <a href={DOWNLOAD_URL} download className={btnSecondary}>{c.hero.download}</a>
             </div>
             <p className="mt-4 text-sm text-neutral-500">{c.hero.note}</p>
             <div className="mt-12">

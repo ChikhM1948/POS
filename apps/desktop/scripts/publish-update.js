@@ -50,7 +50,10 @@ async function put(name) {
 }
 
 (async () => {
-  for (const name of [...names, 'latest.yml']) await put(name);
+  // Archive de téléchargement de la landing page (créée par `npm run make:zip`), si elle existe.
+  const portable = 'POS-Algerie-Setup.zip';
+  const extra = fs.existsSync(path.join(release, portable)) ? [portable] : [];
+  for (const name of [...names, ...extra, 'latest.yml']) await put(name);
   console.log('Version publiée.');
 })().catch((err) => {
   console.error(`\nÉchec : ${err.message}`);

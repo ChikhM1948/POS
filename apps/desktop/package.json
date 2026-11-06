@@ -7,6 +7,7 @@
     "dev": "node scripts/bundle.js && electron dist/main.js",
     "build": "tsc -p . --noEmit && node scripts/fetch-native.js && node scripts/bundle.js && node scripts/copy-renderer.js && electron-builder --win",
     "typecheck": "tsc -p . --noEmit",
+    "make:zip": "node scripts/make-zip.js",
     "publish:update": "node scripts/publish-update.js"
   },
   "dependencies": {

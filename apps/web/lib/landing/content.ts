@@ -6,7 +6,7 @@ interface Showcase { eyebrow: string; title: string; text: string; points: strin
 export interface LandingDict {
   meta: { title: string };
   nav: { features: string; how: string; offline: string; faq: string; open: string; backoffice: string; menu: string };
-  hero: { title: string; text: string; cta: string; ctaSecondary: string; note: string; alt: string };
+  hero: { title: string; text: string; cta: string; ctaSecondary: string; download: string; note: string; alt: string };
   showcase: { pos: Showcase; stock: Showcase; reports: Showcase };
   features: { eyebrow: string; title: string; items: Item[] };
   whitelabel: { eyebrow: string; title: string; text: string; items: Item[] };
@@ -28,6 +28,7 @@ const fr: LandingDict = {
     text: 'Encaissez rapidement, suivez vos stocks et comprenez vos ventes. Fonctionne sans Internet, en français, en arabe et en anglais, avec le dinar et la TVA locale.',
     cta: 'Ouvrir la caisse',
     ctaSecondary: 'Accéder au back-office',
+    download: 'Télécharger pour Windows (.zip)',
     note: 'Aucune connexion nécessaire pour vendre.',
     alt: 'Écran de caisse du logiciel',
   },
@@ -130,6 +131,7 @@ const ar: LandingDict = {
     text: 'حصّل بسرعة، تابع مخزونك وافهم مبيعاتك. يعمل بدون إنترنت، بالعربية والفرنسية والإنجليزية، وبالدينار والضريبة المحلية.',
     cta: 'فتح الصندوق',
     ctaSecondary: 'الدخول إلى لوحة الإدارة',
+    download: 'تحميل نسخة Windows (.zip)',
     note: 'لا حاجة للاتصال بالإنترنت للبيع.',
     alt: 'شاشة الصندوق في البرنامج',
   },
@@ -232,6 +234,7 @@ const en: LandingDict = {
     text: 'Check out quickly, track your stock and understand your sales. Works without Internet, in French, Arabic and English, with the dinar and local VAT.',
     cta: 'Open the POS',
     ctaSecondary: 'Go to the back-office',
+    download: 'Download for Windows (.zip)',
     note: 'No connection needed to sell.',
     alt: 'Checkout screen of the software',
   },
