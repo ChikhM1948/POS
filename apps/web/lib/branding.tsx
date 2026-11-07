@@ -5,6 +5,8 @@ import { adminFetch } from './adminApi';
 import type { TenantSettingsDTO } from '@pos-dz/shared';
 
 export interface Branding {
+  /** Nom commercial du commerce — imprimé en en-tête des tickets. */
+  name?: string;
   logoUrl?: string;
   primaryColor?: string;
   secondaryColor?: string;
@@ -112,7 +114,7 @@ export function useLoadBranding(token: string | undefined) {
     if (!token) return;
     let cancelled = false;
     adminFetch<{ tenant: TenantSettingsDTO }>(token, '/tenant')
-      .then(({ tenant }) => { if (!cancelled) setBranding(tenant.branding); })
+      .then(({ tenant }) => { if (!cancelled) setBranding({ ...tenant.branding, name: tenant.name }); })
       .catch(() => { /* hors-ligne : on garde la charte en cache */ });
     return () => { cancelled = true; };
   }, [token, setBranding]);

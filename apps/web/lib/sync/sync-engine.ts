@@ -50,11 +50,12 @@ export class SyncEngine {
 
   /** Idempotent et sûr à appeler en concurrence (ex. event 'online' + interval qui se chevauchent). */
   async syncNow(): Promise<void> {
+    // Verrou pris avant le health-check (asynchrone) : sinon deux déclencheurs simultanés
+    // (event 'online' + intervalle) passent tous deux le test et poussent en double.
     if (this.syncing) return;
-    if (!(await isApiReachable())) return;
-
     this.syncing = true;
     try {
+      if (!(await isApiReachable())) return;
       await this.pushPending();
       await this.pullChanges();
     } finally {

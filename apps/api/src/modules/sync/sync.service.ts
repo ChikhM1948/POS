@@ -66,9 +66,18 @@ export async function applyOperation(
         await recordCreditFromSale(tenantId, serverId, op.payload as any, op.createdAtLocal);
       }
     } else if (op.entityType === 'stockMovement') {
+      // Le poste référence la vente par son clientGeneratedId (UUID, seul identifiant connu hors-ligne) ;
+      // le modèle stocke l'_id Mongo de la vente. La vente est poussée avant ses mouvements (ordre de l'outbox).
+      const payload = { ...(op.payload as any) };
+      const src = payload.sourceDocument;
+      if (src?.id && !Types.ObjectId.isValid(src.id)) {
+        const sale = src.type === 'sale' ? await Sale.findOne({ tenantId: tenantObjectId, clientGeneratedId: src.id }).select('_id').lean() : null;
+        if (sale) payload.sourceDocument = { type: src.type, id: sale._id };
+        else delete payload.sourceDocument; // lien introuvable : on garde le mouvement de stock, sans la référence
+      }
       const doc = await StockMovement.findOneAndUpdate(
         { tenantId: tenantObjectId, clientGeneratedId: op.clientGeneratedId },
-        { $setOnInsert: { tenantId: tenantObjectId, ...(op.payload as object), createdAtLocal: op.createdAtLocal, clientGeneratedId: op.clientGeneratedId } },
+        { $setOnInsert: { tenantId: tenantObjectId, ...payload, createdAtLocal: op.createdAtLocal, clientGeneratedId: op.clientGeneratedId } },
         { upsert: true, new: true },
       );
       serverId = String(doc!._id);

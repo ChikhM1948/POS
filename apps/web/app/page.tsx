@@ -17,7 +17,8 @@ import { effectivePriceCents, isPromoActive, lineTotalCents, parseScaleBarcode, 
 import { DiscountEditor } from '../components/pos/DiscountEditor';
 import { Receipt, type CompletedSale } from '../components/pos/Receipt';
 import { BrandMark } from '../components/BrandMark';
-import { useLoadBranding } from '../lib/branding';
+import { clearSession, loadSession, saveSession } from '../lib/session';
+import { useBranding, useLoadBranding } from '../lib/branding';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useTranslation } from '../lib/i18n/LanguageContext';
 import { formatCurrency } from '../lib/format';
@@ -34,7 +35,19 @@ export default function PosPage() {
   const { t, locale } = useTranslation();
   const formatDZD = (cents: number) => formatCurrency(cents, locale);
   const deviceId = useDeviceId();
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSessionState] = useState<Session | null>(null);
+  const [sessionRestored, setSessionRestored] = useState(false);
+  const setSession = useCallback((s: Session | null) => {
+    setSessionState(s);
+    if (LOCAL_MODE) return; // le poste bureau garde sa connexion PIN à chaque prise de service
+    if (s) saveSession(s);
+    else clearSession();
+  }, []);
+  // Reprend la session du caissier après rechargement (utile hors-ligne, où la reconnexion est impossible).
+  useEffect(() => {
+    if (!LOCAL_MODE) setSessionState(loadSession());
+    setSessionRestored(true);
+  }, []);
   const [cart, setCart] = useState<SaleLine[]>([]);
   const [lastSale, setLastSale] = useState<CompletedSale | null>(null);
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORIES);
@@ -49,6 +62,11 @@ export default function PosPage() {
   const [showLegend, setShowLegend] = useState(true);
 
   useLoadBranding(session?.token);
+  const { branding } = useBranding();
+  const tenantBranding = useMemo(
+    () => ({ nameFr: branding.name || 'Épicerie Demo', logoUrl: branding.logoUrl, footer: t('pos.demoFooter') }),
+    [branding.name, branding.logoUrl, t],
+  );
 
   const db = useMemo(() => (deviceId ? getOfflineDB(deviceId) : null), [deviceId]);
 
@@ -274,6 +292,8 @@ export default function PosPage() {
     setCart([]);
     setQuery('');
   }
+
+  if (!sessionRestored) return null;
 
   if (!session) {
     return <LoginForm onLogin={setSession} />;
@@ -506,7 +526,7 @@ export default function PosPage() {
             registerId="R1"
             cashierId={session.cashierId}
             cartLines={cart}
-            tenantBranding={{ nameFr: 'Épicerie Demo', footer: t('pos.demoFooter') }}
+            tenantBranding={tenantBranding}
             onSaleComplete={handleSaleComplete}
           />
         </section>
@@ -573,7 +593,7 @@ export default function PosPage() {
       {lastSale && (
         <Receipt
           sale={lastSale}
-          tenantBranding={{ nameFr: 'Épicerie Demo', footer: t('pos.demoFooter') }}
+          tenantBranding={tenantBranding}
           onClose={() => {
             setLastSale(null);
             scanInputRef.current?.focus();

@@ -3,6 +3,7 @@ import { Inter, Tajawal } from 'next/font/google';
 import './globals.css';
 import { LanguageProvider } from '../lib/i18n/LanguageContext';
 import { BrandingProvider } from '../lib/branding';
+import { ServiceWorkerRegister } from '../components/ServiceWorkerRegister';
 
 // Polices auto-hébergées par Next (aucun appel réseau à l'exécution) — indispensable pour un POS
 // utilisé hors-ligne en boutique. Tajawal couvre l'arabe ; Inter reste la police latine par défaut.
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-neutral-50 font-sans text-neutral-900 antialiased" suppressHydrationWarning>
         <LanguageProvider>
           <BrandingProvider>{children}</BrandingProvider>
+          <ServiceWorkerRegister />
         </LanguageProvider>
       </body>
     </html>

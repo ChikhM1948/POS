@@ -15,6 +15,8 @@ const DOTS_PER_MM_203DPI = 8; // imprimantes thermiques standard 203 dpi ≈ 8 d
 export interface ReceiptRenderInput {
   widthMm: 80 | 58;
   header: string;
+  /** Logo du commerce (data URL) — dessiné en haut du ticket, en noir et blanc. */
+  logoUrl?: string;
   footer?: string;
   saleNumber: string;
   dateLabel: string;
@@ -34,8 +36,16 @@ export async function renderReceiptToImageData(input: ReceiptRenderInput): Promi
   const widthDots = input.widthMm * DOTS_PER_MM_203DPI; // 576 (80mm) ou 464 (58mm)
   const paddingX = 16;
   const lineHeight = 28;
+  const logo = input.logoUrl ? await loadLogo(input.logoUrl) : null;
+  let logoW = 0;
+  let logoH = 0;
+  if (logo) {
+    const scale = Math.min((widthDots * 0.6) / logo.width, 140 / logo.height);
+    logoW = Math.round(logo.width * scale);
+    logoH = Math.round(logo.height * scale);
+  }
   const estimatedHeight =
-    220 + input.lines.length * lineHeight * 2 + (input.footer ? 60 : 0);
+    (logo ? logoH + 16 : 0) + 220 + input.lines.length * lineHeight * 2 + (input.footer ? 60 : 0);
 
   // Le canvas ne va chercher une police @font-face qu'une fois `document.fonts` confirmé chargé —
   // sans ce await, le premier ticket imprimé après le chargement de la page retombe sur le
@@ -54,6 +64,11 @@ export async function renderReceiptToImageData(input: ReceiptRenderInput): Promi
   ctx.fillStyle = '#000000';
 
   let y = 30;
+
+  if (logo) {
+    ctx.drawImage(logo, Math.round((canvas.width - logoW) / 2), 10, logoW, logoH);
+    y = 10 + logoH + 36;
+  }
 
   // En arabe, le bord "début de ligne" (où s'alignent libellés et noms d'article) est à droite du
   // ticket ; le montant, toujours en chiffres latins, reste à l'opposé — voir formatCurrency.
@@ -126,6 +141,16 @@ export async function renderReceiptToImageData(input: ReceiptRenderInput): Promi
   }
 
   return ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+/** Charge le logo ; en cas d'échec le ticket s'imprime simplement sans logo. */
+function loadLogo(src: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img.width > 0 && img.height > 0 ? img : null);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
 }
 
 function drawRule(ctx: CanvasRenderingContext2D, width: number, y: number, paddingX: number) {

@@ -19,7 +19,7 @@ interface Props {
   registerId: string;
   cashierId: string;
   cartLines: SaleLine[];
-  tenantBranding: { nameFr: string; nameAr?: string; header?: string; footer?: string };
+  tenantBranding: { nameFr: string; nameAr?: string; logoUrl?: string; header?: string; footer?: string };
   onSaleComplete: (sale: CompletedSale) => void;
 }
 
@@ -58,6 +58,7 @@ export const SaleCheckout = forwardRef<SaleCheckoutHandle, Props>(function SaleC
           const imageData = await renderReceiptToImageData({
             widthMm: 80,
             header: tenantBranding.header ?? tenantBranding.nameFr,
+            logoUrl: tenantBranding.logoUrl,
             footer: tenantBranding.footer,
             saleNumber: sale.number,
             lines: cartLines,

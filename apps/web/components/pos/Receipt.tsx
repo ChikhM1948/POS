@@ -15,7 +15,7 @@ export interface CompletedSale {
 
 interface Props {
   sale: CompletedSale;
-  tenantBranding: { nameFr: string; nameAr?: string; header?: string; footer?: string };
+  tenantBranding: { nameFr: string; nameAr?: string; logoUrl?: string; header?: string; footer?: string };
   onClose: () => void;
 }
 
@@ -46,6 +46,8 @@ export function Receipt({ sale, tenantBranding, onClose }: Props) {
 
         <div className="receipt-print overflow-y-auto px-6 py-5 text-neutral-900">
           <div className="flex flex-col items-center gap-0.5 text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {tenantBranding.logoUrl && <img src={tenantBranding.logoUrl} alt="" className="mb-2 max-h-20 max-w-[60%] object-contain" />}
             <p className="text-base font-bold">{tenantBranding.header ?? tenantBranding.nameFr}</p>
             {tenantBranding.nameAr && (
               <p dir="rtl" className="text-sm text-neutral-600">

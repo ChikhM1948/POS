@@ -40,7 +40,7 @@ export default function SettingsPage() {
       body: JSON.stringify(input),
     });
     setTenant(tenant);
-    setBranding(tenant.branding); // applique immédiatement logo + couleurs à toute l'interface
+    setBranding({ ...tenant.branding, name: tenant.name }); // applique immédiatement logo + couleurs à toute l'interface
   }
 
   return (
