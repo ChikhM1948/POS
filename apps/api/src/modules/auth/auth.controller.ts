@@ -23,9 +23,6 @@ authRouter.post('/setup', asyncHandler(async (req: Request, res: Response) => {
   if (password.length < 6) {
     return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 6 caractères.' });
   }
-  if (!activationKey) {
-    return res.status(400).json({ error: "Clé d'activation requise pour créer un commerce." });
-  }
 
   if (await User.exists({ email: identifier.value }).setOptions({ skipTenantScope: true })) {
     return res.status(409).json({ error: identifier.kind === 'phone' ? 'Un compte existe déjà avec ce numéro de téléphone.' : 'Un compte existe déjà avec cet email.' });

@@ -6,7 +6,7 @@ import { Store } from '../../models/Store';
 import { env } from '../../config/env';
 import { Types } from 'mongoose';
 import { getTenantLicenseStatus, redeemKey, statusOf } from '../license/license.service';
-import { PERMISSION_VIEW_PURCHASE_PRICE, normalizeIdentifier, parseIdentifier } from '@pos-dz/shared';
+import { PERMISSION_VIEW_PURCHASE_PRICE, TRIAL_DAYS, normalizeIdentifier, parseIdentifier } from '@pos-dz/shared';
 import type { AuthResult, JwtClaims, SignupInput } from '@pos-dz/shared';
 
 function canViewPurchasePrice(user: { permissions?: string[] }): boolean {
@@ -62,12 +62,18 @@ export async function signupTenant(input: SignupInput): Promise<AuthResult> {
   // La clé est consommée AVANT la création du commerce (une clé invalide ne laisse rien derrière elle) ;
   // elle est liée à l'_id pré-généré du futur tenant.
   const tenantId = new Types.ObjectId();
-  const license = await redeemKey(input.activationKey ?? '', `tenant:${tenantId}`, String(tenantId));
+  // Clé facultative : sans clé, le commerce démarre un essai gratuit (TRIAL_DAYS) sans clé à saisir.
+  const license = input.activationKey?.trim()
+    ? await redeemKey(input.activationKey, `tenant:${tenantId}`, String(tenantId))
+    : (() => {
+        const now = new Date();
+        return { key: undefined, kind: 'trial' as const, activatedAt: now, expiresAt: new Date(now.getTime() + TRIAL_DAYS * 86_400_000) };
+      })();
 
   const tenant = await Tenant.create({
     _id: tenantId,
     license,
-    status: license.kind === 'paid' ? 'active' : 'trial',
+    status: license.kind === 'trial' ? 'trial' : 'active',
     name: businessName,
     slug,
     legal: phone ? { phone } : undefined,

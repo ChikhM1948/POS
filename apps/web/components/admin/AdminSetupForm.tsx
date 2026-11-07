@@ -143,7 +143,7 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
         </label>
 
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-          {locale === 'ar' ? 'مفتاح التفعيل' : "Clé d'activation"}{LOCAL_MODE && (locale === 'ar' ? ' (اختياري)' : ' (optionnelle)')}
+          {locale === 'ar' ? 'مفتاح التفعيل' : "Clé d'activation"}{locale === 'ar' ? ' (اختياري)' : ' (optionnelle)'}
           <input
             value={activationKey}
             onChange={(e) => setActivationKey(e.target.value)}
@@ -152,14 +152,15 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
             spellCheck={false}
             dir="ltr"
             className="rounded-lg border border-neutral-300 px-3 py-2 font-mono text-sm uppercase text-neutral-900 placeholder:text-neutral-400"
-            required={!LOCAL_MODE}
-          />
+                      />
           <span className="text-xs font-normal text-neutral-500">
             {LOCAL_MODE
               ? locale === 'ar'
                 ? 'اختياري: اتركه فارغًا لبدء فترة تجريبية مجانية (14 يومًا) دون إنترنت.'
                 : "Facultatif : laissez vide pour démarrer l'essai gratuit de 14 jours, sans Internet."
-              : locale === 'ar' ? 'تبدأ الفترة التجريبية (14 يومًا) عند التفعيل.' : "L'essai de 14 jours démarre à l'activation."}
+              : locale === 'ar'
+                ? 'اختياري: اتركه فارغًا لبدء فترة تجريبية مجانية (14 يومًا).'
+                : "Facultatif : laissez vide pour démarrer l'essai gratuit de 14 jours."}
           </span>
         </label>
 
