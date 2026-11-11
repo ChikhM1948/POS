@@ -2,6 +2,7 @@ import { createPublicKey, randomUUID, verify } from 'node:crypto';
 import { LICENSE_RENEW_BELOW_DAYS, TRIAL_DAYS, type LicenseStatusDTO, type SignedLicense } from '@pos-dz/shared';
 import type { Db } from './db';
 import { HttpError } from './util';
+import { netFetch } from './netfetch';
 
 /**
  * Licence du poste (essai 14 jours ou clé payante). Le serveur signe la licence (Ed25519) ; le poste
@@ -135,7 +136,7 @@ export class LicenseManager {
     if (!force && !due) return this.status();
     let res: Response;
     try {
-      res = await fetch(`${base}/license/renew`, {
+      res = await netFetch(`${base}/license/renew`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: l.key, deviceId: this.deviceId() }),
@@ -202,7 +203,7 @@ export class LicenseManager {
 
     let res: Response;
     try {
-      res = await fetch(`${base}/license/redeem`, {
+      res = await netFetch(`${base}/license/redeem`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, deviceId: this.deviceId() }),

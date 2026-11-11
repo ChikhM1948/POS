@@ -3,6 +3,7 @@ import { normalizeIdentifier } from './identifier';
 import { createHash } from 'node:crypto';
 import type { Db } from './db';
 import { HttpError, nowIso } from './util';
+import { netFetch } from './netfetch';
 
 /**
  * Réplication du poste (SQLite) vers la base en ligne (API cloud + MongoDB), avec le MÊME compte :
@@ -182,7 +183,7 @@ export class CloudSync {
   }
 
   private async http(path: string, body: unknown, token?: string): Promise<{ status: number; data: any }> {
-    const res = await fetch(`${this.getMeta('cloud_url')}${path}`, {
+    const res = await netFetch(`${this.getMeta('cloud_url')}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify(body),
@@ -209,7 +210,7 @@ export class CloudSync {
     let last: unknown;
     for (let i = 0; i < 3; i++) {
       try {
-        const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(45_000) });
+        const res = await netFetch(`${url}/health`, { signal: AbortSignal.timeout(45_000) });
         if (res.ok) return;
         last = new Error(`Serveur en ligne a répondu ${res.status} (adresse incorrecte ?).`);
       } catch (err) {
@@ -244,8 +245,8 @@ export class CloudSync {
       for (const k of ['cloud_url', 'cloud_email', 'cloud_password', 'cloud_token']) this.setMeta(k, undefined);
       if (err instanceof HttpError) throw err;
       const msg = err instanceof Error ? err.message : String(err);
-      const code = (err as { cause?: { code?: string } })?.cause?.code;
-      throw new HttpError(502, /fetch failed|timeout|aborted/i.test(msg)
+      const code = (err as { cause?: { code?: string } })?.cause?.code ?? /net::(ERR_[A-Z_]+)/.exec(msg)?.[1];
+      throw new HttpError(502, /fetch failed|timeout|aborted|net::/i.test(msg)
         ? `Impossible de joindre le serveur en ligne${code ? ` (${code})` : ''}. Vérifiez l'adresse (${url}) et la connexion Internet, puis réessayez : le serveur gratuit peut mettre une minute à se réveiller.`
         : msg);
     }
