@@ -54,9 +54,10 @@ licenseRouter.get('/admin/keys', requirePlatformAdmin, asyncHandler(async (req: 
 
 licenseRouter.post('/admin/generate', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {
   const { count, kind, days, note } = parseGenerate(req.body);
+  // Magasin optionnel : un poste hors-ligne n'a pas encore de commerce dans le cloud.
   const tenantId = String(req.body?.tenantId ?? '');
-  if (!Types.ObjectId.isValid(tenantId) || !(await Tenant.exists({ _id: tenantId }))) return res.status(400).json({ error: 'Sélectionnez le magasin auquel la clé est destinée.' });
-  res.status(201).json({ keys: await generateKeys(count, kind, days, note, tenantId) });
+  if (tenantId && (!Types.ObjectId.isValid(tenantId) || !(await Tenant.exists({ _id: tenantId })))) return res.status(400).json({ error: 'Magasin introuvable.' });
+  res.status(201).json({ keys: await generateKeys(count, kind, days, note, tenantId || undefined) });
 }));
 
 licenseRouter.get('/admin/tenants', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {

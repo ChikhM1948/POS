@@ -241,10 +241,9 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
 
   async function generate(e: React.FormEvent) {
     e.preventDefault();
-    if (!store) { setError('Sélectionnez un magasin avant de générer la clé.'); return; }
     setBusy(true); setError(null);
     try {
-      const body = { tenantId: store.id, kind: form.kind, count: form.count, note: form.note || undefined, durationDays: form.durationDays ? Number(form.durationDays) : undefined };
+      const body = { tenantId: store?.id, kind: form.kind, count: form.count, note: form.note || undefined, durationDays: form.durationDays ? Number(form.durationDays) : undefined };
       const res = await call<{ keys: { key: string }[] }>(token, '/admin/generate', { method: 'POST', body: JSON.stringify(body) });
       setFresh(res.keys.map((k) => k.key));
       await load();
@@ -426,7 +425,7 @@ function StoreSelect({ token, value, onChange, className }: { token: string; val
       {open ? (
         <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)} placeholder="Nom du magasin…" className={`${className} w-full`} />
       ) : (
-        <button type="button" onClick={() => setOpen(true)} className={`${className} w-full text-start ${value ? '' : 'text-neutral-400'}`}>{value ? value.name : 'Magasin (obligatoire)'}</button>
+        <button type="button" onClick={() => setOpen(true)} className={`${className} w-full text-start ${value ? '' : 'text-neutral-400'}`}>{value ? value.name : 'Magasin (optionnel — client hors-ligne : laisser vide)'}</button>
       )}
       {open && (
         <ul className="absolute z-10 mt-1 max-h-56 w-full min-w-56 overflow-auto sheet rounded-xl bg-white p-1 shadow-popover ring-1 ring-neutral-200">
