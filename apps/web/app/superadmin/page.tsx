@@ -223,7 +223,7 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
   const [fresh, setFresh] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [offline, setOffline] = useState({ key: '', deviceId: '', code: '' });
+  const [offline, setOffline] = useState({ key: '', deviceId: '', code: '', kind: 'paid' as Kind, durationDays: '', note: '', usedKey: '' });
 
   const fail = useCallback((err: unknown) => {
     if ((err as { status?: number }).status === 401) return onSignOut(); // session expirée
@@ -255,8 +255,9 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
     e.preventDefault();
     setBusy(true); setError(null);
     try {
-      const res = await call<{ code: string }>(token, '/admin/offline-code', { method: 'POST', body: JSON.stringify({ key: offline.key.trim(), deviceId: offline.deviceId.trim() }) });
-      setOffline((o) => ({ ...o, code: res.code }));
+      const body = { key: offline.key.trim() || undefined, deviceId: offline.deviceId.trim(), kind: offline.kind, durationDays: offline.durationDays ? Number(offline.durationDays) : undefined, note: offline.note || undefined };
+      const res = await call<{ code: string; key: string }>(token, '/admin/offline-code', { method: 'POST', body: JSON.stringify(body) });
+      setOffline((o) => ({ ...o, code: res.code, usedKey: res.key }));
       await load();
     } catch (err) { fail(err); } finally { setBusy(false); }
   }
@@ -297,15 +298,24 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
 
       <form onSubmit={offlineCode} className="flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-card">
         <h2 className="text-sm font-semibold text-neutral-900">Activation hors-ligne (client sans Internet)</h2>
-        <p className="text-xs text-neutral-500">Le client lit l'ID de son poste sur l'écran d'activation. Saisissez-le avec une clé : le code obtenu s'entre sur le poste, sans connexion. La clé est liée à ce poste.</p>
-        <div className="grid gap-3 sm:grid-cols-[1fr_1.5fr_auto]">
-          <input dir="ltr" value={offline.key} onChange={(e) => setOffline({ ...offline, key: e.target.value, code: '' })} placeholder="POS-XXXX-XXXX-XXXX-XXXX" className={`${input} font-mono`} required />
+        <p className="text-xs text-neutral-500">Pas besoin de magasin : le client lit l'ID de son poste sur l'écran d'activation. Collez-le ici. Laissez « clé » vide pour en créer une nouvelle (type et durée ci-dessous), ou collez une clé existante. Le code obtenu s'entre sur le poste, sans connexion, et la clé est liée à ce poste.</p>
+        <div className="grid gap-3 sm:grid-cols-[1.5fr_1fr_auto]">
           <input dir="ltr" value={offline.deviceId} onChange={(e) => setOffline({ ...offline, deviceId: e.target.value, code: '' })} placeholder="ID du poste" className={`${input} font-mono`} required />
+          <input dir="ltr" value={offline.key} onChange={(e) => setOffline({ ...offline, key: e.target.value, code: '' })} placeholder="Clé existante (optionnel)" className={`${input} font-mono`} />
           <button disabled={busy} className="rounded-md bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">{busy ? '…' : 'Générer le code'}</button>
         </div>
+        {!offline.key.trim() && (
+          <div className="grid gap-3 sm:grid-cols-3">
+            <select value={offline.kind} onChange={(e) => setOffline({ ...offline, kind: e.target.value as Kind, code: '' })} className={input}>
+              <option value="trial">Essai (14 j)</option><option value="paid">Payante (365 j)</option><option value="lifetime">À vie</option>
+            </select>
+            <input type="number" min={1} max={36500} value={offline.durationDays} onChange={(e) => setOffline({ ...offline, durationDays: e.target.value, code: '' })} placeholder="Durée en jours (défaut)" className={input} />
+            <input value={offline.note} maxLength={200} onChange={(e) => setOffline({ ...offline, note: e.target.value })} placeholder="Note (client…)" className={input} />
+          </div>
+        )}
         {offline.code && (
           <div className="rounded-xl bg-green-50 p-3 ring-1 ring-green-200">
-            <div className="mb-1 flex justify-between text-sm font-medium text-green-900"><span>Code d'activation</span><button type="button" onClick={() => void navigator.clipboard?.writeText(offline.code)} className="underline underline-offset-2">Copier</button></div>
+            <div className="mb-1 flex justify-between text-sm font-medium text-green-900"><span>Code d'activation{offline.usedKey ? ` · clé ${offline.usedKey}` : ''}</span><button type="button" onClick={() => void navigator.clipboard?.writeText(offline.code)} className="underline underline-offset-2">Copier</button></div>
             <code dir="ltr" className="block select-all break-all font-mono text-xs text-green-900">{offline.code}</code>
           </div>
         )}
