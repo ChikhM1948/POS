@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { LOCAL_MODE } from '../lib/localMode';
 import { useTranslation } from '../lib/i18n/LanguageContext';
 import { LICENSE_EXPIRED_EVENT, activateLicense, fetchDeviceId, fetchLicensePrice, fetchLicenseStatus, renewLicense, startLicenseCheckout, verifyLicenseCheckout, type LicensePrice } from '../lib/license';
 import type { LicenseStatusDTO } from '@pos-dz/shared';
@@ -91,7 +92,7 @@ export function LicenseGate({ token, canActivate }: Props) {
 
   useEffect(() => {
     void fetchLicensePrice().then(setPrice);
-    if (!token) void fetchDeviceId().then(setDeviceId);
+    if (LOCAL_MODE || !token) void fetchDeviceId().then(setDeviceId);
   }, []);
 
   // Retour de SofizPay (?license_order=...) : on confirme auprès du serveur puis on nettoie l'URL.
@@ -228,7 +229,15 @@ export function LicenseGate({ token, canActivate }: Props) {
               {!status.needsOnline && keyForm}
             </>
           ) : (
-            <p className="text-sm text-neutral-500">{tx.cashierBody}</p>
+            <>
+              <p className="text-sm text-neutral-500">{tx.cashierBody}</p>
+              {deviceId && (
+                <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+                  <p>{tx.deviceLabel}</p>
+                  <code dir="ltr" className="mt-0.5 block select-all break-all font-mono text-neutral-900">{deviceId}</code>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
