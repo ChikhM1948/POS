@@ -201,6 +201,24 @@ export class CloudSync {
     return data.token;
   }
 
+  /**
+   * Réveille le serveur (hébergement gratuit : mise en veille après inactivité, réveil ~1 min) avant de lier le poste.
+   * Lève l'erreur réseau d'origine (DNS, pas d'Internet, URL erronée…) si le serveur reste injoignable.
+   */
+  private async wake(url: string): Promise<void> {
+    let last: unknown;
+    for (let i = 0; i < 3; i++) {
+      try {
+        const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(45_000) });
+        if (res.ok) return;
+        last = new Error(`Serveur en ligne a répondu ${res.status} (adresse incorrecte ?).`);
+      } catch (err) {
+        last = err;
+      }
+    }
+    throw last;
+  }
+
   /** Relie ce poste au cloud avec le compte administrateur local (mêmes identifiants des deux côtés). */
   async connect(input: { url?: string; email?: string; password?: string }): Promise<CloudStatus> {
     const url = String(input.url ?? '').trim().replace(/\/+$/, '');
@@ -215,6 +233,7 @@ export class CloudSync {
     this.setMeta('cloud_email', email);
     this.setMeta('cloud_password', password);
     try {
+      await this.wake(url);
       const [, tenant] = TABLES[0].map(this.db.prepare('SELECT * FROM tenants WHERE id = ?').get(user.tenant_id));
       const [, store] = TABLES[1].map(this.db.prepare('SELECT * FROM stores WHERE tenant_id = ? AND is_main_store = 1').get(user.tenant_id) ?? this.db.prepare('SELECT * FROM stores WHERE tenant_id = ? LIMIT 1').get(user.tenant_id));
       const [, cloudUser] = TABLES[2].map(user);
@@ -225,7 +244,10 @@ export class CloudSync {
       for (const k of ['cloud_url', 'cloud_email', 'cloud_password', 'cloud_token']) this.setMeta(k, undefined);
       if (err instanceof HttpError) throw err;
       const msg = err instanceof Error ? err.message : String(err);
-      throw new HttpError(502, /fetch failed|timeout|aborted/i.test(msg) ? "Impossible de joindre le serveur en ligne. Vérifiez l'adresse et la connexion Internet." : msg);
+      const code = (err as { cause?: { code?: string } })?.cause?.code;
+      throw new HttpError(502, /fetch failed|timeout|aborted/i.test(msg)
+        ? `Impossible de joindre le serveur en ligne${code ? ` (${code})` : ''}. Vérifiez l'adresse (${url}) et la connexion Internet, puis réessayez : le serveur gratuit peut mettre une minute à se réveiller.`
+        : msg);
     }
     for (const spec of TABLES) this.setMeta(`cloud_cursor_${spec.table}`, undefined);
     this.setMeta('cloud_last_error', undefined);
