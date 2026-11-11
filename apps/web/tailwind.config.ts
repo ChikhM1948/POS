@@ -5,6 +5,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
+        display: ['var(--font-bricolage)', 'var(--font-tajawal)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         sans: [
           'var(--font-inter)',
           'var(--font-tajawal)',
@@ -34,7 +35,16 @@ const config: Config = {
           900: 'rgb(var(--brand-900) / <alpha-value>)',
           950: 'rgb(var(--brand-950) / <alpha-value>)',
         },
+        paper: { DEFAULT: 'var(--color-paper)', 2: 'var(--color-paper-2)', 3: 'var(--color-paper-3)' },
+        ink: { DEFAULT: 'var(--color-ink)', 2: 'var(--color-ink-2)' },
+        rule: 'var(--color-rule)',
+        surface: 'var(--color-surface)',
+        whatsapp: 'var(--color-whatsapp)',
+        muted: 'var(--color-muted)',
         accent: 'rgb(var(--accent) / <alpha-value>)',
+        signal: { 300: 'rgb(var(--signal-300) / <alpha-value>)', 400: 'rgb(var(--signal-400) / <alpha-value>)', 500: 'rgb(var(--signal-500) / <alpha-value>)', 600: 'rgb(var(--signal-600) / <alpha-value>)' },
+        // Neutres teintés bleu marine, déclarés dans tokens.css.
+        neutral: Object.fromEntries([50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((k) => [k, `rgb(var(--n-${k}) / <alpha-value>)`])),
       },
       boxShadow: {
         // Ombres en couches (contact + ambiante), comme les surfaces Apple : plus la surface est grande, plus elle est épaisse.

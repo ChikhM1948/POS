@@ -58,7 +58,7 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
       </div>
       <form
         onSubmit={handleSubmit}
-        className="flex w-full max-w-sm flex-col gap-4 sheet rounded-3xl bg-white/90 p-9 shadow-popover ring-1 ring-black/[0.04] backdrop-blur-xl"
+        className="flex w-full max-w-sm flex-col gap-4 sheet rounded-3xl bg-white p-9 shadow-popover ring-1 ring-neutral-200"
       >
         <div className="mb-1 flex flex-col items-center gap-3 text-center">
           <BrandMark size={60} />

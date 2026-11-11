@@ -123,18 +123,18 @@ export const SaleCheckout = forwardRef<SaleCheckoutHandle, Props>(function SaleC
   }));
 
   return (
-    <div className="flex flex-col gap-3 border-t border-neutral-200 bg-neutral-50 p-4">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-baseline justify-between text-sm text-neutral-500">
+    <div className="flex flex-col gap-3 border-t border-neutral-200 bg-neutral-100 p-4">
+      <div className="panel-dark flex flex-col gap-1 rounded-2xl p-4">
+        <div className="flex items-baseline justify-between text-sm text-white/70">
           <span>{t('common.subtotal')}</span>
           <span>{formatDZD(totals.subtotalCents)}</span>
         </div>
-        <div className="flex items-baseline justify-between text-sm text-neutral-500">
+        <div className="flex items-baseline justify-between text-sm text-white/70">
           <span>{t('common.tax')}</span>
           <span>{formatDZD(totals.taxTotalCents)}</span>
         </div>
-        <div className="flex items-baseline justify-between pt-2 text-3xl font-semibold tracking-tight text-neutral-900">
-          <span className="text-base font-medium text-neutral-500">{t('common.total')}</span>
+        <div className="flex items-baseline justify-between pt-2 font-display text-4xl font-bold tracking-tight text-white">
+          <span className="font-sans text-base font-medium text-signal-300">{t('common.total')}</span>
           <span className="tabular-nums">{formatDZD(totals.grandTotalCents)}</span>
         </div>
       </div>
@@ -149,28 +149,28 @@ export const SaleCheckout = forwardRef<SaleCheckoutHandle, Props>(function SaleC
         <button
           disabled={isBusy || cartLines.length === 0}
           onClick={() => setShowCashModal(true)}
-          className="flex items-center justify-center gap-2 rounded-xl bg-brand-600 py-4 text-base font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-30"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-signal-500 py-4 text-lg font-bold text-ink transition hover:bg-signal-400 disabled:cursor-not-allowed disabled:opacity-30"
         >
-          <IconBanknote className="h-5 w-5" />
+          <IconBanknote className="h-6 w-6" />
           {t('saleCheckout.cash')}
-          <kbd className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold">F2</kbd>
+          <kbd className="rounded bg-ink/15 px-1.5 py-0.5 text-xs font-semibold">F2</kbd>
         </button>
         <div className="grid grid-cols-2 gap-2">
         <button
           disabled={isBusy || cartLines.length === 0}
           onClick={handleCib}
-          className="flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white py-3 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <IconCreditCard className="h-4 w-4" />
+          <IconCreditCard className="h-5 w-5" />
           {processingMethod === 'cib' ? t('saleCheckout.processing') : 'CIB / Edahabia'}
           <kbd className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-500">F3</kbd>
         </button>
         <button
           disabled={isBusy || cartLines.length === 0}
           onClick={() => setShowCreditModal(true)}
-          className="flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white py-3 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <IconWallet className="h-4 w-4" />
+          <IconWallet className="h-5 w-5" />
           {t('saleCheckout.credit')}
           <kbd className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-500">F4</kbd>
         </button>

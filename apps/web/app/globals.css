@@ -1,23 +1,17 @@
+/* Hallmark · shape: kept (full redesign) · genre: playful · theme: brand (navy + orange from logo-wordmark.webp) · redesign: full
+ * paper: oklch(97.6% 0.01 245) · accent: oklch(36% 0.1 250) · display: Bricolage Grotesque + Tajawal · body: Inter + Tajawal · hero: Drenched · nav: kept · footer: kept · signature: the real POS shown big
+ * axes: light/geometric-sans/cool · posture: Drenched · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P3 H4 E3 S4 R3 V3 · weakest: P, the system stays a tinted-navy retail tool; spent colour on one orange signal instead of gradients */
+/* Hallmark · dismissed 74 · neutral-* est remappé sur les neutres teintés bleu marine de tokens.css; rouge/ambre sont des états (erreur, alerte), pas une palette */
+/* Hallmark · dismissed 59 · la page garde les 14 sections du contenu d'origine (redesign: le contenu reste) */
+/* Hallmark · answered F20 · trois actions de hero de même poids, deux sur la première ligne selon la largeur */
+@import "./tokens.css";
+@import "./base.css" layer(base);
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --brand-50: 246 247 249;
-    --brand-100: 236 238 242;
-    --brand-200: 217 221 228;
-    --brand-300: 180 187 200;
-    --brand-400: 139 149 167;
-    --brand-500: 75 86 106;
-    --brand-600: 31 41 55;
-    --brand-700: 17 24 39;
-    --brand-800: 11 18 32;
-    --brand-900: 7 12 24;
-    --brand-950: 4 7 15;
-    --accent: 75 86 106;
-  }
-
   html {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -26,7 +20,7 @@
   }
 
   /* Typographie : suivi négatif sur les grands titres, quasi nul sur le corps. */
-  h1, h2 { letter-spacing: -0.022em; }
+  h1, h2 { font-family: var(--font-display); letter-spacing: var(--tracking-display); text-wrap: balance; }
   h3 { letter-spacing: -0.012em; }
 
   /* Réponse instantanée : le retour visuel se produit à l'appui, pas au relâchement. */
@@ -42,7 +36,7 @@
     transform: scale(0.97);
     transition-duration: 80ms;
   }
-  button:disabled { cursor: not-allowed; }
+  button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: not-allowed; opacity: 0.5; }
 
   /* Champs : fond doux, anneau de focus net façon macOS. */
   input:not([type='checkbox']):not([type='radio']),
@@ -54,7 +48,7 @@
   select:focus,
   textarea:focus {
     outline: none;
-    box-shadow: 0 0 0 4px rgb(var(--accent) / 0.16);
+    box-shadow: 0 0 0 4px rgb(var(--brand-400) / 0.28);
   }
 
   body {
@@ -79,55 +73,69 @@
   }
 }
 
-/* ── Matériaux : surfaces translucides (le contenu défile dessous) ───────────────────────── */
+/* ── Surfaces : pleines, l'élévation se lit par la clarté et un filet, jamais par le flou ── */
 @layer components {
   .glass {
-    background-color: rgb(255 255 255 / 0.72);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    backdrop-filter: blur(24px) saturate(180%);
-    box-shadow: inset 0 -0.5px 0 rgb(0 0 0 / 0.1);
+    background-color: rgb(var(--n-50));
+    box-shadow: inset 0 -1px 0 rgb(var(--n-200));
   }
   .glass-side {
-    background-color: rgb(250 250 252 / 0.78);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    backdrop-filter: blur(28px) saturate(180%);
+    background-color: rgb(var(--n-100));
   }
-  /* Voile + flou léger : la tâche modale passe devant, l'arrière-plan recule. */
   .scrim {
-    background-color: rgb(10 12 18 / 0.38);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
-    animation: scrim-in 240ms ease-out both;
+    background-color: var(--color-scrim);
+    animation: scrim-in var(--dur-short) var(--ease-out) both;
   }
   .sheet {
-    animation: sheet-in 360ms cubic-bezier(0.32, 0.72, 0, 1) both;
+    animation: sheet-in var(--dur-long) var(--ease-out) both;
     transform-origin: 50% 60%;
   }
-  /* Fond des écrans de connexion : halo doux de la couleur de marque sur gris Apple. */
   .auth-bg {
-    background-color: #f5f5f7;
+    background-color: rgb(var(--n-100));
     background-image:
-      radial-gradient(60rem 40rem at 50% -10%, rgb(var(--brand-300) / 0.35), transparent 70%),
-      radial-gradient(40rem 30rem at 100% 100%, rgb(var(--brand-200) / 0.5), transparent 70%);
+      radial-gradient(48rem 30rem at 12% 0%, rgb(var(--brand-200) / 0.7), transparent 70%),
+      radial-gradient(36rem 24rem at 100% 100%, rgb(var(--signal-300) / 0.35), transparent 70%);
   }
   .surface {
-    background-color: #fff;
-    border-radius: 0.875rem;
-    box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 8px -2px rgb(0 0 0 / 0.05);
+    background-color: var(--color-surface);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
   }
+  .panel-dark {
+    color: var(--color-accent-ink);
+    background-color: rgb(var(--brand-900));
+    background-image: linear-gradient(165deg, rgb(var(--brand-700)), rgb(var(--brand-950)));
+    box-shadow: var(--shadow-card);
+  }
+  .panel-dark :focus-visible { outline-color: rgb(var(--signal-300)); }
+  .bg-brand-gradient { background-color: rgb(var(--brand-600)); }
+  .bg-signal { background-color: rgb(var(--signal-500)); color: var(--color-signal-ink); }
 }
 
-@media (prefers-reduced-transparency: reduce) {
-  .glass, .glass-side { background-color: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .scrim { -webkit-backdrop-filter: none; backdrop-filter: none; background-color: rgb(10 12 18 / 0.55); }
-}
-@media (prefers-contrast: more) {
-  .glass, .glass-side { background-color: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: inset 0 -1px 0 #000; }
-}
 @media (prefers-reduced-motion: reduce) {
-  .sheet, .scrim { animation: scrim-in 160ms ease-out both; }
+  .sheet, .scrim { animation: scrim-in 0.01ms both; }
   button:not(:disabled):active, [role='button']:active { transform: none; }
   *, *::before, *::after { scroll-behavior: auto !important; }
+}
+
+/* Cibles tactiles : 44 px minimum pour les champs et les actions principales, partout dans l'app. */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+select {
+  min-height: 2.75rem;
+  font-size: 1rem;
+}
+button[class*='bg-brand-600'],
+button[class*='bg-brand-700'],
+button[class*='bg-emerald-600'],
+a[class*='bg-brand-600']:not([class*='rounded-full']) {
+  min-height: 2.75rem;
+  padding-inline: 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+button[class*='border-neutral-300']:not([class*='h-']):not([class*='w-']) {
+  min-height: 2.75rem;
+  font-size: 1rem;
 }
 
 @media print {
@@ -150,7 +158,7 @@
     position: absolute !important;
     inset: 0 auto auto 0 !important;
     overflow: visible !important;
-    background: #fff !important;
+    background: var(--color-surface) !important;
   }
   .doc-print {
     box-shadow: none !important;
@@ -204,7 +212,7 @@
 .label-roll {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 .label-sheet {
   display: grid;
@@ -222,9 +230,9 @@
   gap: 1mm;
   padding: 1.5mm 2mm;
   overflow: hidden;
-  background: #fff;
-  color: #000;
-  border: 1px dashed #d4d4d4;
+  background: var(--color-surface);
+  color: rgb(var(--n-950));
+  border: 1px dashed rgb(var(--n-300));
   text-align: center;
   break-inside: avoid;
 }
@@ -242,7 +250,6 @@
 .label-code {
   font-family: ui-monospace, monospace;
   font-size: 7pt;
-  letter-spacing: 0.08em;
 }
 .label-price {
   font-size: 11pt;
@@ -258,7 +265,7 @@
     background: transparent;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: rgb(0 0 0 / 0.18);
+    background-color: rgb(var(--n-950) / 0.22);
     border-radius: 9999px;
   }
 }

@@ -125,8 +125,8 @@ export function DocumentViewer({ doc: initial, onClose, onChanged }: Props) {
         <details className="text-xs text-neutral-500">
           <summary className="cursor-pointer font-medium text-neutral-600">{t('documents.einvoiceTitle')} · {t(`documents.einvoiceStatus.${doc.einvoice.status}`)}</summary>
           <p className="mt-1">{t('documents.einvoiceNote')}</p>
-          <p className="mt-1 break-all font-mono">UUID {doc.einvoice.uuid}</p>
-          <p className="mt-1 break-all font-mono">{t('documents.integrityTitle')} : {doc.integrity.hash}</p>
+          <p className="mt-1 break-all tabular-nums">UUID {doc.einvoice.uuid}</p>
+          <p className="mt-1 break-all tabular-nums">{t('documents.integrityTitle')} : {doc.integrity.hash}</p>
         </details>
       </div>
       <DocumentSheet doc={doc} logoUrl={tenant?.branding.logoUrl} phone={tenant?.phone} />

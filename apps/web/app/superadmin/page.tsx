@@ -24,7 +24,7 @@ async function call<T>(token: string | null, path: string, init: RequestInit = {
   return body as T;
 }
 
-const fmt = (d?: string) => (d ? new Date(d).toLocaleDateString('fr-DZ') : '—');
+const fmt = (d?: string) => (d ? new Date(d).toLocaleDateString('fr-DZ') : '-');
 const stateOf = (k: KeyRow) => (k.revoked ? 'révoquée' : k.redeemedAt ? 'utilisée' : 'disponible');
 
 /**
@@ -66,14 +66,14 @@ function Login({ onToken }: { onToken: (t: string) => void }) {
   }
 
   return (
-    <form onSubmit={submit} className="sheet mx-auto mt-24 flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-white/90 p-9 shadow-popover ring-1 ring-black/[0.04] backdrop-blur-xl">
+    <form onSubmit={submit} className="sheet mx-auto mt-24 flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-white p-9 shadow-popover ring-1 ring-neutral-200">
       <h1 className="text-2xl font-semibold tracking-[-0.025em] text-neutral-900">Super administrateur</h1>
       <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="username" placeholder="Email" required
         className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500/40 focus:bg-white" />
       <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="current-password" placeholder="Mot de passe" required
         className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500/40 focus:bg-white" />
       {error && <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700" role="alert">{error}</p>}
-      <button disabled={busy} className="rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:opacity-50">
+      <button disabled={busy} className="rounded-md bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">
         {busy ? 'Connexion…' : 'Se connecter'}
       </button>
     </form>
@@ -84,11 +84,11 @@ function Console({ token, onSignOut }: { token: string; onSignOut: () => void })
   const [tab, setTab] = useState<'keys' | 'stores'>('keys');
   return (
     <div className="flex flex-col gap-6">
-      <nav className="glass sticky top-3 z-20 flex items-center gap-1 rounded-2xl p-1.5 text-sm shadow-card ring-1 ring-black/[0.05]">
+      <nav className="sticky top-0 z-20 flex items-center gap-1 border-b border-neutral-200 bg-neutral-100 text-sm">
         {([['keys', "Clés d'activation"], ['stores', 'Magasins']] as const).map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} className={`rounded-xl px-4 py-2 font-medium transition ${tab === id ? 'bg-white text-neutral-900 shadow-card' : 'text-neutral-500 hover:bg-black/[0.04] hover:text-neutral-900'}`}>{label}</button>
+          <button key={id} onClick={() => setTab(id)} className={`-mb-px border-b-2 px-4 py-2.5 font-semibold transition ${tab === id ? 'border-brand-600 text-neutral-900' : 'border-transparent text-neutral-500 hover:text-neutral-900'}`}>{label}</button>
         ))}
-        <button onClick={onSignOut} className="ms-auto rounded-xl px-4 py-2 font-medium text-neutral-500 transition hover:bg-black/[0.05] hover:text-neutral-900">Déconnexion</button>
+        <button onClick={onSignOut} className="ms-auto px-4 py-2.5 font-semibold text-neutral-500 transition hover:text-neutral-900">Déconnexion</button>
       </nav>
       {tab === 'keys' ? <KeysPanel token={token} onSignOut={onSignOut} /> : <StoresPanel token={token} onSignOut={onSignOut} />}
     </div>
@@ -123,7 +123,7 @@ function StoresPanel({ token, onSignOut }: { token: string; onSignOut: () => voi
       {error && <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700" role="alert">{error}</p>}
       <div className="overflow-x-auto rounded-2xl bg-white shadow-card">
         <table className="w-full text-start text-sm">
-          <thead className="bg-black/[0.03] text-[11px] uppercase tracking-wider text-neutral-500">
+          <thead className="bg-black/[0.03] text-xs text-neutral-600">
             <tr>{['Magasin', 'Statut', 'Licence', 'Expire', 'Clés', 'Créé le'].map((h) => <th key={h} className="px-4 py-3 text-start font-semibold">{h}</th>)}</tr>
           </thead>
           <tbody>
@@ -131,10 +131,10 @@ function StoresPanel({ token, onSignOut }: { token: string; onSignOut: () => voi
               <tr key={s.id} className="border-t border-black/[0.06] transition hover:bg-black/[0.02] align-top">
                 <td className="px-4 py-3"><div className="font-medium text-neutral-900">{s.name}</div><div className="text-xs text-neutral-400">{s.slug}</div></td>
                 <td className="px-4 py-3">{s.status}</td>
-                <td className="px-4 py-3">{s.license ? kindLabel(s.license.kind) : '—'}</td>
+                <td className="px-4 py-3">{s.license ? kindLabel(s.license.kind) : '-'}</td>
                 <td className="px-4 py-3">{fmt(s.license?.expiresAt)}</td>
                 <td dir="ltr" className="px-4 py-3 font-mono text-xs">
-                  {s.keys.length === 0 ? <span className="text-neutral-400">—</span> : s.keys.map((k) => (
+                  {s.keys.length === 0 ? <span className="text-neutral-400">-</span> : s.keys.map((k) => (
                     <div key={k.key} className={k.revoked ? 'text-neutral-400 line-through' : ''}>{k.key} <span className="font-sans text-neutral-500">· {k.used ? 'utilisée' : 'réservée'}</span></div>
                   ))}
                 </td>
@@ -211,9 +211,9 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
           <option value="lifetime">À vie</option>
         </select>
         <input type="number" min={1} max={200} value={form.count} onChange={(e) => setForm({ ...form, count: Number(e.target.value) })} className={input} aria-label="Nombre de clés" />
-        <input type="number" min={1} max={36500} value={form.durationDays} onChange={(e) => setForm({ ...form, durationDays: e.target.value })} placeholder="Durée (jours) — défaut" className={input} />
+        <input type="number" min={1} max={36500} value={form.durationDays} onChange={(e) => setForm({ ...form, durationDays: e.target.value })} placeholder="Durée en jours (défaut)" className={input} />
         <input value={form.note} maxLength={200} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Note (client…)" className={input} />
-        <button disabled={busy} className="rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:opacity-50">{busy ? '…' : 'Générer'}</button>
+        <button disabled={busy} className="rounded-md bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">{busy ? '…' : 'Générer'}</button>
       </form>
 
       {error && <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700" role="alert">{error}</p>}
@@ -240,7 +240,7 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
 
       <div className="overflow-x-auto rounded-2xl bg-white shadow-card">
         <table className="w-full text-start text-sm">
-          <thead className="bg-black/[0.03] text-[11px] uppercase tracking-wider text-neutral-500">
+          <thead className="bg-black/[0.03] text-xs text-neutral-600">
             <tr>{['Clé', 'Type', 'État', 'Magasin', 'Activée', 'Expire', 'Note', ''].map((h) => <th key={h} className="px-4 py-3 text-start font-semibold">{h}</th>)}</tr>
           </thead>
           <tbody>
@@ -284,7 +284,7 @@ function TenantPicker({ token, current, disabled, onPick }: { token: string; cur
   if (!open) {
     return (
       <button disabled={disabled} onClick={() => setOpen(true)} className="text-start underline-offset-2 hover:underline disabled:no-underline">
-        {current ?? <span className="text-neutral-400">— Attribuer —</span>}
+        {current ?? <span className="text-neutral-400">Attribuer</span>}
       </button>
     );
   }
@@ -292,7 +292,7 @@ function TenantPicker({ token, current, disabled, onPick }: { token: string; cur
     <div className="relative">
       <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)} placeholder="Nom du magasin…"
         className="w-44 rounded-lg border border-transparent bg-black/[0.05] px-2.5 py-1.5 text-sm focus:bg-white" />
-      <ul className="absolute z-10 mt-1 max-h-56 w-56 overflow-auto sheet rounded-xl bg-white/95 p-1 shadow-popover backdrop-blur-xl">
+      <ul className="absolute z-10 mt-1 max-h-56 w-56 overflow-auto sheet rounded-xl bg-white p-1 shadow-popover ring-1 ring-neutral-200">
         {current && <li><button className="w-full px-3 py-1.5 text-start text-red-600 hover:bg-black/[0.05] rounded-lg" onClick={() => { setOpen(false); onPick(null); }}>Retirer l'attribution</button></li>}
         {opts.map((t) => (
           <li key={t.id}><button className="w-full px-3 py-1.5 text-start hover:bg-black/[0.05] rounded-lg" onClick={() => { setOpen(false); onPick(t.id); }}>{t.name} <span className="text-xs text-neutral-400">{t.slug}</span></button></li>
@@ -326,7 +326,7 @@ function StoreSelect({ token, value, onChange, className }: { token: string; val
         <button type="button" onClick={() => setOpen(true)} className={`${className} w-full text-start ${value ? '' : 'text-neutral-400'}`}>{value ? value.name : 'Magasin (obligatoire)'}</button>
       )}
       {open && (
-        <ul className="absolute z-10 mt-1 max-h-56 w-full min-w-56 overflow-auto sheet rounded-xl bg-white/95 p-1 shadow-popover backdrop-blur-xl">
+        <ul className="absolute z-10 mt-1 max-h-56 w-full min-w-56 overflow-auto sheet rounded-xl bg-white p-1 shadow-popover ring-1 ring-neutral-200">
           {opts.map((t) => (
             <li key={t.id}><button type="button" className="w-full px-3 py-1.5 text-start hover:bg-black/[0.05] rounded-lg" onClick={() => { onChange(t); setOpen(false); setQ(''); }}>{t.name} <span className="text-xs text-neutral-400">{t.slug}</span></button></li>
           ))}

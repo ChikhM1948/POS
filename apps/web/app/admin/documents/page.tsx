@@ -133,7 +133,7 @@ export default function DocumentsPage() {
         <div className="flex items-center justify-center gap-3 text-sm">
           <button disabled={page <= 1} onClick={() => setPage(page - 1)} className="rounded-lg border border-neutral-300 px-3 py-1 disabled:opacity-40">‹</button>
           <span className="tabular-nums text-neutral-600">{page} / {pages}</span>
-          <button disabled={page >= pages} onClick={() => setPage(page + 1)} className="rounded-lg border border-neutral-300 px-3 py-1 disabled:opacity-40">›</button>
+          <button disabled={page >= pages} onClick={() => setPage(page + 1)} className="rounded-lg border border-neutral-300 px-3 py-1 disabled:opacity-40" aria-label="Next"><svg viewBox="0 0 24 24" className="h-4 w-4 rtl:rotate-180" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg></button>
         </div>
       )}
     </div>

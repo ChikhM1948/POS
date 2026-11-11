@@ -84,7 +84,7 @@ export function ReorderPanel({ storeId }: { storeId: string }) {
             <header className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 px-4 py-3">
               <div>
                 <h3 className="text-sm font-semibold text-neutral-900">
-                  <span className="hidden print:inline">{t('inventory.orderTitle')} — </span>
+                  <span className="hidden print:inline">{t('inventory.orderTitle')} : </span>
                   {g.supplierName ?? t('inventory.noSupplier')}
                 </h3>
                 <p className="text-xs text-neutral-500">

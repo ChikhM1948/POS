@@ -119,13 +119,13 @@ export function CustomerCreditModal({ deviceId, totalCents, onCancel, onConfirm,
         </div>
 
         <div className="flex gap-2 border-t border-neutral-100 px-5 py-4">
-          <button onClick={onCancel} className="flex-1 rounded-xl border border-neutral-300 py-3 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50">
+          <button onClick={onCancel} className="flex-1 rounded-2xl border-2 border-brand-200 py-4 text-base font-bold text-neutral-700 transition hover:bg-neutral-50">
             {t('common.cancel')}
           </button>
           <button
             disabled={!selected || submitting || overLimitCents > 0}
             onClick={() => selected && onConfirm(selected.id, paidNowCents)}
-            className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-card transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex-1 rounded-xl bg-emerald-600 py-4 text-base font-bold text-white shadow-card transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? t('creditModal.confirming') : t('creditModal.confirm')}
           </button>

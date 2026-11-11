@@ -40,7 +40,7 @@ export function PaymentBreakdown({ data }: { data: RevenueByPaymentMethodPoint[]
           <div className="h-6 flex-1 rounded-[4px] bg-neutral-100">
             <div
               className="h-6 rounded-[4px]"
-              style={{ width: `${(d.amountCents / max) * 100}%`, backgroundColor: CATEGORICAL_SLOTS[d.method as keyof typeof CATEGORICAL_SLOTS] ?? '#898781' }}
+              style={{ width: `${(d.amountCents / max) * 100}%`, backgroundColor: CATEGORICAL_SLOTS[d.method as keyof typeof CATEGORICAL_SLOTS] ?? 'rgb(var(--n-400))' }}
             />
           </div>
           <span className="w-24 shrink-0 text-end text-sm font-medium text-neutral-900">{formatDZD(d.amountCents)}</span>

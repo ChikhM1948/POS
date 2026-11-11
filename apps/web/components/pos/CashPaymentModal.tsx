@@ -120,14 +120,14 @@ export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }
         <div className="flex gap-2 border-t border-neutral-100 px-5 py-4">
           <button
             onClick={onCancel}
-            className="flex-1 rounded-xl border border-neutral-300 py-3 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
+            className="flex-1 rounded-2xl border-2 border-brand-200 py-4 text-base font-bold text-neutral-700 transition hover:bg-neutral-50"
           >
             {t('common.cancel')}
           </button>
           <button
             disabled={!isSufficient || submitting}
             onClick={() => onConfirm(tenderedCents)}
-            className="flex-1 rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex-1 rounded-xl bg-brand-600 py-4 text-base font-bold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-30"
           >
             {submitting ? t('cashModal.confirming') : t('cashModal.confirm')}
           </button>

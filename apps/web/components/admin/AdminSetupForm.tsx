@@ -74,7 +74,7 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
       </div>
       <form
         onSubmit={handleSubmit}
-        className="flex w-full max-w-sm flex-col gap-4 sheet rounded-3xl bg-white/90 p-9 shadow-popover ring-1 ring-black/[0.04] backdrop-blur-xl"
+        className="flex w-full max-w-sm flex-col gap-4 sheet rounded-3xl bg-white p-9 shadow-popover ring-1 ring-neutral-200"
       >
         <div className="mb-1 flex flex-col items-center gap-3 text-center">
           <BrandMark size={60} />
@@ -151,7 +151,7 @@ export function AdminSetupForm({ onSwitchToLogin }: Props) {
             autoCapitalize="characters"
             spellCheck={false}
             dir="ltr"
-            className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 font-mono text-sm uppercase text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-brand-500/40"
+            className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 font-mono text-sm text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-brand-500/40"
                       />
           <span className="text-xs font-normal text-neutral-500">
             {LOCAL_MODE

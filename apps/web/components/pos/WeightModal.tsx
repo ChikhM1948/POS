@@ -58,10 +58,10 @@ export function WeightModal({ name, unit, unitPriceCents, initialQuantity, onCan
           </div>
         </div>
         <div className="flex gap-2 border-t border-neutral-100 px-5 py-4">
-          <button type="button" onClick={onCancel} className="flex-1 rounded-xl border border-neutral-300 py-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50">
+          <button type="button" onClick={onCancel} className="flex-1 rounded-2xl border-2 border-brand-200 py-4 text-base font-bold text-neutral-700 hover:bg-neutral-50">
             {t('common.cancel')}
           </button>
-          <button disabled={!valid} type="submit" className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
+          <button disabled={!valid} type="submit" className="flex-1 rounded-2xl bg-signal-500 py-4 text-base font-bold text-ink hover:bg-signal-400 disabled:cursor-not-allowed disabled:opacity-50">
             {t('weightModal.confirm')}
           </button>
         </div>

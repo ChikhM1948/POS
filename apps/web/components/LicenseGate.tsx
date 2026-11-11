@@ -174,7 +174,7 @@ export function LicenseGate({ token, canActivate }: Props) {
           autoCapitalize="characters"
           spellCheck={false}
           dir="ltr"
-          className="rounded-lg border border-neutral-300 px-3 py-2 font-mono text-sm uppercase text-neutral-900"
+          className="rounded-lg border border-neutral-300 px-3 py-2 font-mono text-sm text-neutral-900"
           required
         />
       </label>

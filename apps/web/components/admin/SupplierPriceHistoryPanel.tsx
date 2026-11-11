@@ -72,7 +72,7 @@ export function SupplierPriceHistoryPanel({ supplierId, supplierName, onClose }:
                     <tr key={`${p.productId}-h`}>
                       <td colSpan={5} className="bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
                         {[...p.points].reverse().map((pt, i) => (
-                          <p key={i}>{formatDateTime(pt.date, locale)} — {formatDZD(pt.unitCostCents)} × {pt.quantity}</p>
+                          <p key={i}>{formatDateTime(pt.date, locale)} : {formatDZD(pt.unitCostCents)} × {pt.quantity}</p>
                         ))}
                       </td>
                     </tr>

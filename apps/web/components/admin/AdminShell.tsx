@@ -80,13 +80,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const visibleNav = NAV.filter((item) => !item.roles || (session && item.roles.includes(session.role)));
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f7] print:block print:min-h-0">
-      <aside className="glass-side sticky top-0 flex h-screen w-60 print:hidden shrink-0 flex-col overflow-y-auto border-e border-black/[0.08] p-3">
+    <div className="flex min-h-screen bg-neutral-100 print:block print:min-h-0">
+      <aside className="panel-dark sticky top-0 flex h-screen w-64 print:hidden shrink-0 flex-col overflow-y-auto p-3">
         <div className="mb-6 flex items-center gap-2.5 px-1">
-          <BrandMark size={32} />
+          <BrandMark size={42} />
           <div>
-            <p className="text-sm font-semibold leading-tight tracking-tight text-neutral-900">POS Algérie</p>
-            <p className="text-xs text-neutral-400">{t('adminShell.subtitle')}</p>
+            <p className="text-base font-bold leading-tight tracking-tight text-white">POS Algérie</p>
+            <p className="text-xs text-white/60">{t('adminShell.subtitle')}</p>
           </div>
         </div>
         <nav className="flex flex-col gap-1">
@@ -97,11 +97,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  isActive ? 'bg-black/[0.07] text-neutral-900' : 'text-neutral-600 hover:bg-black/[0.04] hover:text-neutral-900'
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-semibold transition ${
+                  isActive ? 'bg-white/15 text-white' : 'text-white/75 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Icon className="h-[18px] w-[18px] shrink-0" />
+                <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-signal-400' : ''}`} />
                 {t(`adminShell.nav.${item.labelKey}`)}
                 {item.labelKey === 'stock' && stockBadge > 0 && (
                   <span
@@ -116,11 +116,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
           })}
         </nav>
         <div className="mt-auto pt-4">
-          <LanguageSwitcher />
+          <LanguageSwitcher className="!bg-white/10 !text-white hover:!bg-white/20" />
         </div>
       </aside>
       <div className="flex flex-1 flex-col print:block">
-        <header className="glass sticky top-0 z-20 flex items-center justify-between print:hidden px-6 py-3">
+        <header className="glass sticky top-0 z-20 flex items-center justify-between border-t-4 border-t-signal-500 print:hidden px-6 py-3">
           <div className="text-sm">
             <p className="font-medium text-neutral-900">{session?.name}</p>
             <p className="text-xs text-neutral-400">{session ? t(`roles.${session.role}`) : ''}</p>

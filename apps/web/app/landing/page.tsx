@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { IconBanknote, IconBarcode, IconBox, IconChart, IconLayers, IconReceipt, IconTruck, IconUsers, IconWallet } from '../../components/icons';
 import { LANDING_LOCALES, landingContent, type LandingLocale } from '../../lib/landing/content';
 
 const STORAGE_KEY = 'landing-language';
@@ -34,7 +35,7 @@ function Arrow() {
 
 function Tick() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="mt-1 h-4 w-4 shrink-0 text-blue-700" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="mt-1 h-4 w-4 shrink-0 text-brand-600" aria-hidden="true">
       <path d="m5 12.5 4.5 4.5L19 7.5" />
     </svg>
   );
@@ -126,7 +127,7 @@ function LanguageMenu({ value, onChange, label }: { value: LandingLocale; onChan
         </svg>
       </button>
       {open && (
-        <ul role="listbox" aria-label={label} className="absolute end-0 top-full z-50 sheet mt-2 w-52 overflow-hidden rounded-2xl bg-white/90 p-1 shadow-popover backdrop-blur-xl">
+        <ul role="listbox" aria-label={label} className="absolute end-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-[var(--radius-card)] border border-rule bg-surface p-1 shadow-[var(--shadow-pop)]">
           {LANDING_LOCALES.map((l) => {
             const active = l.code === value;
             return (
@@ -143,7 +144,7 @@ function LanguageMenu({ value, onChange, label }: { value: LandingLocale; onChan
                   <Flag code={l.code} className="h-6 w-6" />
                   <span className="flex-1 text-start">{l.name}</span>
                   {active && (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-blue-700" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-brand-600" aria-hidden="true">
                       <path d="m5 12.5 4.5 4.5L19 7.5" />
                     </svg>
                   )}
@@ -159,16 +160,17 @@ function LanguageMenu({ value, onChange, label }: { value: LandingLocale; onChan
 
 function Screenshot({ src, alt, width, height, priority = false }: { src: string; alt: string; width: number; height: number; priority?: boolean }) {
   return (
-    <figure className="overflow-hidden rounded-2xl bg-white shadow-popover ring-1 ring-black/[0.06]">
-      <div dir="ltr" className="flex items-center gap-2 bg-[#f2f2f4] px-4 py-3">
-        <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-        <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
-        <span className="h-3 w-3 rounded-full bg-[#28c840]" />
-      </div>
+    <figure className="overflow-hidden rounded-[var(--radius-card)] border border-rule bg-surface shadow-[var(--shadow-pop)]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={alt} width={width} height={height} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
     </figure>
   );
+}
+
+const FEATURE_ICONS = [IconBox, IconLayers, IconBarcode, IconReceipt, IconChart, IconWallet, IconTruck, IconUsers, IconBanknote];
+function FeatureIcon({ i }: { i: number }) {
+  const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length];
+  return <Icon className="h-6 w-6 text-brand-600" />;
 }
 
 export default function LandingPage() {
@@ -217,37 +219,36 @@ export default function LandingPage() {
     { href: '#offline', label: c.nav.offline },
     { href: '#faq', label: c.nav.faq },
   ];
-  const btnPrimary = 'inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-[15px] font-semibold text-white shadow-card transition hover:bg-brand-700 hover:shadow-lift';
-  const btnSecondary = 'inline-flex items-center justify-center rounded-full bg-black/[0.06] px-6 py-3 text-[15px] font-semibold text-neutral-800 transition hover:bg-black/[0.1]';
+  const btnPrimary = 'inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 px-4 py-4 text-[15px] sm:px-8 sm:text-base font-semibold text-white transition hover:bg-brand-700';
+  const btnSecondary = 'inline-flex items-center justify-center rounded-full border-2 border-brand-200 bg-surface px-4 py-4 text-[15px] sm:px-8 sm:text-base font-semibold text-ink transition hover:bg-brand-50';
 
   const sections = [
-    { key: 'pos', data: c.showcase.pos, img: `/screens/pos-${shot}.webp`, w: 1600, h: 958, bg: 'bg-white' },
-    { key: 'stock', data: c.showcase.stock, img: `/screens/stock-${shot}.webp`, w: 1600, h: 1000, bg: 'bg-[#f5f5f7]' },
-    { key: 'reports', data: c.showcase.reports, img: `/screens/reports-${shot}.webp`, w: 1600, h: 1000, bg: 'bg-white' },
+    { key: 'pos', data: c.showcase.pos, img: `/screens/pos-${shot}.webp`, w: 1600, h: 958, bg: 'bg-paper' },
+    { key: 'stock', data: c.showcase.stock, img: `/screens/stock-${shot}.webp`, w: 1600, h: 1000, bg: 'bg-paper-2' },
+    { key: 'reports', data: c.showcase.reports, img: `/screens/reports-${shot}.webp`, w: 1600, h: 1000, bg: 'bg-paper' },
   ] as const;
 
   return (
-    <div dir={dir} lang={locale} className="min-h-screen bg-white text-neutral-900">
-      {/* En-tête */}
-      <header className="glass sticky top-0 z-40">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
+    <div dir={dir} lang={locale} className="min-h-screen bg-paper text-ink">
+      <header className="sticky top-0 z-40 border-b border-rule bg-paper">
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-2 px-4 sm:gap-4 sm:px-6 lg:px-16">
           <Link href="/landing" aria-label="POS Stock Manager" className="flex shrink-0 items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-wordmark.webp" alt="POS Stock Manager" width={900} height={108} className="h-6 w-auto sm:h-8" />
+            <img src="/logo-wordmark.webp" alt="POS Stock Manager" width={900} height={108} className="h-4 w-auto min-[400px]:h-5 sm:h-8" />
           </Link>
-          <nav className="ms-8 hidden items-center gap-7 text-[13px] font-medium text-neutral-600 lg:flex" aria-label="Principal">
+          <nav className="ms-8 hidden items-center gap-7 text-base font-semibold text-ink-2 xl:flex" aria-label="Principal">
             {navLinks.map((l) => (
-              <a key={l.href} href={l.href} className="hover:text-neutral-900">{l.label}</a>
+              <a key={l.href} href={l.href} className="whitespace-nowrap transition hover:text-ink">{l.label}</a>
             ))}
           </nav>
-          <div className="ms-auto flex items-center gap-3">
+          <div className="ms-auto flex items-center gap-2 sm:gap-3">
             <LanguageMenu value={locale} onChange={changeLocale} label={c.lang.label} />
-            <Link href="/" className="hidden rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 md:block">
+            <Link href="/" className="hidden whitespace-nowrap rounded-full bg-brand-600 px-6 py-3 text-base font-semibold text-white transition hover:bg-brand-700 md:block">
               {c.nav.open}
             </Link>
             <button
               type="button"
-              className="rounded-full p-2 text-neutral-700 hover:bg-black/[0.05] lg:hidden"
+              className="rounded-full p-2 text-ink-2 hover:bg-brand-100 xl:hidden"
               aria-label={c.nav.menu}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((o) => !o)}
@@ -259,9 +260,9 @@ export default function LandingPage() {
           </div>
         </div>
         {menuOpen && (
-          <div className="border-t border-black/[0.06] px-4 py-2 lg:hidden">
+          <div className="border-t border-rule px-4 py-2 xl:hidden">
             {[...navLinks, { href: '/admin', label: c.nav.backoffice }, { href: '/', label: c.nav.open }].map((l) => (
-              <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-black/[0.05]">
+              <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-ink-2 hover:bg-brand-100">
                 {l.label}
               </a>
             ))}
@@ -270,19 +271,24 @@ export default function LandingPage() {
       </header>
 
       <main>
-        {/* Hero */}
-        <section className="bg-white">
-          <div className="mx-auto max-w-6xl px-4 pb-20 pt-16 text-center sm:px-6 sm:pt-24">
-            <h1 className="sheet mx-auto max-w-4xl text-balance text-4xl font-bold leading-[1.05] tracking-[-0.035em] text-brand-800 sm:text-6xl lg:text-7xl">{c.hero.title}</h1>
-            <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-neutral-500 sm:text-xl">{c.hero.text}</p>
-            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/" className={btnPrimary}>{c.hero.cta} <Arrow /></Link>
-              <Link href="/admin" className={btnSecondary}>{c.hero.ctaSecondary}</Link>
-              <a href={DOWNLOAD_URL} download className={btnSecondary}>{c.hero.download}</a>
+        {/* Hero : bande marine, le titre et ses actions à gauche, la vraie caisse en grand à droite */}
+        <section className="panel-dark overflow-x-clip">
+          <div className="mx-auto grid max-w-[1440px] items-center gap-x-14 gap-y-12 px-4 pb-20 pt-12 sm:px-6 lg:min-h-[calc(100svh-4rem)] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:px-16 lg:py-16">
+            <div className="min-w-0">
+              <h1 className="font-display text-4xl font-bold leading-[1.02] tracking-[-0.03em] text-white sm:text-5xl xl:text-6xl">{c.hero.title}</h1>
+              <p className="mt-6 max-w-xl text-pretty text-xl leading-relaxed text-white/85 sm:text-2xl">{c.hero.text}</p>
+              <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-3">
+                <Link href="/" className="inline-flex items-center justify-center gap-2 rounded-full bg-signal-500 px-9 py-4 text-lg font-bold text-ink transition hover:bg-signal-400">{c.hero.cta} <Arrow /></Link>
+                <Link href="/admin" className="inline-flex items-center justify-center rounded-full border-2 border-white/40 px-8 py-4 text-lg font-semibold text-white transition hover:bg-white/10">{c.hero.ctaSecondary}</Link>
+                <a href={DOWNLOAD_URL} download className="px-2 py-4 text-lg font-semibold text-white underline decoration-signal-400 decoration-2 underline-offset-4 transition hover:text-signal-300">{c.hero.download}</a>
+              </div>
+              <p className="mt-5 text-sm text-white/65">{c.hero.note}</p>
             </div>
-            <p className="mt-5 text-sm text-neutral-400">{c.hero.note}</p>
-            <div className="mx-auto mt-14 max-w-5xl text-start">
-              <Screenshot src={`/screens/pos-${shot}.webp`} alt={c.hero.alt} width={1600} height={958} priority />
+            <div className="relative min-w-0 pb-4 pe-4">
+              <div aria-hidden="true" className="absolute inset-y-6 start-6 end-0 rounded-[var(--radius-card)] bg-signal-500" />
+              <div className="relative">
+                <Screenshot src={`/screens/pos-${shot}.webp`} alt={c.hero.alt} width={1600} height={958} priority />
+              </div>
             </div>
           </div>
         </section>
@@ -290,59 +296,57 @@ export default function LandingPage() {
         {/* Écrans détaillés */}
         {sections.map((s, i) => (
           <section key={s.key} className={`${s.bg} py-20 sm:py-28`}>
-            <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_1.35fr] lg:gap-14">
-              <div className={i % 2 === 1 ? 'lg:order-2' : ''}>
-                <p className="text-sm font-semibold tracking-tight text-blue-700">{s.data.eyebrow}</p>
-                <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{s.data.title}</h2>
-                <p className="mt-4 leading-relaxed text-neutral-600">{s.data.text}</p>
+            <div className="mx-auto grid max-w-[1440px] items-center gap-12 px-4 sm:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16 lg:px-16">
+              <div className={`min-w-0 ${i % 2 === 1 ? 'lg:order-2' : ''}`}>
+                <h2 className="font-display text-[length:var(--text-section)] font-bold leading-[1.05] tracking-[-0.025em] text-ink">{s.data.title}</h2>
+                <p className="mt-4 max-w-xl leading-relaxed text-ink-2">{s.data.text}</p>
                 <ul className="mt-6 space-y-3">
                   {s.data.points.map((p) => (
-                    <li key={p} className="flex items-start gap-3 text-sm text-neutral-800"><Tick />{p}</li>
+                    <li key={p} className="flex items-start gap-3 text-sm text-ink"><Tick />{p}</li>
                   ))}
                 </ul>
               </div>
-              <div className={i % 2 === 1 ? 'lg:order-1' : ''}>
+              <div className={`min-w-0 ${i % 2 === 1 ? 'lg:order-1' : ''}`}>
                 <Screenshot src={s.img} alt={s.data.alt} width={s.w} height={s.h} />
               </div>
             </div>
           </section>
         ))}
 
-        {/* Installation (démo pas à pas) */}
-        <section id="install" className="scroll-mt-16 bg-[#f5f5f7] py-20 sm:py-28">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="text-sm font-semibold tracking-tight text-blue-700">{c.install.eyebrow}</p>
-            <h2 className="mt-2 max-w-2xl text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.install.title}</h2>
-            <p className="mt-4 max-w-2xl leading-relaxed text-neutral-600">{c.install.text}</p>
-            <ol className="mt-10 grid gap-8 md:grid-cols-2">
+        {/* Installation */}
+        <section id="install" className="scroll-mt-16 bg-paper-2 py-20 sm:py-28">
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-16">
+            <h2 className="max-w-2xl font-display text-[length:var(--text-section)] font-bold leading-[1.05] tracking-[-0.025em] text-ink">{c.install.title}</h2>
+            <p className="mt-4 max-w-2xl leading-relaxed text-ink-2">{c.install.text}</p>
+            <ol className="mt-12 grid gap-10 md:grid-cols-2">
               {c.install.steps.map((s, i) => (
-                <li key={s.title}>
-                  <figure className="overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-black/[0.06]">
+                <li key={s.title} className="min-w-0">
+                  <figure className="overflow-hidden rounded-[var(--radius-card)] border border-rule bg-surface">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={`/install/step-${i + 1}.svg`} alt={s.alt} width={960} height={600} loading="lazy" decoding="async" className="block h-auto w-full" />
                   </figure>
                   <div className="mt-4 flex items-start gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">{i + 1}</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-signal-500 text-sm font-bold text-ink">{i + 1}</span>
                     <div>
-                      <h3 className="text-lg font-semibold text-brand-800">{s.title}</h3>
-                      <p className="mt-1 text-sm leading-relaxed text-neutral-600">{s.text}</p>
+                      <h3 className="font-display text-[length:var(--text-title)] font-semibold text-ink">{s.title}</h3>
+                      <p className="mt-1 text-sm leading-relaxed text-ink-2">{s.text}</p>
                     </div>
                   </div>
                 </li>
               ))}
             </ol>
-            <div className="mt-10 grid gap-6 md:grid-cols-2">
+            <div className="mt-12 grid gap-6 md:grid-cols-2">
               <div className="surface p-6">
-                <p className="font-semibold text-brand-800">{c.install.reqLabel}</p>
-                <ul className="mt-3 space-y-2 text-sm text-neutral-700">
+                <p className="font-display font-semibold text-ink">{c.install.reqLabel}</p>
+                <ul className="mt-3 space-y-2 text-sm text-ink-2">
                   {c.install.req.map((r) => (
                     <li key={r} className="flex items-start gap-2"><Tick />{r}</li>
                   ))}
                 </ul>
               </div>
-              <div className="rounded-[0.875rem] bg-amber-50 p-6 ring-1 ring-amber-200">
-                <p className="font-semibold text-amber-900">{c.install.warnTitle}</p>
-                <p className="mt-2 text-sm leading-relaxed text-amber-900/80">{c.install.warn}</p>
+              <div className="rounded-[var(--radius-card)] border border-signal-500 bg-signal-300/20 p-6">
+                <p className="font-display font-semibold text-ink">{c.install.warnTitle}</p>
+                <p className="mt-2 text-sm leading-relaxed text-ink-2">{c.install.warn}</p>
               </div>
             </div>
             <div className="mt-8">
@@ -352,15 +356,15 @@ export default function LandingPage() {
         </section>
 
         {/* Fonctionnalités */}
-        <section id="features" className="scroll-mt-16 bg-[#f5f5f7] py-20 sm:py-28">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="text-sm font-semibold tracking-tight text-blue-700">{c.features.eyebrow}</p>
-            <h2 className="mt-2 max-w-2xl text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.features.title}</h2>
-            <dl className="mt-12 grid gap-4 sm:grid-cols-2">
-              {c.features.items.map((f) => (
-                <div key={f.title} className="surface p-6 transition duration-200 ease-spring hover:-translate-y-0.5 hover:shadow-lift">
-                  <dt className="font-semibold text-brand-800">{f.title}</dt>
-                  <dd className="mt-1 text-sm text-neutral-600">{f.text}</dd>
+        <section id="features" className="scroll-mt-16 bg-paper py-20 sm:py-28">
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-16">
+            <h2 className="max-w-2xl font-display text-[length:var(--text-section)] font-bold leading-[1.05] tracking-[-0.025em] text-ink">{c.features.title}</h2>
+            <dl className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {c.features.items.map((f, idx) => (
+                <div key={f.title} className="surface p-7 transition duration-200 motion-reduce:transition-none hover:shadow-lift">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100"><FeatureIcon i={idx} /></span>
+                  <dt className="mt-4 font-display text-[length:var(--text-title)] font-semibold text-ink">{f.title}</dt>
+                  <dd className="mt-1 text-sm leading-relaxed text-ink-2">{f.text}</dd>
                 </div>
               ))}
             </dl>
@@ -368,16 +372,15 @@ export default function LandingPage() {
         </section>
 
         {/* Marque blanche */}
-        <section id="whitelabel" className="scroll-mt-16 bg-white py-20 sm:py-28">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="text-sm font-semibold tracking-tight text-blue-700">{c.whitelabel.eyebrow}</p>
-            <h2 className="mt-2 max-w-2xl text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.whitelabel.title}</h2>
-            <p className="mt-4 max-w-2xl leading-relaxed text-neutral-600">{c.whitelabel.text}</p>
-            <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <section id="whitelabel" className="scroll-mt-16 bg-paper-2 py-20 sm:py-28">
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-16">
+            <h2 className="max-w-2xl font-display text-[length:var(--text-section)] font-bold leading-[1.05] tracking-[-0.025em] text-ink">{c.whitelabel.title}</h2>
+            <p className="mt-4 max-w-2xl leading-relaxed text-ink-2">{c.whitelabel.text}</p>
+            <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {c.whitelabel.items.map((f) => (
-                <li key={f.title} className="surface p-6 transition duration-200 ease-spring hover:-translate-y-0.5 hover:shadow-lift">
-                  <h3 className="font-semibold text-brand-800">{f.title}</h3>
-                  <p className="mt-1 text-sm text-neutral-600">{f.text}</p>
+                <li key={f.title} className="surface border-t-4 border-t-signal-500 p-6">
+                  <h3 className="font-display text-[length:var(--text-title)] font-semibold text-ink">{f.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-ink-2">{f.text}</p>
                 </li>
               ))}
             </ul>
@@ -385,26 +388,25 @@ export default function LandingPage() {
         </section>
 
         {/* Tarif */}
-        <section id="pricing" className="scroll-mt-16 bg-[#f5f5f7] py-20 sm:py-28">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="text-sm font-semibold tracking-tight text-blue-700">{c.pricing.eyebrow}</p>
-            <h2 className="mt-2 max-w-2xl text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.pricing.title}</h2>
-            <div className="mt-10 grid gap-6 md:grid-cols-2">
-              <div className="rounded-3xl bg-white p-8 shadow-card">
-                <p className="text-sm font-semibold text-neutral-500">{c.pricing.trialLabel}</p>
-                <p className="mt-2 text-5xl font-bold tracking-[-0.03em] text-brand-800">{c.pricing.trialValue}</p>
-                <p className="mt-3 text-sm text-neutral-600">{c.pricing.trialText}</p>
+        <section id="pricing" className="scroll-mt-16 bg-paper py-20 sm:py-28">
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-16">
+            <h2 className="max-w-2xl font-display text-[length:var(--text-section)] font-bold leading-[1.05] tracking-[-0.025em] text-ink">{c.pricing.title}</h2>
+            <div className="mt-12 grid gap-6 md:grid-cols-2">
+              <div className="rounded-[var(--radius-card)] border border-rule bg-surface p-8">
+                <p className="text-sm font-semibold text-muted">{c.pricing.trialLabel}</p>
+                <p className="mt-2 font-display text-5xl font-bold tracking-[-0.03em] text-ink">{c.pricing.trialValue}</p>
+                <p className="mt-3 text-sm leading-relaxed text-ink-2">{c.pricing.trialText}</p>
               </div>
-              <div className="rounded-3xl bg-white p-8 shadow-lift ring-2 ring-brand-600">
-                <p className="text-sm font-semibold text-neutral-500">{c.pricing.lifetimeLabel}</p>
-                <p className="mt-2 flex items-baseline gap-2 text-5xl font-bold tracking-[-0.03em] text-brand-800">
+              <div className="panel-dark rounded-[var(--radius-card)] p-8">
+                <p className="text-sm font-semibold text-white/70">{c.pricing.lifetimeLabel}</p>
+                <p className="mt-2 flex flex-wrap items-baseline gap-x-2 font-display text-5xl font-bold tracking-[-0.03em] text-signal-400">
                   <bdi dir="ltr">{c.pricing.price}</bdi> <span className="text-lg">{c.pricing.currency}</span>
-                  <span className="text-sm font-medium text-neutral-500">· {c.pricing.once}</span>
+                  <span className="font-sans text-sm font-semibold text-white/70">{c.pricing.once}</span>
                 </p>
-                <p className="mt-3 text-sm text-neutral-600">{c.pricing.lifetimeText}</p>
-                <ul className="mt-4 space-y-2 text-sm text-neutral-700">
+                <p className="mt-3 text-sm leading-relaxed text-white/80">{c.pricing.lifetimeText}</p>
+                <ul className="mt-4 space-y-2 text-sm text-white/90">
                   {c.pricing.points.map((p) => (
-                    <li key={p} className="flex items-start gap-2"><Tick />{p}</li>
+                    <li key={p} className="flex items-start gap-2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="mt-1 h-4 w-4 shrink-0 text-signal-400" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>{p}</li>
                   ))}
                 </ul>
               </div>
@@ -422,17 +424,16 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Comment ça marche */}
-        <section id="how" className="scroll-mt-16 bg-white py-20 sm:py-28">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="text-sm font-semibold tracking-tight text-blue-700">{c.how.eyebrow}</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.how.title}</h2>
-            <ol className="mt-10 grid gap-8 md:grid-cols-3">
+        {/* Comment ça marche : une vraie séquence */}
+        <section id="how" className="scroll-mt-16 bg-paper-2 py-20 sm:py-28">
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-16">
+            <h2 className="font-display text-[length:var(--text-section)] font-bold leading-[1.05] tracking-[-0.025em] text-ink">{c.how.title}</h2>
+            <ol className="mt-12 grid gap-8 md:grid-cols-3">
               {c.how.steps.map((s, i) => (
-                <li key={s.title} className="surface p-6">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">{i + 1}</span>
-                  <h3 className="mt-1 text-lg font-semibold text-brand-800">{s.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-neutral-600">{s.text}</p>
+                <li key={s.title} className="border-t-2 border-brand-600 pt-5">
+                  <span className="font-display text-3xl font-bold text-signal-500">{i + 1}</span>
+                  <h3 className="mt-2 font-display text-[length:var(--text-title)] font-semibold text-ink">{s.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-ink-2">{s.text}</p>
                 </li>
               ))}
             </ol>
@@ -440,17 +441,16 @@ export default function LandingPage() {
         </section>
 
         {/* Hors-ligne */}
-        <section id="offline" className="scroll-mt-16 bg-brand-900 py-20 text-white sm:py-24">
-          <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-2">
-            <div>
-              <p className="text-sm font-semibold text-blue-300">{c.offline.eyebrow}</p>
-              <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">{c.offline.title}</h2>
-              <p className="mt-4 leading-relaxed text-brand-300">{c.offline.text}</p>
+        <section id="offline" className="panel-dark scroll-mt-16 py-20 sm:py-28">
+          <div className="mx-auto grid max-w-[1440px] gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-16">
+            <div className="min-w-0">
+              <h2 className="font-display text-[length:var(--text-section)] font-bold leading-[1.05] tracking-[-0.025em] text-white">{c.offline.title}</h2>
+              <p className="mt-4 max-w-xl leading-relaxed text-white/75">{c.offline.text}</p>
             </div>
             <ul className="divide-y divide-white/15 border-y border-white/15">
               {c.offline.points.map((p) => (
-                <li key={p} className="flex items-start gap-3 py-4 text-sm text-brand-100">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 h-4 w-4 shrink-0 text-blue-300" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
+                <li key={p} className="flex items-start gap-3 py-4 text-sm text-white/90">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 h-4 w-4 shrink-0 text-signal-400" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
                   {p}
                 </li>
               ))}
@@ -459,18 +459,17 @@ export default function LandingPage() {
         </section>
 
         {/* FAQ */}
-        <section id="faq" className="scroll-mt-16 bg-white py-20 sm:py-28">
-          <div className="mx-auto max-w-3xl px-4 sm:px-6">
-            <p className="text-sm font-semibold tracking-tight text-blue-700">{c.faq.eyebrow}</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.faq.title}</h2>
-            <div className="mt-8 divide-y divide-black/[0.08] border-y border-black/[0.08]">
+        <section id="faq" className="scroll-mt-16 bg-paper py-20 sm:py-28">
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-16">
+            <h2 className="font-display text-[length:var(--text-section)] font-bold leading-[1.05] tracking-[-0.025em] text-ink">{c.faq.title}</h2>
+            <div className="mt-10 max-w-5xl divide-y divide-rule border-y border-rule">
               {c.faq.items.map((item) => (
                 <details key={item.q} className="group py-4">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-brand-800 [&::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded font-semibold text-ink [&::-webkit-details-marker]:hidden">
                     {item.q}
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-neutral-400 transition group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-muted transition group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
                   </summary>
-                  <p className="mt-3 text-sm leading-relaxed text-neutral-600">{item.a}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-ink-2">{item.a}</p>
                 </details>
               ))}
             </div>
@@ -478,35 +477,34 @@ export default function LandingPage() {
         </section>
 
         {/* Contact */}
-        <section id="contact" className="scroll-mt-16 bg-[#f5f5f7] py-20 sm:py-28">
-          <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-2">
-            <div>
-              <p className="text-sm font-semibold tracking-tight text-blue-700">{c.contact.eyebrow}</p>
-              <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.contact.title}</h2>
-              <p className="mt-4 leading-relaxed text-neutral-600">{c.contact.text}</p>
+        <section id="contact" className="scroll-mt-16 bg-paper-2 py-20 sm:py-28">
+          <div className="mx-auto grid max-w-[1440px] gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-16">
+            <div className="min-w-0">
+              <h2 className="font-display text-[length:var(--text-section)] font-bold leading-[1.05] tracking-[-0.025em] text-ink">{c.contact.title}</h2>
+              <p className="mt-4 max-w-xl leading-relaxed text-ink-2">{c.contact.text}</p>
               <div className="mt-6">
                 {WHATSAPP_NUMBER ? (
                   <a href={waLink(c.contact.message)} target="_blank" rel="noopener noreferrer" className={btnPrimary}>
                     <WhatsAppIcon /> {c.contact.button}
                   </a>
                 ) : (
-                  <p className="text-sm text-neutral-500">{c.contact.unavailable}</p>
+                  <p className="text-sm text-muted">{c.contact.unavailable}</p>
                 )}
               </div>
             </div>
-            <dl className="surface divide-y divide-black/[0.06] px-6 text-sm">
+            <dl className="surface divide-y divide-rule px-6 text-sm">
               <div className="py-4">
-                <dt className="font-semibold text-brand-800">{c.contact.hoursLabel}</dt>
-                <dd className="mt-1 text-neutral-600">{c.contact.hours}</dd>
+                <dt className="font-display font-semibold text-ink">{c.contact.hoursLabel}</dt>
+                <dd className="mt-1 text-ink-2">{c.contact.hours}</dd>
               </div>
               <div className="py-4">
-                <dt className="font-semibold text-brand-800">{c.contact.replyLabel}</dt>
-                <dd className="mt-1 text-neutral-600">{c.contact.reply}</dd>
+                <dt className="font-display font-semibold text-ink">{c.contact.replyLabel}</dt>
+                <dd className="mt-1 text-ink-2">{c.contact.reply}</dd>
               </div>
               <div className="py-4">
-                <dt className="font-semibold text-brand-800">{c.contact.helpLabel}</dt>
+                <dt className="font-display font-semibold text-ink">{c.contact.helpLabel}</dt>
                 <dd className="mt-2">
-                  <ul className="space-y-2 text-neutral-700">
+                  <ul className="space-y-2 text-ink-2">
                     {c.contact.help.map((h) => (
                       <li key={h} className="flex items-start gap-2"><Tick />{h}</li>
                     ))}
@@ -518,31 +516,31 @@ export default function LandingPage() {
         </section>
 
         {/* Appel à l'action */}
-        <section className="bg-[#f5f5f7] py-20 sm:py-28">
-          <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 sm:px-6 md:flex-row md:items-center">
-            <div>
-              <h2 className="text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.cta.title}</h2>
-              <p className="mt-2 text-neutral-600">{c.cta.text}</p>
+        <section className="bg-paper px-4 py-20 sm:px-6 sm:py-28 lg:px-16">
+          <div className="panel-dark mx-auto flex max-w-[1440px] flex-col items-start justify-between gap-8 rounded-[var(--radius-card)] p-8 sm:p-16 md:flex-row md:items-center lg:py-24">
+            <div className="min-w-0">
+              <h2 className="font-display text-[length:var(--text-section)] font-bold leading-[1.05] tracking-[-0.025em] text-white">{c.cta.title}</h2>
+              <p className="mt-3 max-w-xl text-white/75">{c.cta.text}</p>
             </div>
-            <Link href="/" className={btnPrimary}>{c.cta.button} <Arrow /></Link>
+            <Link href="/" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-signal-500 px-9 py-4 text-lg font-bold text-ink transition hover:bg-signal-400">{c.cta.button} <Arrow /></Link>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-black/[0.08] bg-[#f5f5f7]">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-neutral-600 sm:px-6 md:flex-row md:items-center md:justify-between">
+      <footer className="border-t border-rule bg-paper">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-4 px-4 py-8 text-sm text-ink-2 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-16">
           <div className="flex items-center gap-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-full.webp" alt="POS Stock Manager" width={720} height={720} loading="lazy" className="h-20 w-20 shrink-0" />
             <span className="max-w-xs">{c.footer.tagline}</span>
           </div>
-          <div className="flex items-center gap-6">
-            <Link href="/" className="hover:text-neutral-900">{c.footer.pos}</Link>
-            <Link href="/admin" className="hover:text-neutral-900">{c.footer.admin}</Link>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <Link href="/" className="hover:text-ink">{c.footer.pos}</Link>
+            <Link href="/admin" className="hover:text-ink">{c.footer.admin}</Link>
             {WHATSAPP_NUMBER && (
-              <a href={waLink(c.contact.message)} target="_blank" rel="noopener noreferrer" className="hover:text-neutral-900">{c.footer.contact}</a>
+              <a href={waLink(c.contact.message)} target="_blank" rel="noopener noreferrer" className="hover:text-ink">{c.footer.contact}</a>
             )}
-            <span className="text-neutral-400">© {new Date().getFullYear()} · {c.footer.rights} · Developed by DevLab</span>
+            <span className="text-muted">© {new Date().getFullYear()} {c.footer.rights} Developed by DevLab</span>
           </div>
         </div>
       </footer>
@@ -554,7 +552,7 @@ export default function LandingPage() {
           rel="noopener noreferrer"
           aria-label={c.contact.floating}
           title={c.contact.floating}
-          className="fixed bottom-5 end-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition hover:scale-105"
+          className="fixed bottom-5 end-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-whatsapp text-white shadow-[var(--shadow-pop)] transition hover:scale-105"
         >
           <WhatsAppIcon className="h-7 w-7" />
         </a>

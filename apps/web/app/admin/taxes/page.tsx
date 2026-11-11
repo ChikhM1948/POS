@@ -84,7 +84,7 @@ export default function TaxesPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
       {regime && (
         <p className="text-xs text-neutral-500">
-          {t('taxes.regimeLabel')} : <strong>{regime === 'ifu' ? t('taxes.regimeIfu') : t('taxes.regimeReal')}</strong> — {regime === 'ifu' ? t('taxes.hintG12') : t('taxes.hintG50')}
+          {t('taxes.regimeLabel')} : <strong>{regime === 'ifu' ? t('taxes.regimeIfu') : t('taxes.regimeReal')}</strong>, {regime === 'ifu' ? t('taxes.hintG12') : t('taxes.hintG50')}
         </p>
       )}
 

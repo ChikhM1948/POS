@@ -124,7 +124,7 @@ export function StockMovementPanel({ storeId, product, onClose, onMovementCreate
         <h3 className="text-base font-semibold text-neutral-900">
           {product.name.fr}{' '}
           <span className="font-normal text-neutral-500">
-            — {t('stockMovement.currentStock', { qty: product.quantity, unit: product.unit })}
+            : {t('stockMovement.currentStock', { qty: product.quantity, unit: product.unit })}
           </span>
         </h3>
         <button onClick={onClose} className="text-sm font-medium text-neutral-500 hover:text-neutral-700">

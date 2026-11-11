@@ -188,7 +188,7 @@ export default function ProductsPage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={p.imageUrl} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      <span className="text-[10px] text-neutral-400">—</span>
+                      <span className="text-xs text-neutral-400">-</span>
                     )}
                   </div>
                 </td>

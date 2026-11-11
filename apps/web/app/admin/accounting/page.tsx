@@ -131,7 +131,7 @@ export default function AccountingPage() {
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <p className="hidden text-sm font-medium print:block">{t('accounting.title')} — {stamp}</p>
+      <p className="hidden text-sm font-medium print:block">{t('accounting.title')} : {stamp}</p>
 
       {entries && !hasData && <p className="rounded-xl border border-dashed border-neutral-300 p-8 text-center text-sm text-neutral-500">{t('accounting.noData')}</p>}
 
