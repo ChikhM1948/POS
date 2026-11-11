@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from '../lib/i18n/LanguageContext';
-import { LICENSE_EXPIRED_EVENT, activateLicense, fetchLicensePrice, fetchLicenseStatus, renewLicense, startLicenseCheckout, verifyLicenseCheckout, type LicensePrice } from '../lib/license';
+import { LICENSE_EXPIRED_EVENT, activateLicense, fetchDeviceId, fetchLicensePrice, fetchLicenseStatus, renewLicense, startLicenseCheckout, verifyLicenseCheckout, type LicensePrice } from '../lib/license';
 import type { LicenseStatusDTO } from '@pos-dz/shared';
 
 const TEXT = {
@@ -29,6 +29,8 @@ const TEXT = {
     denied: "Cette clé n'est plus valide sur ce poste (révoquée ou déplacée vers un autre poste). Contactez votre fournisseur ou saisissez une autre clé.",
     renew: 'Renouveler maintenant',
     renewing: 'Renouvellement…',
+    deviceLabel: "ID de ce poste (à communiquer pour une activation sans Internet)",
+    offlineHint: "Sans Internet : envoyez l'ID du poste à votre fournisseur, puis collez ici le code reçu.",
   },
   ar: {
     trialLeft: (n: number) => `فترة تجريبية: ${n} يوم متبقٍ`,
@@ -53,6 +55,8 @@ const TEXT = {
     denied: 'هذا المفتاح لم يعد صالحًا على هذا الجهاز (ملغى أو منقول إلى جهاز آخر). اتصل بالمورّد أو أدخل مفتاحًا آخر.',
     renew: 'جدّد الآن',
     renewing: 'جارٍ التجديد…',
+    deviceLabel: 'معرّف هذا الجهاز (أرسله للمورّد للتفعيل بدون إنترنت)',
+    offlineHint: 'بدون إنترنت: أرسل معرّف الجهاز إلى المورّد ثم الصق هنا الرمز المستلم.',
   },
 } as const;
 
@@ -77,6 +81,7 @@ export function LicenseGate({ token, canActivate }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [price, setPrice] = useState<LicensePrice | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [deviceId, setDeviceId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!token) return;
@@ -86,6 +91,7 @@ export function LicenseGate({ token, canActivate }: Props) {
 
   useEffect(() => {
     void fetchLicensePrice().then(setPrice);
+    if (!token) void fetchDeviceId().then(setDeviceId);
   }, []);
 
   // Retour de SofizPay (?license_order=...) : on confirme auprès du serveur puis on nettoie l'URL.
@@ -178,6 +184,13 @@ export function LicenseGate({ token, canActivate }: Props) {
           required
         />
       </label>
+      {deviceId && (
+        <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+          <p>{tx.offlineHint}</p>
+          <p className="mt-1">{tx.deviceLabel}</p>
+          <code dir="ltr" className="mt-0.5 block select-all break-all font-mono text-neutral-900">{deviceId}</code>
+        </div>
+      )}
       {notice && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800" role="status">{notice}</p>}
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{error}</p>}
       <div className="flex gap-2">

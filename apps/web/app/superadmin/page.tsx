@@ -223,6 +223,7 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
   const [fresh, setFresh] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [offline, setOffline] = useState({ key: '', deviceId: '', code: '' });
 
   const fail = useCallback((err: unknown) => {
     if ((err as { status?: number }).status === 401) return onSignOut(); // session expirée
@@ -246,6 +247,16 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
       const body = { tenantId: store.id, kind: form.kind, count: form.count, note: form.note || undefined, durationDays: form.durationDays ? Number(form.durationDays) : undefined };
       const res = await call<{ keys: { key: string }[] }>(token, '/admin/generate', { method: 'POST', body: JSON.stringify(body) });
       setFresh(res.keys.map((k) => k.key));
+      await load();
+    } catch (err) { fail(err); } finally { setBusy(false); }
+  }
+
+  async function offlineCode(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true); setError(null);
+    try {
+      const res = await call<{ code: string }>(token, '/admin/offline-code', { method: 'POST', body: JSON.stringify({ key: offline.key.trim(), deviceId: offline.deviceId.trim() }) });
+      setOffline((o) => ({ ...o, code: res.code }));
       await load();
     } catch (err) { fail(err); } finally { setBusy(false); }
   }
@@ -283,6 +294,22 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
       </form>
 
       {error && <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700" role="alert">{error}</p>}
+
+      <form onSubmit={offlineCode} className="flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-card">
+        <h2 className="text-sm font-semibold text-neutral-900">Activation hors-ligne (client sans Internet)</h2>
+        <p className="text-xs text-neutral-500">Le client lit l'ID de son poste sur l'écran d'activation. Saisissez-le avec une clé : le code obtenu s'entre sur le poste, sans connexion. La clé est liée à ce poste.</p>
+        <div className="grid gap-3 sm:grid-cols-[1fr_1.5fr_auto]">
+          <input dir="ltr" value={offline.key} onChange={(e) => setOffline({ ...offline, key: e.target.value, code: '' })} placeholder="POS-XXXX-XXXX-XXXX-XXXX" className={`${input} font-mono`} required />
+          <input dir="ltr" value={offline.deviceId} onChange={(e) => setOffline({ ...offline, deviceId: e.target.value, code: '' })} placeholder="ID du poste" className={`${input} font-mono`} required />
+          <button disabled={busy} className="rounded-md bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">{busy ? '…' : 'Générer le code'}</button>
+        </div>
+        {offline.code && (
+          <div className="rounded-xl bg-green-50 p-3 ring-1 ring-green-200">
+            <div className="mb-1 flex justify-between text-sm font-medium text-green-900"><span>Code d'activation</span><button type="button" onClick={() => void navigator.clipboard?.writeText(offline.code)} className="underline underline-offset-2">Copier</button></div>
+            <code dir="ltr" className="block select-all break-all font-mono text-xs text-green-900">{offline.code}</code>
+          </div>
+        )}
+      </form>
 
       {fresh.length > 0 && (
         <div className="rounded-2xl bg-green-50 p-5 ring-1 ring-green-200">

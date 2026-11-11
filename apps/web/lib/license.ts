@@ -66,3 +66,13 @@ export async function renewLicense(token: string | undefined): Promise<LicenseSt
   if (!res.ok) throw new Error(body.error ?? `Erreur ${res.status}`);
   return body.license as LicenseStatusDTO;
 }
+
+/** Poste local : identifiant du poste, à communiquer à l'éditeur pour obtenir un code d'activation hors-ligne. */
+export async function fetchDeviceId(): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/license/device`);
+    return res.ok ? ((await res.json()).deviceId as string) : null;
+  } catch {
+    return null;
+  }
+}

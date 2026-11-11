@@ -94,6 +94,18 @@ licenseRouter.post('/redeem', asyncHandler(async (req: Request, res: Response) =
   res.json({ license: signLicense(lic) });
 }));
 
+/**
+ * Activation hors-ligne : le super admin saisit la clé + l'ID du poste (affiché sur son écran) et obtient un code signé
+ * à recopier sur le poste, sans Internet. La clé est liée à ce poste exactement comme pour /redeem.
+ */
+licenseRouter.post('/admin/offline-code', requirePlatformAdmin, asyncHandler(async (req: Request, res: Response) => {
+  const { key, deviceId } = req.body ?? {};
+  const id = String(deviceId ?? '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(id)) return res.status(400).json({ error: "ID du poste invalide (copiez-le depuis l'écran d'activation)." });
+  const signed = signLicense(await redeemKey(key, `device:${id.toLowerCase()}`));
+  res.json({ code: 'POSL1.' + Buffer.from(JSON.stringify(signed)).toString('base64url') });
+}));
+
 /** Poste desktop : renouvelle le bail de sa licence signée (appel périodique en arrière-plan). */
 licenseRouter.post('/renew', asyncHandler(async (req: Request, res: Response) => {
   const { key, deviceId } = req.body ?? {};

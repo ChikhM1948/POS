@@ -173,10 +173,29 @@ export class LicenseManager {
     if (this.timer) clearInterval(this.timer);
   }
 
+  /** Code d'activation hors-ligne (émis par l'éditeur pour l'ID de ce poste) : vérifié localement, sans Internet. */
+  private activateOffline(code: string): LicenseStatusDTO {
+    if (!PUBLIC_KEY) throw new HttpError(503, 'Clé publique de licence absente de cette version de l\'application.');
+    let license: SignedLicense;
+    try {
+      license = JSON.parse(Buffer.from(code.slice('POSL1.'.length).replace(/\s+/g, ''), 'base64url').toString('utf8')) as SignedLicense;
+    } catch {
+      throw new HttpError(400, "Code d'activation illisible. Recopiez-le en entier.");
+    }
+    if (!license?.signature || !this.verifySignature(license)) throw new HttpError(400, "Code d'activation invalide.");
+    const existing = this.current();
+    if (!existing || new Date(license.expiresAt) >= new Date(existing.expiresAt)) {
+      this.setMeta('license', JSON.stringify(license));
+      this.setMeta('license_denied', '');
+    }
+    return this.status();
+  }
+
   /** Échange une clé auprès du serveur (Internet requis) puis stocke la licence signée. */
   async activate(rawKey: string): Promise<LicenseStatusDTO> {
     const key = String(rawKey ?? '').trim();
     if (!key) throw new HttpError(400, "Clé d'activation requise.");
+    if (key.startsWith('POSL1.')) return this.activateOffline(key);
     const base = this.cloudUrl() || DEFAULT_API_URL;
     if (!base) throw new HttpError(503, "Adresse du serveur de licences non configurée dans cette version de l'application.");
     if (!PUBLIC_KEY) throw new HttpError(503, 'Clé publique de licence absente de cette version de l\'application.');
