@@ -303,7 +303,7 @@ export default function PosPage() {
     <div className="flex h-screen flex-col overflow-hidden bg-neutral-50">
       <OfflineBanner localMode={LOCAL_MODE || !session.syncEnabled} />
       <LicenseGate token={session.token} canActivate={false} />
-      <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3">
+      <header className="glass relative z-10 flex items-center justify-between px-6 py-3">
         <div className="flex items-center gap-3">
           <BrandMark size={38} />
           <div>
@@ -339,7 +339,7 @@ export default function PosPage() {
 
       <main className="grid flex-1 grid-cols-1 gap-0 overflow-hidden md:grid-cols-[1fr_400px]">
         <section className="flex flex-col overflow-hidden">
-          <div className="flex flex-col gap-3 border-b border-neutral-200 bg-white px-6 py-4">
+          <div className="glass relative z-[1] flex flex-col gap-3 px-6 py-4">
             <form onSubmit={handleScanSubmit} className="relative">
               <IconBarcode className="pointer-events-none absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400" />
               <input
@@ -348,7 +348,7 @@ export default function PosPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t('pos.searchPlaceholder')}
-                className="w-full rounded-lg border border-neutral-200 bg-neutral-50 py-3 ps-12 pe-4 text-base text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500 focus:bg-white"
+                className="w-full rounded-xl border border-transparent bg-black/[0.05] py-3 ps-12 pe-4 text-base text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500/40 focus:bg-white"
               />
             </form>
             {scanFeedback && <p className="text-sm font-medium text-red-600">{scanFeedback}</p>}
@@ -357,10 +357,10 @@ export default function PosPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`shrink-0 rounded-md px-3.5 py-1.5 text-sm font-medium transition ${
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition ${
                     selectedCategory === cat
-                      ? 'bg-brand-600 text-white'
-                      : 'text-neutral-600 hover:bg-neutral-100'
+                      ? 'bg-brand-600 text-white shadow-card'
+                      : 'bg-black/[0.05] text-neutral-600 hover:bg-black/[0.08]'
                   }`}
                 >
                   {cat === ALL_CATEGORIES ? t('pos.categoryAll') : cat === UNCATEGORIZED ? t('pos.categoryOther') : cat}
@@ -375,7 +375,7 @@ export default function PosPage() {
                 <button
                   key={product.id}
                   onClick={() => addToCart(product)}
-                  className="group flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white text-start transition duration-150 hover:border-neutral-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:bg-neutral-50"
+                  className="group flex flex-col overflow-hidden rounded-2xl bg-white text-start shadow-card transition duration-200 ease-spring hover:-translate-y-0.5 hover:shadow-lift focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:translate-y-0"
                 >
                   <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-neutral-100">
                     {product.imageUrl ? (
@@ -420,8 +420,8 @@ export default function PosPage() {
           </div>
         </section>
 
-        <section className="flex flex-col overflow-hidden border-s border-neutral-200 bg-white">
-          <h2 className="flex items-center gap-2 border-b border-neutral-200 bg-white px-4 py-3.5 text-xs font-medium uppercase tracking-wider text-neutral-500">
+        <section className="flex flex-col overflow-hidden border-s border-black/[0.08] bg-white">
+          <h2 className="flex items-center gap-2 border-b border-black/[0.06] bg-white px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-neutral-500">
             <IconCart className="h-4 w-4" />
             {t('pos.cart.title')}
             {cart.length > 0 && (
@@ -533,7 +533,7 @@ export default function PosPage() {
       </main>
 
       {showLegend && (
-        <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-neutral-200 bg-white px-6 py-1.5 text-xs text-neutral-500">
+        <footer className="glass flex flex-wrap items-center gap-x-4 gap-y-1 px-6 py-1.5 text-xs text-neutral-500">
           {([
             ['F1', 'shortcuts.scan'], ['F2', 'shortcuts.cash'], ['F3', 'shortcuts.cib'], ['F4', 'shortcuts.credit'],
             ['F5', 'shortcuts.hold'], ['F6', 'shortcuts.recall'], ['F7', 'shortcuts.discount'], ['F8', 'shortcuts.clear'],

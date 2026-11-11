@@ -67,7 +67,7 @@ export function SaleDocumentDialog({ sale, kind, onClose }: Props) {
   if (doc) return <DocumentViewer doc={doc} onClose={onClose} />;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center scrim p-4">
       <div className="flex w-full max-w-lg flex-col gap-3 rounded-xl bg-white p-5 shadow-xl">
         <h2 className="text-base font-semibold text-neutral-900">{t(`docs.${DOC_LABEL_KEY[kind]}`)} · {sale.number}</h2>
         {checking ? (

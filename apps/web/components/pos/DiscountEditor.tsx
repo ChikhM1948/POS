@@ -50,7 +50,7 @@ export function DiscountEditor({ quantity, unitPriceCents, minSellingPriceCents,
   }
 
   return (
-    <div className="absolute inset-x-3 top-full z-10 mt-1 flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-3 shadow-popover">
+    <div className="absolute inset-x-3 top-full z-10 mt-1 flex flex-col gap-2 rounded-xl bg-white shadow-card p-3 shadow-popover">
       <label className="flex flex-col gap-1 text-xs font-medium text-neutral-700">
         {t('discountEditor.label')}
         <input

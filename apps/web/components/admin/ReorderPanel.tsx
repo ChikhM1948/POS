@@ -80,7 +80,7 @@ export function ReorderPanel({ storeId }: { storeId: string }) {
         // Les règles @media print globales (globals.css) n'impriment que .doc-print : seul le bon choisi sort.
         const hidden = printing === null ? '' : printing === key ? 'doc-print doc-overlay' : 'print:hidden';
         return (
-          <section key={key} className={`rounded-xl border border-neutral-200 bg-white ${hidden}`}>
+          <section key={key} className={`rounded-xl bg-white shadow-card ${hidden}`}>
             <header className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 px-4 py-3">
               <div>
                 <h3 className="text-sm font-semibold text-neutral-900">

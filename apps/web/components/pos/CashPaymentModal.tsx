@@ -52,8 +52,8 @@ export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/40 p-4 backdrop-blur-[2px]">
-      <div className="flex w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-popover">
+    <div className="fixed inset-0 z-50 flex items-center justify-center scrim p-4">
+      <div className="flex w-full max-w-sm flex-col overflow-hidden sheet rounded-2xl bg-white shadow-popover">
         <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4 text-neutral-900">
           <div className="flex items-center gap-2">
             <IconBanknote className="h-5 w-5" />
@@ -98,7 +98,7 @@ export function CashPaymentModal({ totalCents, onCancel, onConfirm, submitting }
               <button
                 key={key}
                 onClick={() => (key === '⌫' ? backspace() : pressDigit(key))}
-                className="rounded-lg border border-neutral-200 bg-white py-3.5 text-lg font-medium text-neutral-900 transition hover:bg-neutral-100 active:bg-neutral-200"
+                className="rounded-lg bg-white shadow-card py-3.5 text-lg font-medium text-neutral-900 transition hover:bg-neutral-100 active:bg-neutral-200"
               >
                 {key}
               </button>

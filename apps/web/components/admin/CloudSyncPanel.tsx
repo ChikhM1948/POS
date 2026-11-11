@@ -67,7 +67,7 @@ export function CloudSyncPanel() {
   const lastSync = status?.lastSyncAt ? new Date(status.lastSyncAt).toLocaleString() : t('cloudSync.never');
 
   return (
-    <section className="flex max-w-xl flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+    <section className="flex max-w-xl flex-col gap-3 rounded-xl bg-white shadow-card p-4">
       <h2 className="text-lg font-semibold text-neutral-900">{t('cloudSync.title')}</h2>
       <p className="text-sm text-neutral-500">{t('cloudSync.intro')}</p>
 

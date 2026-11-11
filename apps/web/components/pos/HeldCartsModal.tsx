@@ -35,8 +35,8 @@ export function HeldCartsModal({ db, onResume, onClose }: Props) {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/40 p-4 backdrop-blur-[2px]">
-      <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-popover">
+    <div className="fixed inset-0 z-50 flex items-center justify-center scrim p-4">
+      <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden sheet rounded-2xl bg-white shadow-popover">
         <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4 text-neutral-900">
           <div className="flex items-center gap-2">
             <IconCart className="h-5 w-5" />

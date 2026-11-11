@@ -103,7 +103,7 @@ export default function SuppliersPage() {
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+      <div className="overflow-x-auto rounded-xl bg-white shadow-card">
         <table className="w-full text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
             <tr>

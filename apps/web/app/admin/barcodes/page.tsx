@@ -168,7 +168,7 @@ export default function BarcodesPage() {
             )}
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-card">
+          <div className="overflow-x-auto rounded-xl bg-white shadow-card">
             <table className="w-full text-sm">
               <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
                 <tr>
@@ -217,7 +217,7 @@ export default function BarcodesPage() {
         </div>
 
         {/* Réglages d'étiquette */}
-        <aside className="flex h-fit flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-card">
+        <aside className="flex h-fit flex-col gap-4 rounded-xl bg-white shadow-card p-4 shadow-card">
           <label className="flex flex-col gap-1.5 text-sm font-medium text-neutral-700">
             {t('barcodes.labelSize')}
             <select value={presetId} onChange={(e) => setPresetId(e.target.value)} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-normal">

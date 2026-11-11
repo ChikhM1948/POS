@@ -112,7 +112,7 @@ export default function SalesPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {selected && (
-        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+        <div className="rounded-xl bg-white shadow-card p-4">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="flex items-center gap-2 font-semibold text-neutral-900">
               {t('sales.ticket', { number: selected.number })}
@@ -213,7 +213,7 @@ export default function SalesPage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+      <div className="overflow-x-auto rounded-xl bg-white shadow-card">
         <table className="w-full text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
             <tr>

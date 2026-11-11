@@ -80,8 +80,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const visibleNav = NAV.filter((item) => !item.roles || (session && item.roles.includes(session.role)));
 
   return (
-    <div className="flex min-h-screen bg-neutral-50 print:block print:min-h-0">
-      <aside className="flex w-60 print:hidden shrink-0 flex-col border-e border-neutral-200 bg-white p-4">
+    <div className="flex min-h-screen bg-[#f5f5f7] print:block print:min-h-0">
+      <aside className="glass-side sticky top-0 flex h-screen w-60 print:hidden shrink-0 flex-col overflow-y-auto border-e border-black/[0.08] p-3">
         <div className="mb-6 flex items-center gap-2.5 px-1">
           <BrandMark size={32} />
           <div>
@@ -97,8 +97,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition ${
-                  isActive ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                  isActive ? 'bg-black/[0.07] text-neutral-900' : 'text-neutral-600 hover:bg-black/[0.04] hover:text-neutral-900'
                 }`}
               >
                 <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -120,21 +120,21 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
       <div className="flex flex-1 flex-col print:block">
-        <header className="flex items-center justify-between print:hidden border-b border-neutral-200 bg-white px-6 py-3">
+        <header className="glass sticky top-0 z-20 flex items-center justify-between print:hidden px-6 py-3">
           <div className="text-sm">
             <p className="font-medium text-neutral-900">{session?.name}</p>
             <p className="text-xs text-neutral-400">{session ? t(`roles.${session.role}`) : ''}</p>
           </div>
           <button
             onClick={logout}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-neutral-600 transition hover:bg-black/[0.05] hover:text-neutral-900"
           >
             <IconLogout className="h-4 w-4" />
             {t('common.logout')}
           </button>
         </header>
         {session && <LicenseGate token={session.token} canActivate={session.role === 'store_admin' || session.role === 'super_admin'} />}
-        <main className="flex-1 p-6 print:p-0">{children}</main>
+        <main className="flex-1 p-8 print:p-0">{children}</main>
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ export function LanguageSwitcher({ className = '' }: Props) {
       onClick={() => setLocale(next)}
       aria-label={`${t('languageSwitcher.label')}: ${t(`languageSwitcher.${next}`)}`}
       title={t(`languageSwitcher.${next}`)}
-      className={`flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-100 text-neutral-600 transition hover:bg-neutral-200 hover:text-neutral-900 ${className}`}
+      className={`flex h-9 w-9 items-center justify-center rounded-lg bg-black/[0.05] text-neutral-600 transition hover:bg-black/[0.09] hover:text-neutral-900 ${className}`}
     >
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="9" />

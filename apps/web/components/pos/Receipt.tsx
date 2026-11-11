@@ -34,7 +34,7 @@ export function Receipt({ sale, tenantBranding, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4 print:static print:bg-transparent print:p-0">
+    <div className="fixed inset-0 z-50 flex items-center justify-center scrim p-4 print:static print:bg-transparent print:p-0">
       <div className="flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-popover print:max-h-none print:w-auto print:rounded-none print:shadow-none">
         <div className="flex items-center gap-2 bg-emerald-600 px-5 py-4 text-white print:hidden">
           <IconCheckCircle className="h-6 w-6" />

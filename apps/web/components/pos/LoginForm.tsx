@@ -147,7 +147,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
   // indicateur de chargement évite un flash de l'écran de configuration.
   if (config === undefined) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-50">
+      <div className="flex min-h-screen items-center justify-center auth-bg">
         <p className="text-sm text-neutral-400">{t('common.loading')}</p>
       </div>
     );
@@ -155,12 +155,12 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
 
   if (!config && LOCAL_MODE) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
+      <div className="relative flex min-h-screen items-center justify-center auth-bg px-4 py-12">
         <div className="absolute top-4 end-4">
           <LanguageSwitcher />
         </div>
-        <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-8 text-center shadow-card">
-          <BrandMark size={44} />
+        <div className="flex w-full max-w-sm flex-col items-center gap-4 sheet rounded-3xl bg-white/90 p-9 shadow-popover ring-1 ring-black/[0.04] backdrop-blur-xl text-center shadow-card">
+          <BrandMark size={60} />
           <p className="text-sm text-neutral-600">{localMissing ? t('login.localNotConfigured') : t('common.loading')}</p>
         </div>
       </div>
@@ -168,29 +168,29 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center auth-bg px-4 py-12">
       <div className="absolute top-4 end-4">
         <LanguageSwitcher />
       </div>
       <form
         onSubmit={handleLoginSubmit}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-8 shadow-card"
+        className="flex w-full max-w-sm flex-col gap-4 sheet rounded-3xl bg-white/90 p-9 shadow-popover ring-1 ring-black/[0.04] backdrop-blur-xl"
       >
         <div className="mb-1 flex flex-col items-center gap-3 text-center">
-          <BrandMark size={44} />
+          <BrandMark size={60} />
           <div>
-            <h1 className="text-lg font-semibold text-neutral-900">{config ? t('login.title') : t('login.setupTitle')}</h1>
+            <h1 className="text-2xl font-semibold tracking-[-0.025em] text-neutral-900">{config ? t('login.title') : t('login.setupTitle')}</h1>
             <p className="text-sm text-neutral-500">{config ? t('login.subtitle') : t('login.setupSubtitle')}</p>
           </div>
         </div>
 
 
         {config && (
-        <div className="grid grid-cols-2 gap-1 rounded-lg bg-neutral-100 p-1">
+        <div className="grid grid-cols-2 gap-0.5 rounded-[0.7rem] bg-black/[0.06] p-0.5">
           <button
             type="button"
             onClick={() => switchMethod('pin')}
-            className={`rounded-md py-1.5 text-sm font-semibold transition ${
+            className={`rounded-lg py-1.5 text-sm font-semibold transition ${
               method === 'pin' ? 'bg-white text-neutral-900 shadow-card' : 'text-neutral-500 hover:text-neutral-700'
             }`}
           >
@@ -199,7 +199,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
           <button
             type="button"
             onClick={() => switchMethod('password')}
-            className={`rounded-md py-1.5 text-sm font-semibold transition ${
+            className={`rounded-lg py-1.5 text-sm font-semibold transition ${
               method === 'password' ? 'bg-white text-neutral-900 shadow-card' : 'text-neutral-500 hover:text-neutral-700'
             }`}
           >
@@ -219,7 +219,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
               inputMode="numeric"
               maxLength={8}
               autoFocus
-              className="rounded-lg border border-neutral-300 px-3 py-2.5 text-center text-lg tracking-[0.6em] text-neutral-900 placeholder:tracking-normal placeholder:text-neutral-400"
+              className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-3 text-center text-lg tracking-[0.6em] text-neutral-900 placeholder:tracking-normal placeholder:text-neutral-400 focus:bg-white focus:border-brand-500/40"
               required
             />
           </label>
@@ -236,7 +236,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
                 autoCapitalize="none"
                 autoComplete="username"
                 autoFocus
-                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
+                className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-brand-500/40"
                 required
               />
             </label>
@@ -247,7 +247,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t('login.passwordPlaceholder')}
                 type="password"
-                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
+                className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-brand-500/40"
                 required
               />
             </label>
@@ -255,7 +255,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
         )}
 
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+          <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700" role="alert">
             {error}
           </p>
         )}
@@ -263,7 +263,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
         <button
           disabled={loading}
           type="submit"
-          className="mt-1 flex items-center justify-center rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-1 flex items-center justify-center rounded-xl bg-brand-600 py-3 text-[15px] font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? t('login.submitting') : t('login.submit')}
         </button>

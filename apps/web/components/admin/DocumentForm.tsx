@@ -107,7 +107,7 @@ export function DocumentForm({ onCreated, onCancel }: Props) {
   const input = 'rounded-lg border border-neutral-300 px-2 py-1.5 text-sm text-neutral-900 focus:border-brand-500';
 
   return (
-    <div className="fixed inset-0 z-40 flex items-start justify-center overflow-auto bg-black/40 p-4">
+    <div className="fixed inset-0 z-40 flex items-start justify-center overflow-auto scrim p-4">
       <div className="flex w-full max-w-4xl flex-col gap-4 rounded-xl bg-white p-5 shadow-xl">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-base font-semibold text-neutral-900">{t('documents.newDocument')}</h2>

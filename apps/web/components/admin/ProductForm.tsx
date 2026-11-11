@@ -141,7 +141,7 @@ export function ProductForm({ initial, onSubmit, onCancel, canViewCostPrice = tr
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-5">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-xl bg-white shadow-card p-5">
       <h3 className="text-base font-semibold text-neutral-900">{initial ? t('productForm.titleEdit') : t('productForm.titleNew')}</h3>
 
       <div className="flex items-center gap-4">

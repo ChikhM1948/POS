@@ -104,17 +104,17 @@ export default function ReportsPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="rounded-xl border border-neutral-200 bg-white p-4 lg:col-span-2">
+            <div className="rounded-xl bg-white shadow-card p-4 lg:col-span-2">
               <h2 className="mb-4 text-sm font-semibold text-neutral-700">{t('reports.revenueByDay')}</h2>
               <RevenueBarChart data={summary.revenueByDay} />
             </div>
-            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <div className="rounded-xl bg-white shadow-card p-4">
               <h2 className="mb-4 text-sm font-semibold text-neutral-700">{t('reports.byPaymentMethod')}</h2>
               <PaymentBreakdown data={summary.revenueByPaymentMethod} />
             </div>
           </div>
 
-          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="rounded-xl bg-white shadow-card p-4">
             <h2 className="mb-3 text-sm font-semibold text-neutral-700">{t('reports.topProducts')}</h2>
             <table className="w-full text-sm">
               <thead className="border-b border-neutral-200 text-start text-xs font-medium text-neutral-500">
@@ -148,11 +148,11 @@ export default function ReportsPage() {
 
           {debts && (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="rounded-xl bg-white shadow-card p-4">
                 <h2 className="mb-3 text-sm font-semibold text-neutral-700">{t('reports.topSuppliers')}</h2>
                 <DebtorTable rows={debts.topSuppliers} formatDZD={formatDZD} t={t} />
               </div>
-              <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="rounded-xl bg-white shadow-card p-4">
                 <h2 className="mb-3 text-sm font-semibold text-neutral-700">{t('reports.topCustomers')}</h2>
                 <DebtorTable rows={debts.topCustomers} formatDZD={formatDZD} t={t} />
               </div>

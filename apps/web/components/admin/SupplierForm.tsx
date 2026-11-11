@@ -37,7 +37,7 @@ export function SupplierForm({ onSubmit, onCancel }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-5">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-xl bg-white shadow-card p-5">
       <h3 className="text-base font-semibold text-neutral-900">{t('supplierForm.title')}</h3>
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">

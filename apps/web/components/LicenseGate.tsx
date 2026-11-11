@@ -195,7 +195,7 @@ export function LicenseGate({ token, canActivate }: Props) {
 
   if (status.expired) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/70 px-4" role="dialog" aria-modal="true">
+      <div className="fixed inset-0 z-50 flex items-center justify-center scrim px-4" role="dialog" aria-modal="true">
         <div className="flex w-full max-w-sm flex-col gap-4 rounded-2xl bg-white p-8">
           <div>
             <h2 className="text-lg font-semibold text-neutral-900">{tx.expiredTitle}</h2>

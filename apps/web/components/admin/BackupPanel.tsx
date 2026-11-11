@@ -110,14 +110,14 @@ export function BackupPanel() {
 
   if (restoring) {
     return (
-      <section className="max-w-xl rounded-xl border border-neutral-200 bg-white p-4 text-sm text-neutral-700">
+      <section className="max-w-xl rounded-xl bg-white shadow-card p-4 text-sm text-neutral-700">
         {t('backup.restoring')}
       </section>
     );
   }
 
   return (
-    <section className="flex max-w-xl flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4 text-sm">
+    <section className="flex max-w-xl flex-col gap-3 rounded-xl bg-white shadow-card p-4 text-sm">
       <h2 className="text-lg font-semibold text-neutral-900">{t('backup.title')}</h2>
       <p className="text-neutral-500">{t('backup.intro')}</p>
 

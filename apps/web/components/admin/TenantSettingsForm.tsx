@@ -110,7 +110,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex max-w-xl flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-5">
+    <form onSubmit={handleSubmit} className="flex max-w-xl flex-col gap-4 rounded-xl bg-white shadow-card p-5">
       <div className="flex items-center gap-4">
         <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-neutral-300 bg-neutral-50">
           {logoUrl ? (

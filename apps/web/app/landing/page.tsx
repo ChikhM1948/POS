@@ -112,7 +112,7 @@ function LanguageMenu({ value, onChange, label }: { value: LandingLocale; onChan
         aria-expanded={open}
         aria-label={`${label}: ${current.name}`}
         onClick={() => setOpen((o) => !o)}
-        className="flex h-10 items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 text-sm font-semibold text-neutral-800 transition hover:bg-neutral-50"
+        className="flex h-10 items-center gap-2 rounded-full bg-black/[0.05] px-3.5 text-sm font-semibold text-neutral-800 transition hover:bg-black/[0.09]"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="hidden h-4 w-4 text-neutral-500 sm:block" aria-hidden="true">
           <circle cx="12" cy="12" r="9" />
@@ -126,7 +126,7 @@ function LanguageMenu({ value, onChange, label }: { value: LandingLocale; onChan
         </svg>
       </button>
       {open && (
-        <ul role="listbox" aria-label={label} className="absolute end-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-popover">
+        <ul role="listbox" aria-label={label} className="absolute end-0 top-full z-50 sheet mt-2 w-52 overflow-hidden rounded-2xl bg-white/90 p-1 shadow-popover backdrop-blur-xl">
           {LANDING_LOCALES.map((l) => {
             const active = l.code === value;
             return (
@@ -138,7 +138,7 @@ function LanguageMenu({ value, onChange, label }: { value: LandingLocale; onChan
                     onChange(l.code);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center gap-3 px-3 py-2.5 text-sm transition hover:bg-neutral-50 ${active ? 'font-semibold text-brand-800' : 'text-neutral-700'}`}
+                  className={`flex w-full items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition hover:bg-black/[0.05] ${active ? 'font-semibold text-brand-800' : 'text-neutral-700'}`}
                 >
                   <Flag code={l.code} className="h-6 w-6" />
                   <span className="flex-1 text-start">{l.name}</span>
@@ -159,11 +159,11 @@ function LanguageMenu({ value, onChange, label }: { value: LandingLocale; onChan
 
 function Screenshot({ src, alt, width, height, priority = false }: { src: string; alt: string; width: number; height: number; priority?: boolean }) {
   return (
-    <figure className="overflow-hidden rounded-xl border border-neutral-300 bg-white">
-      <div dir="ltr" className="flex items-center gap-1.5 border-b border-neutral-200 bg-neutral-100 px-3.5 py-2.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
-        <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
-        <span className="h-2.5 w-2.5 rounded-full bg-neutral-300" />
+    <figure className="overflow-hidden rounded-2xl bg-white shadow-popover ring-1 ring-black/[0.06]">
+      <div dir="ltr" className="flex items-center gap-2 bg-[#f2f2f4] px-4 py-3">
+        <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+        <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
+        <span className="h-3 w-3 rounded-full bg-[#28c840]" />
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={alt} width={width} height={height} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
@@ -217,37 +217,37 @@ export default function LandingPage() {
     { href: '#offline', label: c.nav.offline },
     { href: '#faq', label: c.nav.faq },
   ];
-  const btnPrimary = 'inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700';
-  const btnSecondary = 'inline-flex items-center justify-center rounded-lg border border-neutral-300 bg-white px-5 py-3 text-sm font-semibold text-neutral-800 transition hover:bg-neutral-50';
+  const btnPrimary = 'inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-[15px] font-semibold text-white shadow-card transition hover:bg-brand-700 hover:shadow-lift';
+  const btnSecondary = 'inline-flex items-center justify-center rounded-full bg-black/[0.06] px-6 py-3 text-[15px] font-semibold text-neutral-800 transition hover:bg-black/[0.1]';
 
   const sections = [
     { key: 'pos', data: c.showcase.pos, img: `/screens/pos-${shot}.webp`, w: 1600, h: 958, bg: 'bg-white' },
-    { key: 'stock', data: c.showcase.stock, img: `/screens/stock-${shot}.webp`, w: 1600, h: 1000, bg: 'bg-neutral-50' },
+    { key: 'stock', data: c.showcase.stock, img: `/screens/stock-${shot}.webp`, w: 1600, h: 1000, bg: 'bg-[#f5f5f7]' },
     { key: 'reports', data: c.showcase.reports, img: `/screens/reports-${shot}.webp`, w: 1600, h: 1000, bg: 'bg-white' },
   ] as const;
 
   return (
     <div dir={dir} lang={locale} className="min-h-screen bg-white text-neutral-900">
       {/* En-tête */}
-      <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white">
+      <header className="glass sticky top-0 z-40">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
           <Link href="/landing" aria-label="POS Stock Manager" className="flex shrink-0 items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-wordmark.webp" alt="POS Stock Manager" width={900} height={108} className="h-6 w-auto sm:h-8" />
           </Link>
-          <nav className="ms-8 hidden items-center gap-6 text-sm text-neutral-600 lg:flex" aria-label="Principal">
+          <nav className="ms-8 hidden items-center gap-7 text-[13px] font-medium text-neutral-600 lg:flex" aria-label="Principal">
             {navLinks.map((l) => (
               <a key={l.href} href={l.href} className="hover:text-neutral-900">{l.label}</a>
             ))}
           </nav>
           <div className="ms-auto flex items-center gap-3">
             <LanguageMenu value={locale} onChange={changeLocale} label={c.lang.label} />
-            <Link href="/" className="hidden rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 md:block">
+            <Link href="/" className="hidden rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 md:block">
               {c.nav.open}
             </Link>
             <button
               type="button"
-              className="rounded-lg p-2 text-neutral-700 hover:bg-neutral-100 lg:hidden"
+              className="rounded-full p-2 text-neutral-700 hover:bg-black/[0.05] lg:hidden"
               aria-label={c.nav.menu}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((o) => !o)}
@@ -259,9 +259,9 @@ export default function LandingPage() {
           </div>
         </div>
         {menuOpen && (
-          <div className="border-t border-neutral-200 bg-white px-4 py-2 lg:hidden">
+          <div className="border-t border-black/[0.06] px-4 py-2 lg:hidden">
             {[...navLinks, { href: '/admin', label: c.nav.backoffice }, { href: '/', label: c.nav.open }].map((l) => (
-              <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100">
+              <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-black/[0.05]">
                 {l.label}
               </a>
             ))}
@@ -271,17 +271,17 @@ export default function LandingPage() {
 
       <main>
         {/* Hero */}
-        <section className="border-b border-neutral-200 bg-white">
-          <div className="mx-auto max-w-6xl px-4 pb-16 pt-14 sm:px-6 sm:pt-20">
-            <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight text-brand-800 sm:text-5xl">{c.hero.title}</h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-neutral-600">{c.hero.text}</p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+        <section className="bg-white">
+          <div className="mx-auto max-w-6xl px-4 pb-20 pt-16 text-center sm:px-6 sm:pt-24">
+            <h1 className="sheet mx-auto max-w-4xl text-balance text-4xl font-bold leading-[1.05] tracking-[-0.035em] text-brand-800 sm:text-6xl lg:text-7xl">{c.hero.title}</h1>
+            <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-neutral-500 sm:text-xl">{c.hero.text}</p>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
               <Link href="/" className={btnPrimary}>{c.hero.cta} <Arrow /></Link>
               <Link href="/admin" className={btnSecondary}>{c.hero.ctaSecondary}</Link>
               <a href={DOWNLOAD_URL} download className={btnSecondary}>{c.hero.download}</a>
             </div>
-            <p className="mt-4 text-sm text-neutral-500">{c.hero.note}</p>
-            <div className="mt-12">
+            <p className="mt-5 text-sm text-neutral-400">{c.hero.note}</p>
+            <div className="mx-auto mt-14 max-w-5xl text-start">
               <Screenshot src={`/screens/pos-${shot}.webp`} alt={c.hero.alt} width={1600} height={958} priority />
             </div>
           </div>
@@ -289,11 +289,11 @@ export default function LandingPage() {
 
         {/* Écrans détaillés */}
         {sections.map((s, i) => (
-          <section key={s.key} className={`${s.bg} border-b border-neutral-200 py-16 sm:py-20`}>
+          <section key={s.key} className={`${s.bg} py-20 sm:py-28`}>
             <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_1.35fr] lg:gap-14">
               <div className={i % 2 === 1 ? 'lg:order-2' : ''}>
-                <p className="text-sm font-semibold text-blue-700">{s.data.eyebrow}</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{s.data.title}</h2>
+                <p className="text-sm font-semibold tracking-tight text-blue-700">{s.data.eyebrow}</p>
+                <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{s.data.title}</h2>
                 <p className="mt-4 leading-relaxed text-neutral-600">{s.data.text}</p>
                 <ul className="mt-6 space-y-3">
                   {s.data.points.map((p) => (
@@ -309,15 +309,15 @@ export default function LandingPage() {
         ))}
 
         {/* Installation (démo pas à pas) */}
-        <section id="install" className="scroll-mt-16 border-b border-neutral-200 bg-neutral-50 py-16 sm:py-20">
+        <section id="install" className="scroll-mt-16 bg-[#f5f5f7] py-20 sm:py-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="text-sm font-semibold text-blue-700">{c.install.eyebrow}</p>
-            <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{c.install.title}</h2>
+            <p className="text-sm font-semibold tracking-tight text-blue-700">{c.install.eyebrow}</p>
+            <h2 className="mt-2 max-w-2xl text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.install.title}</h2>
             <p className="mt-4 max-w-2xl leading-relaxed text-neutral-600">{c.install.text}</p>
             <ol className="mt-10 grid gap-8 md:grid-cols-2">
               {c.install.steps.map((s, i) => (
                 <li key={s.title}>
-                  <figure className="overflow-hidden rounded-xl border border-neutral-300 bg-white">
+                  <figure className="overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-black/[0.06]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={`/install/step-${i + 1}.svg`} alt={s.alt} width={960} height={600} loading="lazy" decoding="async" className="block h-auto w-full" />
                   </figure>
@@ -332,7 +332,7 @@ export default function LandingPage() {
               ))}
             </ol>
             <div className="mt-10 grid gap-6 md:grid-cols-2">
-              <div className="rounded-lg border border-neutral-200 bg-white p-5">
+              <div className="surface p-6">
                 <p className="font-semibold text-brand-800">{c.install.reqLabel}</p>
                 <ul className="mt-3 space-y-2 text-sm text-neutral-700">
                   {c.install.req.map((r) => (
@@ -340,7 +340,7 @@ export default function LandingPage() {
                   ))}
                 </ul>
               </div>
-              <div className="rounded-lg border border-amber-300 bg-amber-50 p-5">
+              <div className="rounded-[0.875rem] bg-amber-50 p-6 ring-1 ring-amber-200">
                 <p className="font-semibold text-amber-900">{c.install.warnTitle}</p>
                 <p className="mt-2 text-sm leading-relaxed text-amber-900/80">{c.install.warn}</p>
               </div>
@@ -352,13 +352,13 @@ export default function LandingPage() {
         </section>
 
         {/* Fonctionnalités */}
-        <section id="features" className="scroll-mt-16 border-b border-neutral-200 bg-neutral-50 py-16 sm:py-20">
+        <section id="features" className="scroll-mt-16 bg-[#f5f5f7] py-20 sm:py-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="text-sm font-semibold text-blue-700">{c.features.eyebrow}</p>
-            <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{c.features.title}</h2>
-            <dl className="mt-10 grid gap-x-10 sm:grid-cols-2">
+            <p className="text-sm font-semibold tracking-tight text-blue-700">{c.features.eyebrow}</p>
+            <h2 className="mt-2 max-w-2xl text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.features.title}</h2>
+            <dl className="mt-12 grid gap-4 sm:grid-cols-2">
               {c.features.items.map((f) => (
-                <div key={f.title} className="border-t border-neutral-300 py-5">
+                <div key={f.title} className="surface p-6 transition duration-200 ease-spring hover:-translate-y-0.5 hover:shadow-lift">
                   <dt className="font-semibold text-brand-800">{f.title}</dt>
                   <dd className="mt-1 text-sm text-neutral-600">{f.text}</dd>
                 </div>
@@ -368,14 +368,14 @@ export default function LandingPage() {
         </section>
 
         {/* Marque blanche */}
-        <section id="whitelabel" className="scroll-mt-16 border-b border-neutral-200 bg-white py-16 sm:py-20">
+        <section id="whitelabel" className="scroll-mt-16 bg-white py-20 sm:py-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="text-sm font-semibold text-blue-700">{c.whitelabel.eyebrow}</p>
-            <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{c.whitelabel.title}</h2>
+            <p className="text-sm font-semibold tracking-tight text-blue-700">{c.whitelabel.eyebrow}</p>
+            <h2 className="mt-2 max-w-2xl text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.whitelabel.title}</h2>
             <p className="mt-4 max-w-2xl leading-relaxed text-neutral-600">{c.whitelabel.text}</p>
             <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {c.whitelabel.items.map((f) => (
-                <li key={f.title} className="border-t-2 border-brand-600 pt-4">
+                <li key={f.title} className="surface p-6 transition duration-200 ease-spring hover:-translate-y-0.5 hover:shadow-lift">
                   <h3 className="font-semibold text-brand-800">{f.title}</h3>
                   <p className="mt-1 text-sm text-neutral-600">{f.text}</p>
                 </li>
@@ -385,19 +385,19 @@ export default function LandingPage() {
         </section>
 
         {/* Tarif */}
-        <section id="pricing" className="scroll-mt-16 border-b border-neutral-200 bg-neutral-50 py-16 sm:py-20">
+        <section id="pricing" className="scroll-mt-16 bg-[#f5f5f7] py-20 sm:py-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="text-sm font-semibold text-blue-700">{c.pricing.eyebrow}</p>
-            <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{c.pricing.title}</h2>
+            <p className="text-sm font-semibold tracking-tight text-blue-700">{c.pricing.eyebrow}</p>
+            <h2 className="mt-2 max-w-2xl text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.pricing.title}</h2>
             <div className="mt-10 grid gap-6 md:grid-cols-2">
-              <div className="rounded-lg border border-neutral-200 bg-white p-6">
+              <div className="rounded-3xl bg-white p-8 shadow-card">
                 <p className="text-sm font-semibold text-neutral-500">{c.pricing.trialLabel}</p>
-                <p className="mt-2 text-4xl font-bold text-brand-800">{c.pricing.trialValue}</p>
+                <p className="mt-2 text-5xl font-bold tracking-[-0.03em] text-brand-800">{c.pricing.trialValue}</p>
                 <p className="mt-3 text-sm text-neutral-600">{c.pricing.trialText}</p>
               </div>
-              <div className="rounded-lg border-2 border-brand-600 bg-white p-6">
+              <div className="rounded-3xl bg-white p-8 shadow-lift ring-2 ring-brand-600">
                 <p className="text-sm font-semibold text-neutral-500">{c.pricing.lifetimeLabel}</p>
-                <p className="mt-2 flex items-baseline gap-2 text-4xl font-bold text-brand-800">
+                <p className="mt-2 flex items-baseline gap-2 text-5xl font-bold tracking-[-0.03em] text-brand-800">
                   <bdi dir="ltr">{c.pricing.price}</bdi> <span className="text-lg">{c.pricing.currency}</span>
                   <span className="text-sm font-medium text-neutral-500">· {c.pricing.once}</span>
                 </p>
@@ -423,14 +423,14 @@ export default function LandingPage() {
         </section>
 
         {/* Comment ça marche */}
-        <section id="how" className="scroll-mt-16 border-b border-neutral-200 bg-white py-16 sm:py-20">
+        <section id="how" className="scroll-mt-16 bg-white py-20 sm:py-28">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="text-sm font-semibold text-blue-700">{c.how.eyebrow}</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{c.how.title}</h2>
+            <p className="text-sm font-semibold tracking-tight text-blue-700">{c.how.eyebrow}</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.how.title}</h2>
             <ol className="mt-10 grid gap-8 md:grid-cols-3">
               {c.how.steps.map((s, i) => (
-                <li key={s.title} className="border-t-2 border-brand-600 pt-5">
-                  <span className="text-sm font-semibold text-neutral-500">0{i + 1}</span>
+                <li key={s.title} className="surface p-6">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">{i + 1}</span>
                   <h3 className="mt-1 text-lg font-semibold text-brand-800">{s.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-neutral-600">{s.text}</p>
                 </li>
@@ -440,11 +440,11 @@ export default function LandingPage() {
         </section>
 
         {/* Hors-ligne */}
-        <section id="offline" className="scroll-mt-16 bg-brand-800 py-16 text-white sm:py-20">
+        <section id="offline" className="scroll-mt-16 bg-brand-900 py-20 text-white sm:py-24">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-2">
             <div>
               <p className="text-sm font-semibold text-blue-300">{c.offline.eyebrow}</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{c.offline.title}</h2>
+              <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">{c.offline.title}</h2>
               <p className="mt-4 leading-relaxed text-brand-300">{c.offline.text}</p>
             </div>
             <ul className="divide-y divide-white/15 border-y border-white/15">
@@ -459,11 +459,11 @@ export default function LandingPage() {
         </section>
 
         {/* FAQ */}
-        <section id="faq" className="scroll-mt-16 border-b border-neutral-200 bg-white py-16 sm:py-20">
+        <section id="faq" className="scroll-mt-16 bg-white py-20 sm:py-28">
           <div className="mx-auto max-w-3xl px-4 sm:px-6">
-            <p className="text-sm font-semibold text-blue-700">{c.faq.eyebrow}</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{c.faq.title}</h2>
-            <div className="mt-8 divide-y divide-neutral-200 border-y border-neutral-200">
+            <p className="text-sm font-semibold tracking-tight text-blue-700">{c.faq.eyebrow}</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.faq.title}</h2>
+            <div className="mt-8 divide-y divide-black/[0.08] border-y border-black/[0.08]">
               {c.faq.items.map((item) => (
                 <details key={item.q} className="group py-4">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-brand-800 [&::-webkit-details-marker]:hidden">
@@ -478,11 +478,11 @@ export default function LandingPage() {
         </section>
 
         {/* Contact */}
-        <section id="contact" className="scroll-mt-16 border-b border-neutral-200 bg-neutral-50 py-16 sm:py-20">
+        <section id="contact" className="scroll-mt-16 bg-[#f5f5f7] py-20 sm:py-28">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-2">
             <div>
-              <p className="text-sm font-semibold text-blue-700">{c.contact.eyebrow}</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{c.contact.title}</h2>
+              <p className="text-sm font-semibold tracking-tight text-blue-700">{c.contact.eyebrow}</p>
+              <h2 className="mt-2 text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.contact.title}</h2>
               <p className="mt-4 leading-relaxed text-neutral-600">{c.contact.text}</p>
               <div className="mt-6">
                 {WHATSAPP_NUMBER ? (
@@ -494,7 +494,7 @@ export default function LandingPage() {
                 )}
               </div>
             </div>
-            <dl className="divide-y divide-neutral-200 border-y border-neutral-200 bg-white px-5 text-sm">
+            <dl className="surface divide-y divide-black/[0.06] px-6 text-sm">
               <div className="py-4">
                 <dt className="font-semibold text-brand-800">{c.contact.hoursLabel}</dt>
                 <dd className="mt-1 text-neutral-600">{c.contact.hours}</dd>
@@ -518,10 +518,10 @@ export default function LandingPage() {
         </section>
 
         {/* Appel à l'action */}
-        <section className="bg-neutral-50 py-16 sm:py-20">
+        <section className="bg-[#f5f5f7] py-20 sm:py-28">
           <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 sm:px-6 md:flex-row md:items-center">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-brand-800 sm:text-3xl">{c.cta.title}</h2>
+              <h2 className="text-3xl font-bold tracking-[-0.03em] text-brand-800 sm:text-4xl">{c.cta.title}</h2>
               <p className="mt-2 text-neutral-600">{c.cta.text}</p>
             </div>
             <Link href="/" className={btnPrimary}>{c.cta.button} <Arrow /></Link>
@@ -529,7 +529,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-neutral-200 bg-white">
+      <footer className="border-t border-black/[0.08] bg-[#f5f5f7]">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-neutral-600 sm:px-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}

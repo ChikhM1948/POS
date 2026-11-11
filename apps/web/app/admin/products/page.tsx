@@ -133,7 +133,7 @@ export default function ProductsPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {pending && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setPending(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center scrim p-4" onClick={() => setPending(null)}>
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <p className="text-sm text-neutral-800">
               {pending.kind === 'delete'
@@ -164,7 +164,7 @@ export default function ProductsPage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-card">
+      <div className="overflow-x-auto rounded-xl bg-white shadow-card">
         <table className="w-full text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-start text-xs font-medium text-neutral-500">
             <tr>

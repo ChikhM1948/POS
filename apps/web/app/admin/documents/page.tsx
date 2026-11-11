@@ -93,7 +93,7 @@ export default function DocumentsPage() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+      <div className="overflow-x-auto rounded-xl bg-white shadow-card">
         <table className="w-full min-w-[40rem] text-sm">
           <thead>
             <tr className="border-b border-neutral-200 text-xs text-neutral-500">

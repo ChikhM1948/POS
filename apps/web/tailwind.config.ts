@@ -8,9 +8,10 @@ const config: Config = {
         sans: [
           'var(--font-inter)',
           'var(--font-tajawal)',
+          '-apple-system',
+          'BlinkMacSystemFont',
           'ui-sans-serif',
           'system-ui',
-          '-apple-system',
           'Segoe UI',
           'Roboto',
           'Helvetica Neue',
@@ -36,13 +37,28 @@ const config: Config = {
         accent: 'rgb(var(--accent) / <alpha-value>)',
       },
       boxShadow: {
-        card: '0 1px 2px 0 rgb(15 23 42 / 0.04)',
-        popover: '0 8px 24px -8px rgb(15 23 42 / 0.16)',
+        // Ombres en couches (contact + ambiante), comme les surfaces Apple : plus la surface est grande, plus elle est épaisse.
+        card: '0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 8px -2px rgb(0 0 0 / 0.05)',
+        popover: '0 0 0 0.5px rgb(0 0 0 / 0.08), 0 4px 12px rgb(0 0 0 / 0.06), 0 24px 56px -12px rgb(0 0 0 / 0.28)',
+        lift: '0 0 0 0.5px rgb(0 0 0 / 0.08), 0 4px 10px rgb(0 0 0 / 0.06), 0 14px 28px -10px rgb(0 0 0 / 0.14)',
       },
       borderRadius: {
-        lg: '0.375rem',
-        xl: '0.5rem',
-        '2xl': '0.625rem',
+        md: '0.5rem',
+        lg: '0.625rem',
+        xl: '0.875rem',
+        '2xl': '1.25rem',
+      },
+      transitionTimingFunction: {
+        // Ressort critique amorti (damping 1.0) : aucun rebond sur l'UI courante.
+        spring: 'cubic-bezier(0.32, 0.72, 0, 1)',
+      },
+      keyframes: {
+        'sheet-in': { from: { opacity: '0', transform: 'translateY(12px) scale(0.97)' }, to: { opacity: '1', transform: 'none' } },
+        'scrim-in': { from: { opacity: '0' }, to: { opacity: '1' } },
+      },
+      animation: {
+        'sheet-in': 'sheet-in 360ms cubic-bezier(0.32, 0.72, 0, 1) both',
+        'scrim-in': 'scrim-in 240ms ease-out both',
       },
     },
   },

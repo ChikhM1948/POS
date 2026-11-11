@@ -26,17 +26,17 @@ export function WeightModal({ name, unit, unitPriceCents, initialQuantity, onCan
   const valid = quantity > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center scrim p-4">
       <form
         onSubmit={(e) => {
           e.preventDefault();
           if (valid) onConfirm(quantity);
         }}
-        className="flex w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-popover"
+        className="flex w-full max-w-sm flex-col sheet overflow-hidden rounded-2xl bg-white shadow-popover"
       >
-        <div className="flex items-center justify-between bg-neutral-900 px-5 py-4 text-white">
+        <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4 text-neutral-900">
           <p className="text-sm font-semibold">{t('weightModal.title', { name })}</p>
-          <button type="button" onClick={onCancel} className="rounded-lg p-1 text-neutral-300 transition hover:bg-white/10 hover:text-white">
+          <button type="button" onClick={onCancel} className="rounded-lg p-1 bg-neutral-100 text-neutral-500 transition hover:bg-neutral-200 hover:text-neutral-900">
             <IconX className="h-5 w-5" />
           </button>
         </div>

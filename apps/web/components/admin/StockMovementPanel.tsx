@@ -119,7 +119,7 @@ export function StockMovementPanel({ storeId, product, onClose, onMovementCreate
   }
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-4">
+    <div className="rounded-xl bg-white shadow-card p-4">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-base font-semibold text-neutral-900">
           {product.name.fr}{' '}

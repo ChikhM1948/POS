@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   // côté client une fois la préférence lue depuis localStorage (voir lib/i18n/LanguageContext.tsx).
   return (
     <html lang="fr" dir="ltr" className={`${inter.variable} ${tajawal.variable}`} suppressHydrationWarning>
-      <body className="min-h-screen bg-neutral-50 font-sans text-neutral-900 antialiased" suppressHydrationWarning>
+      <body className="min-h-screen bg-[#f5f5f7] font-sans text-neutral-900 antialiased" suppressHydrationWarning>
         <LanguageProvider>
           <BrandingProvider>{children}</BrandingProvider>
           <ServiceWorkerRegister />

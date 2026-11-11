@@ -65,7 +65,7 @@ export function LedgerPanel({ title, ledgerPath, paymentPath, debtPath, addDebtL
   }
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-4">
+    <div className="rounded-xl bg-white shadow-card p-4">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-base font-semibold text-neutral-900">{title}</h3>
         <button onClick={onClose} className="text-sm font-medium text-neutral-500 hover:text-neutral-700">

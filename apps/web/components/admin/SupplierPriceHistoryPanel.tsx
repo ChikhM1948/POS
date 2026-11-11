@@ -30,7 +30,7 @@ export function SupplierPriceHistoryPanel({ supplierId, supplierName, onClose }:
   }, [session, supplierId]);
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-4">
+    <div className="rounded-xl bg-white shadow-card p-4">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="font-semibold text-neutral-900">{t('priceHistory.title', { name: supplierName })}</h3>
         <button onClick={onClose} className="text-sm font-medium text-neutral-500 hover:text-neutral-700">{t('common.close')}</button>

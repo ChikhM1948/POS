@@ -43,9 +43,9 @@ export default function SuperAdminPage() {
   if (LOCAL_MODE || !ready) return null;
   const signOut = () => { try { sessionStorage.removeItem(SESSION_KEY); } catch { /* ignore */ } setToken(null); };
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-4 py-8">
+    <main className="auth-bg min-h-screen"><div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       {token ? <Console token={token} onSignOut={signOut} /> : <Login onToken={(t) => { try { sessionStorage.setItem(SESSION_KEY, t); } catch { /* ignore */ } setToken(t); }} />}
-    </main>
+    </div></main>
   );
 }
 
@@ -66,14 +66,14 @@ function Login({ onToken }: { onToken: (t: string) => void }) {
   }
 
   return (
-    <form onSubmit={submit} className="mx-auto mt-24 flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-8">
-      <h1 className="text-lg font-semibold text-neutral-900">Super administrateur</h1>
+    <form onSubmit={submit} className="sheet mx-auto mt-24 flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-white/90 p-9 shadow-popover ring-1 ring-black/[0.04] backdrop-blur-xl">
+      <h1 className="text-2xl font-semibold tracking-[-0.025em] text-neutral-900">Super administrateur</h1>
       <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="username" placeholder="Email" required
-        className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900" />
+        className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500/40 focus:bg-white" />
       <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="current-password" placeholder="Mot de passe" required
-        className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900" />
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{error}</p>}
-      <button disabled={busy} className="rounded-lg bg-brand-600 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
+        className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500/40 focus:bg-white" />
+      {error && <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700" role="alert">{error}</p>}
+      <button disabled={busy} className="rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:opacity-50">
         {busy ? 'Connexion…' : 'Se connecter'}
       </button>
     </form>
@@ -84,11 +84,11 @@ function Console({ token, onSignOut }: { token: string; onSignOut: () => void })
   const [tab, setTab] = useState<'keys' | 'stores'>('keys');
   return (
     <div className="flex flex-col gap-6">
-      <nav className="flex gap-2 border-b border-neutral-200 text-sm">
+      <nav className="glass sticky top-3 z-20 flex items-center gap-1 rounded-2xl p-1.5 text-sm shadow-card ring-1 ring-black/[0.05]">
         {([['keys', "Clés d'activation"], ['stores', 'Magasins']] as const).map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} className={`-mb-px border-b-2 px-3 py-2 ${tab === id ? 'border-brand-600 font-medium text-neutral-900' : 'border-transparent text-neutral-500'}`}>{label}</button>
+          <button key={id} onClick={() => setTab(id)} className={`rounded-xl px-4 py-2 font-medium transition ${tab === id ? 'bg-white text-neutral-900 shadow-card' : 'text-neutral-500 hover:bg-black/[0.04] hover:text-neutral-900'}`}>{label}</button>
         ))}
-        <button onClick={onSignOut} className="ms-auto px-3 py-2 text-neutral-500 underline underline-offset-2">Déconnexion</button>
+        <button onClick={onSignOut} className="ms-auto rounded-xl px-4 py-2 font-medium text-neutral-500 transition hover:bg-black/[0.05] hover:text-neutral-900">Déconnexion</button>
       </nav>
       {tab === 'keys' ? <KeysPanel token={token} onSignOut={onSignOut} /> : <StoresPanel token={token} onSignOut={onSignOut} />}
     </div>
@@ -118,27 +118,27 @@ function StoresPanel({ token, onSignOut }: { token: string; onSignOut: () => voi
   const kindLabel = (k: Kind) => (k === 'lifetime' ? 'À vie' : k === 'paid' ? 'Payante' : 'Essai');
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-neutral-900">Magasins enregistrés</h1>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher par nom" className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900" />
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{error}</p>}
-      <div className="overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
+      <h1 className="text-3xl font-bold tracking-[-0.03em] text-neutral-900">Magasins enregistrés</h1>
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher par nom" className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500/40 focus:bg-white" />
+      {error && <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700" role="alert">{error}</p>}
+      <div className="overflow-x-auto rounded-2xl bg-white shadow-card">
         <table className="w-full text-start text-sm">
-          <thead className="bg-neutral-50 text-xs uppercase text-neutral-500">
-            <tr>{['Magasin', 'Statut', 'Licence', 'Expire', 'Clés', 'Créé le'].map((h) => <th key={h} className="px-3 py-2 text-start font-medium">{h}</th>)}</tr>
+          <thead className="bg-black/[0.03] text-[11px] uppercase tracking-wider text-neutral-500">
+            <tr>{['Magasin', 'Statut', 'Licence', 'Expire', 'Clés', 'Créé le'].map((h) => <th key={h} className="px-4 py-3 text-start font-semibold">{h}</th>)}</tr>
           </thead>
           <tbody>
             {stores.map((s) => (
-              <tr key={s.id} className="border-t border-neutral-100 align-top">
-                <td className="px-3 py-2"><div className="font-medium text-neutral-900">{s.name}</div><div className="text-xs text-neutral-400">{s.slug}</div></td>
-                <td className="px-3 py-2">{s.status}</td>
-                <td className="px-3 py-2">{s.license ? kindLabel(s.license.kind) : '—'}</td>
-                <td className="px-3 py-2">{fmt(s.license?.expiresAt)}</td>
-                <td dir="ltr" className="px-3 py-2 font-mono text-xs">
+              <tr key={s.id} className="border-t border-black/[0.06] transition hover:bg-black/[0.02] align-top">
+                <td className="px-4 py-3"><div className="font-medium text-neutral-900">{s.name}</div><div className="text-xs text-neutral-400">{s.slug}</div></td>
+                <td className="px-4 py-3">{s.status}</td>
+                <td className="px-4 py-3">{s.license ? kindLabel(s.license.kind) : '—'}</td>
+                <td className="px-4 py-3">{fmt(s.license?.expiresAt)}</td>
+                <td dir="ltr" className="px-4 py-3 font-mono text-xs">
                   {s.keys.length === 0 ? <span className="text-neutral-400">—</span> : s.keys.map((k) => (
                     <div key={k.key} className={k.revoked ? 'text-neutral-400 line-through' : ''}>{k.key} <span className="font-sans text-neutral-500">· {k.used ? 'utilisée' : 'réservée'}</span></div>
                   ))}
                 </td>
-                <td className="px-3 py-2">{fmt(s.createdAt)}</td>
+                <td className="px-4 py-3">{fmt(s.createdAt)}</td>
               </tr>
             ))}
             {stores.length === 0 && <tr><td colSpan={6} className="px-3 py-6 text-center text-neutral-400">Aucun magasin.</td></tr>}
@@ -198,12 +198,12 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
     try { await call(token, '/admin/revoke', { method: 'POST', body: JSON.stringify({ key }) }); await load(); } catch (err) { fail(err); }
   }
 
-  const input = 'rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900';
+  const input = 'rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500/40 focus:bg-white';
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold text-neutral-900">Clés d'activation</h1>
+      <h1 className="text-3xl font-bold tracking-[-0.03em] text-neutral-900">Clés d'activation</h1>
 
-      <form onSubmit={generate} className="grid gap-3 rounded-2xl border border-neutral-200 bg-white p-5 sm:grid-cols-6">
+      <form onSubmit={generate} className="grid gap-3 rounded-2xl bg-white p-5 shadow-card sm:grid-cols-6">
         <StoreSelect token={token} value={store} onChange={setStore} className={input} />
         <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as Kind })} className={input}>
           <option value="trial">Essai (14 j)</option>
@@ -213,13 +213,13 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
         <input type="number" min={1} max={200} value={form.count} onChange={(e) => setForm({ ...form, count: Number(e.target.value) })} className={input} aria-label="Nombre de clés" />
         <input type="number" min={1} max={36500} value={form.durationDays} onChange={(e) => setForm({ ...form, durationDays: e.target.value })} placeholder="Durée (jours) — défaut" className={input} />
         <input value={form.note} maxLength={200} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Note (client…)" className={input} />
-        <button disabled={busy} className="rounded-lg bg-brand-600 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">{busy ? '…' : 'Générer'}</button>
+        <button disabled={busy} className="rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:opacity-50">{busy ? '…' : 'Générer'}</button>
       </form>
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{error}</p>}
+      {error && <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700" role="alert">{error}</p>}
 
       {fresh.length > 0 && (
-        <div className="rounded-2xl border border-green-200 bg-green-50 p-5">
+        <div className="rounded-2xl bg-green-50 p-5 ring-1 ring-green-200">
           <div className="mb-2 flex items-center justify-between text-sm font-medium text-green-900">
             <span>{fresh.length} clé{fresh.length > 1 ? 's' : ''} générée{fresh.length > 1 ? 's' : ''}</span>
             <button onClick={() => void navigator.clipboard?.writeText(fresh.join('\n'))} className="underline underline-offset-2">Copier</button>
@@ -238,22 +238,22 @@ function KeysPanel({ token, onSignOut }: { token: string; onSignOut: () => void 
         </select>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
+      <div className="overflow-x-auto rounded-2xl bg-white shadow-card">
         <table className="w-full text-start text-sm">
-          <thead className="bg-neutral-50 text-xs uppercase text-neutral-500">
-            <tr>{['Clé', 'Type', 'État', 'Magasin', 'Activée', 'Expire', 'Note', ''].map((h) => <th key={h} className="px-3 py-2 text-start font-medium">{h}</th>)}</tr>
+          <thead className="bg-black/[0.03] text-[11px] uppercase tracking-wider text-neutral-500">
+            <tr>{['Clé', 'Type', 'État', 'Magasin', 'Activée', 'Expire', 'Note', ''].map((h) => <th key={h} className="px-4 py-3 text-start font-semibold">{h}</th>)}</tr>
           </thead>
           <tbody>
             {keys.map((k) => (
-              <tr key={k.key} className="border-t border-neutral-100">
-                <td dir="ltr" className="select-all px-3 py-2 font-mono text-xs">{k.key}</td>
-                <td className="px-3 py-2">{k.kind === 'lifetime' ? 'À vie' : k.kind === 'paid' ? 'Payante' : 'Essai'} · {k.durationDays} j</td>
-                <td className="px-3 py-2">{stateOf(k)}{k.redeemedAt && !k.revoked && !k.boundTo ? ' (déliée)' : ''}</td>
-                <td className="px-3 py-2"><TenantPicker token={token} current={k.assignedTenantName} disabled={k.revoked} onPick={(id) => void assign(k.key, id)} /></td>
-                <td className="px-3 py-2">{fmt(k.redeemedAt)}</td>
-                <td className="px-3 py-2">{fmt(k.expiresAt)}</td>
-                <td className="px-3 py-2 text-neutral-500">{k.note ?? ''}</td>
-                <td className="space-x-3 whitespace-nowrap px-3 py-2 text-end">
+              <tr key={k.key} className="border-t border-black/[0.06] transition hover:bg-black/[0.02]">
+                <td dir="ltr" className="select-all px-4 py-3 font-mono text-xs">{k.key}</td>
+                <td className="px-4 py-3">{k.kind === 'lifetime' ? 'À vie' : k.kind === 'paid' ? 'Payante' : 'Essai'} · {k.durationDays} j</td>
+                <td className="px-4 py-3">{stateOf(k)}{k.redeemedAt && !k.revoked && !k.boundTo ? ' (déliée)' : ''}</td>
+                <td className="px-4 py-3"><TenantPicker token={token} current={k.assignedTenantName} disabled={k.revoked} onPick={(id) => void assign(k.key, id)} /></td>
+                <td className="px-4 py-3">{fmt(k.redeemedAt)}</td>
+                <td className="px-4 py-3">{fmt(k.expiresAt)}</td>
+                <td className="px-4 py-3 text-neutral-500">{k.note ?? ''}</td>
+                <td className="space-x-3 whitespace-nowrap px-4 py-3 text-end">
                   {!k.revoked && k.kind !== 'trial' && k.boundTo?.startsWith('device:') && <button onClick={() => void resetBinding(k.key)} className="text-neutral-600 underline underline-offset-2">Délier</button>}
                   {!k.revoked && <button onClick={() => void revoke(k.key)} className="text-red-600 underline underline-offset-2">Révoquer</button>}
                 </td>
@@ -291,14 +291,14 @@ function TenantPicker({ token, current, disabled, onPick }: { token: string; cur
   return (
     <div className="relative">
       <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)} placeholder="Nom du magasin…"
-        className="w-44 rounded-lg border border-neutral-300 px-2 py-1 text-sm" />
-      <ul className="absolute z-10 mt-1 max-h-56 w-56 overflow-auto rounded-lg border border-neutral-200 bg-white shadow-lg">
-        {current && <li><button className="w-full px-3 py-1.5 text-start text-red-600 hover:bg-neutral-50" onClick={() => { setOpen(false); onPick(null); }}>Retirer l'attribution</button></li>}
+        className="w-44 rounded-lg border border-transparent bg-black/[0.05] px-2.5 py-1.5 text-sm focus:bg-white" />
+      <ul className="absolute z-10 mt-1 max-h-56 w-56 overflow-auto sheet rounded-xl bg-white/95 p-1 shadow-popover backdrop-blur-xl">
+        {current && <li><button className="w-full px-3 py-1.5 text-start text-red-600 hover:bg-black/[0.05] rounded-lg" onClick={() => { setOpen(false); onPick(null); }}>Retirer l'attribution</button></li>}
         {opts.map((t) => (
-          <li key={t.id}><button className="w-full px-3 py-1.5 text-start hover:bg-neutral-50" onClick={() => { setOpen(false); onPick(t.id); }}>{t.name} <span className="text-xs text-neutral-400">{t.slug}</span></button></li>
+          <li key={t.id}><button className="w-full px-3 py-1.5 text-start hover:bg-black/[0.05] rounded-lg" onClick={() => { setOpen(false); onPick(t.id); }}>{t.name} <span className="text-xs text-neutral-400">{t.slug}</span></button></li>
         ))}
-        {opts.length === 0 && <li className="px-3 py-2 text-neutral-400">Aucun résultat</li>}
-        <li><button className="w-full border-t px-3 py-1.5 text-start text-neutral-500 hover:bg-neutral-50" onClick={() => setOpen(false)}>Annuler</button></li>
+        {opts.length === 0 && <li className="px-4 py-3 text-neutral-400">Aucun résultat</li>}
+        <li><button className="w-full border-t border-black/[0.06] px-3 py-1.5 text-start text-neutral-500 hover:bg-black/[0.05] rounded-lg" onClick={() => setOpen(false)}>Annuler</button></li>
       </ul>
     </div>
   );
@@ -326,11 +326,11 @@ function StoreSelect({ token, value, onChange, className }: { token: string; val
         <button type="button" onClick={() => setOpen(true)} className={`${className} w-full text-start ${value ? '' : 'text-neutral-400'}`}>{value ? value.name : 'Magasin (obligatoire)'}</button>
       )}
       {open && (
-        <ul className="absolute z-10 mt-1 max-h-56 w-full min-w-56 overflow-auto rounded-lg border border-neutral-200 bg-white shadow-lg">
+        <ul className="absolute z-10 mt-1 max-h-56 w-full min-w-56 overflow-auto sheet rounded-xl bg-white/95 p-1 shadow-popover backdrop-blur-xl">
           {opts.map((t) => (
-            <li key={t.id}><button type="button" className="w-full px-3 py-1.5 text-start hover:bg-neutral-50" onClick={() => { onChange(t); setOpen(false); setQ(''); }}>{t.name} <span className="text-xs text-neutral-400">{t.slug}</span></button></li>
+            <li key={t.id}><button type="button" className="w-full px-3 py-1.5 text-start hover:bg-black/[0.05] rounded-lg" onClick={() => { onChange(t); setOpen(false); setQ(''); }}>{t.name} <span className="text-xs text-neutral-400">{t.slug}</span></button></li>
           ))}
-          {opts.length === 0 && <li className="px-3 py-2 text-neutral-400">Aucun résultat</li>}
+          {opts.length === 0 && <li className="px-4 py-3 text-neutral-400">Aucun résultat</li>}
         </ul>
       )}
     </div>

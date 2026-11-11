@@ -7,7 +7,7 @@ export function BrandMark({ size = 36 }: { size?: number }) {
   if (branding.logoUrl) {
     return (
       <div
-        className="flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white"
+        className="flex shrink-0 items-center justify-center overflow-hidden rounded-[22%] bg-white shadow-card"
         style={{ width: size, height: size }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -17,7 +17,7 @@ export function BrandMark({ size = 36 }: { size?: number }) {
   }
   return (
     <div
-      className="flex shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white"
+      className="flex shrink-0 items-center justify-center rounded-[22%] bg-gradient-to-b from-brand-500 to-brand-700 text-white shadow-card"
       style={{ width: size, height: size }}
     >
       <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

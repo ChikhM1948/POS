@@ -52,18 +52,18 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center auth-bg px-4 py-12">
       <div className="absolute top-4 end-4">
         <LanguageSwitcher />
       </div>
       <form
         onSubmit={handleSubmit}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-8"
+        className="flex w-full max-w-sm flex-col gap-4 sheet rounded-3xl bg-white/90 p-9 shadow-popover ring-1 ring-black/[0.04] backdrop-blur-xl"
       >
         <div className="mb-1 flex flex-col items-center gap-3 text-center">
-          <BrandMark size={44} />
+          <BrandMark size={60} />
           <div>
-            <h1 className="text-lg font-semibold text-neutral-900">{t('adminLogin.title')}</h1>
+            <h1 className="text-2xl font-semibold tracking-[-0.025em] text-neutral-900">{t('adminLogin.title')}</h1>
             <p className="text-sm text-neutral-500">{t('adminLogin.subtitle')}</p>
           </div>
         </div>
@@ -78,7 +78,7 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
             inputMode="email"
             autoCapitalize="none"
             autoComplete="username"
-            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
+            className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-brand-500/40"
             required
           />
         </label>
@@ -89,13 +89,13 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
             onChange={(e) => setPassword(e.target.value)}
             placeholder={t('adminLogin.passwordPlaceholder')}
             type="password"
-            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400"
+            className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-brand-500/40"
             required
           />
         </label>
 
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+          <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700" role="alert">
             {error}
           </p>
         )}
@@ -103,7 +103,7 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
         <button
           disabled={loading}
           type="submit"
-          className="mt-1 flex items-center justify-center rounded-lg bg-brand-600 py-2.5 text-sm font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-1 flex items-center justify-center rounded-xl bg-brand-600 py-3 text-[15px] font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? t('adminLogin.submitting') : t('adminLogin.submit')}
         </button>

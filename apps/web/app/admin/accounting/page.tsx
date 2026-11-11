@@ -144,7 +144,7 @@ export default function AccountingPage() {
             <StatTile label={t('accounting.stampDuty')} value={money(summary.stampDutyCents)} />
           </div>
 
-          <section className="rounded-xl border border-neutral-200 bg-white p-4">
+          <section className="rounded-xl bg-white shadow-card p-4">
             <h2 className="mb-2 text-sm font-semibold text-neutral-800">{t('accounting.vatByRate')}</h2>
             <table className="w-full text-sm">
               <thead>
@@ -175,7 +175,7 @@ export default function AccountingPage() {
           </section>
 
           {summary.byMonth.length > 1 && (
-            <section className="rounded-xl border border-neutral-200 bg-white p-4">
+            <section className="rounded-xl bg-white shadow-card p-4">
               <h2 className="mb-2 text-sm font-semibold text-neutral-800">{t('accounting.vatByMonth')}</h2>
               <table className="w-full text-sm">
                 <thead>
@@ -200,7 +200,7 @@ export default function AccountingPage() {
             </section>
           )}
 
-          <section className="rounded-xl border border-neutral-200 bg-white p-4 print:hidden">
+          <section className="rounded-xl bg-white shadow-card p-4 print:hidden">
             <h2 className="mb-2 text-sm font-semibold text-neutral-800">
               {t('accounting.journal')} <span className="font-normal text-neutral-500">· {t('accounting.journalHint', { count: entries!.length })}</span>
             </h2>

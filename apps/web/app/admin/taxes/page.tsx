@@ -96,7 +96,7 @@ export default function TaxesPage() {
             <StatTile label={t('taxes.turnoverTtc')} value={money(data.totalTtcCents)} />
             <StatTile label={t('taxes.stampDuty')} value={money(data.stampDutyCents)} hint={`${t('taxes.cashPart')} ${money(data.cashCents)}`} />
           </div>
-          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="rounded-xl bg-white shadow-card p-4">
             <h2 className="mb-3 text-sm font-semibold text-neutral-700">{t('taxes.g50Table')}</h2>
             <table className="w-full text-sm">
               <thead className="border-b border-neutral-200 text-start text-xs font-medium text-neutral-500">
@@ -161,7 +161,7 @@ export default function TaxesPage() {
               </>
             );
           })()}
-          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="rounded-xl bg-white shadow-card p-4">
             <h2 className="mb-3 text-sm font-semibold text-neutral-700">{t('taxes.monthly')}</h2>
             <table className="w-full text-sm">
               <thead className="border-b border-neutral-200 text-xs font-medium text-neutral-500">
