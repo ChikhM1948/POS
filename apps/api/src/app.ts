@@ -17,6 +17,7 @@ import { requireAuth, requireRole } from './middleware/auth';
 import { requireLicense } from './middleware/license';
 import { licenseRouter } from './modules/license/license.controller';
 import { rateLimit } from './middleware/rateLimit';
+import { reviewsRouter } from './modules/reviews/reviews.controller';
 import { updatesRouter } from './modules/updates/updates.controller';
 
 /** Construit l'application Express (partagée entre le serveur Node classique et la fonction Vercel). */
@@ -47,8 +48,10 @@ export function createApp(opts: { updates: boolean } = { updates: true }) {
   app.use(['/auth/setup', '/auth/replicate-bootstrap'], rateLimit({ windowMs: 60 * 60_000, max: 20 }));
   app.use('/license', rateLimit({ windowMs: 15 * 60_000, max: 60 }));
   app.use('/updates/files', rateLimit({ windowMs: 15 * 60_000, max: 20 }));
+  app.post('/reviews', rateLimit({ windowMs: 60 * 60_000, max: 5, message: 'Trop d’avis envoyés. Réessayez plus tard.' }));
   app.use('/auth', authRouter);
   app.use('/license', licenseRouter);
+  app.use('/reviews', reviewsRouter);
   // Sur Vercel, pas de disque persistant ni de corps > 4,5 Mo : les mises à jour desktop restent sur le serveur dédié.
   if (opts.updates) app.use('/updates', updatesRouter);
   // Tout ce qui suit exige une licence valide (essai 14 jours ou clé payante) : 402 LICENSE_EXPIRED sinon.

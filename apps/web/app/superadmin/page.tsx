@@ -14,8 +14,8 @@ interface KeyRow {
 }
 interface TenantOpt { id: string; name: string; slug: string }
 
-async function call<T>(token: string | null, path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API}/license${path}`, {
+async function call<T>(token: string | null, path: string, init: RequestInit = {}, base = '/license'): Promise<T> {
+  const res = await fetch(`${API}${base}${path}`, {
     ...init,
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
@@ -81,16 +81,82 @@ function Login({ onToken }: { onToken: (t: string) => void }) {
 }
 
 function Console({ token, onSignOut }: { token: string; onSignOut: () => void }) {
-  const [tab, setTab] = useState<'keys' | 'stores'>('keys');
+  const [tab, setTab] = useState<'keys' | 'stores' | 'reviews'>('keys');
   return (
     <div className="flex flex-col gap-6">
       <nav className="sticky top-0 z-20 flex items-center gap-1 border-b border-neutral-200 bg-neutral-100 text-sm">
-        {([['keys', "Clés d'activation"], ['stores', 'Magasins']] as const).map(([id, label]) => (
+        {([['keys', "Clés d'activation"], ['stores', 'Magasins'], ['reviews', 'Avis']] as const).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} className={`-mb-px border-b-2 px-4 py-2.5 font-semibold transition ${tab === id ? 'border-brand-600 text-neutral-900' : 'border-transparent text-neutral-500 hover:text-neutral-900'}`}>{label}</button>
         ))}
         <button onClick={onSignOut} className="ms-auto px-4 py-2.5 font-semibold text-neutral-500 transition hover:text-neutral-900">Déconnexion</button>
       </nav>
-      {tab === 'keys' ? <KeysPanel token={token} onSignOut={onSignOut} /> : <StoresPanel token={token} onSignOut={onSignOut} />}
+      {tab === 'keys' ? <KeysPanel token={token} onSignOut={onSignOut} /> : tab === 'stores' ? <StoresPanel token={token} onSignOut={onSignOut} /> : <ReviewsPanel token={token} onSignOut={onSignOut} />}
+    </div>
+  );
+}
+
+interface ReviewRow { id: string; name: string; business: string; rating: number; comment: string; approved: boolean; createdAt: string }
+
+/** Modération des avis déposés sur la page d'accueil : invisibles tant qu'ils ne sont pas approuvés. */
+function ReviewsPanel({ token, onSignOut }: { token: string; onSignOut: () => void }) {
+  const [rows, setRows] = useState<ReviewRow[]>([]);
+  const [filter, setFilter] = useState<'pending' | 'approved' | 'all'>('pending');
+  const [error, setError] = useState<string | null>(null);
+
+  const fail = useCallback((err: unknown) => {
+    if ((err as { status?: number }).status === 401) return onSignOut();
+    setError(err instanceof Error ? err.message : String(err));
+  }, [onSignOut]);
+
+  const load = useCallback(async () => {
+    try { setRows(await call<ReviewRow[]>(token, '/admin', {}, '/reviews')); setError(null); } catch (err) { fail(err); }
+  }, [token, fail]);
+  useEffect(() => { void load(); }, [load]);
+
+  async function setApproved(id: string, approved: boolean) {
+    try { await call(token, `/admin/${id}/approve`, { method: 'POST', body: JSON.stringify({ approved }) }, '/reviews'); await load(); } catch (err) { fail(err); }
+  }
+  async function remove(id: string) {
+    if (!window.confirm('Supprimer définitivement cet avis ?')) return;
+    try { await call(token, `/admin/${id}`, { method: 'DELETE' }, '/reviews'); await load(); } catch (err) { fail(err); }
+  }
+
+  const pending = rows.filter((r) => !r.approved).length;
+  const shown = rows.filter((r) => filter === 'all' || (filter === 'pending' ? !r.approved : r.approved));
+  const input = 'rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900';
+  return (
+    <div className="flex flex-col gap-4">
+      <h1 className="text-3xl font-bold tracking-[-0.03em] text-neutral-900">Avis clients</h1>
+      <div className="flex flex-wrap items-center gap-3">
+        <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} className={input} aria-label="Filtrer les avis">
+          <option value="pending">En attente</option><option value="approved">Publiés</option><option value="all">Tous</option>
+        </select>
+        <span className="text-sm text-neutral-500">{pending} en attente · {rows.length - pending} publié{rows.length - pending > 1 ? 's' : ''}</span>
+      </div>
+      {error && <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700" role="alert">{error}</p>}
+      <ul className="flex flex-col gap-3">
+        {shown.map((r) => (
+          <li key={r.id} className="flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-card sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                <span className="font-semibold text-neutral-900">{r.name}</span>
+                {r.business && <span className="text-neutral-500">{r.business}</span>}
+                <span className="text-amber-500" aria-label={`${r.rating} sur 5`}>{'★'.repeat(r.rating)}<span className="text-neutral-300">{'★'.repeat(5 - r.rating)}</span></span>
+                <span className="text-xs text-neutral-400">{fmt(r.createdAt)}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${r.approved ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>{r.approved ? 'Publié' : 'En attente'}</span>
+              </div>
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm text-neutral-700">{r.comment}</p>
+            </div>
+            <div className="flex shrink-0 gap-3 text-sm font-semibold">
+              {r.approved
+                ? <button onClick={() => void setApproved(r.id, false)} className="text-neutral-600 underline underline-offset-2">Dépublier</button>
+                : <button onClick={() => void setApproved(r.id, true)} className="rounded-md bg-brand-600 px-4 py-2 text-white transition hover:bg-brand-700">Approuver</button>}
+              <button onClick={() => void remove(r.id)} className="text-red-600 underline underline-offset-2">Supprimer</button>
+            </div>
+          </li>
+        ))}
+        {shown.length === 0 && <li className="rounded-2xl bg-white px-3 py-6 text-center text-neutral-400 shadow-card">Aucun avis.</li>}
+      </ul>
     </div>
   );
 }

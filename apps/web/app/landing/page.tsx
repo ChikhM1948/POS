@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { IconBanknote, IconBarcode, IconBox, IconChart, IconLayers, IconReceipt, IconTruck, IconUsers, IconWallet } from '../../components/icons';
-import { LANDING_LOCALES, landingContent, type LandingLocale } from '../../lib/landing/content';
+import { LANDING_LOCALES, landingContent, type LandingDict, type LandingLocale } from '../../lib/landing/content';
 
 const STORAGE_KEY = 'landing-language';
 /** Numéro WhatsApp au format international sans « + » (ex. 213555123456), fixé au build. */
@@ -168,6 +168,128 @@ function Screenshot({ src, alt, width, height, priority = false }: { src: string
 }
 
 const FEATURE_ICONS = [IconBox, IconLayers, IconBarcode, IconReceipt, IconChart, IconWallet, IconTruck, IconUsers, IconBanknote];
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+interface PublicReview { id: string; name: string; business: string; rating: number; comment: string }
+
+function Stars({ value, className = 'h-4 w-4' }: { value: number; className?: string }) {
+  return (
+    <span className="inline-flex gap-0.5 text-amber-500" aria-hidden="true">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <svg key={n} viewBox="0 0 24 24" className={className} fill={n <= Math.round(value) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+          <path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />
+        </svg>
+      ))}
+    </span>
+  );
+}
+
+function ReviewsSection({ c }: { c: LandingDict['reviews'] }) {
+  const [items, setItems] = useState<PublicReview[]>([]);
+  const [stats, setStats] = useState({ count: 0, average: 0 });
+  const [rating, setRating] = useState(5);
+  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
+  const [errMsg, setErrMsg] = useState('');
+
+  useEffect(() => {
+    fetch(`${API_URL}/reviews`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) { setItems(d.items ?? []); setStats({ count: d.count ?? 0, average: d.average ?? 0 }); } })
+      .catch(() => { /* section vide si l'API est injoignable */ });
+  }, []);
+
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    setStatus('sending');
+    setErrMsg('');
+    try {
+      const res = await fetch(`${API_URL}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: f.get('name'), business: f.get('business'), comment: f.get('comment'), website: f.get('website'), rating }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => null);
+        setErrMsg(d?.error ?? '');
+        setStatus('error');
+        return;
+      }
+      form.reset();
+      setRating(5);
+      setStatus('done');
+    } catch {
+      setStatus('error');
+    }
+  }
+
+  const field = 'mt-1.5 w-full rounded-xl border border-rule bg-surface px-4 py-3 text-ink outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-200';
+
+  return (
+    <section id="reviews" className="scroll-mt-16 bg-paper-2 py-20 sm:py-28">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-16">
+        <p className="text-sm font-semibold uppercase tracking-wider text-brand-600">{c.eyebrow}</p>
+        <h2 className="mt-2 max-w-2xl font-display text-[length:var(--text-section)] font-bold leading-[1.05] tracking-[-0.025em] text-ink">{c.title}</h2>
+        <p className="mt-4 max-w-2xl leading-relaxed text-ink-2">{c.text}</p>
+        {stats.count > 0 && (
+          <p className="mt-5 flex items-center gap-2 text-sm font-semibold text-ink">
+            <Stars value={stats.average} className="h-5 w-5" /> {stats.average.toFixed(1)} / 5 · {stats.count} {c.countLabel}
+          </p>
+        )}
+        <div className="mt-10 grid gap-10 lg:grid-cols-[1.2fr_1fr]">
+          <div className="grid content-start gap-4 sm:grid-cols-2">
+            {items.length === 0 && <p className="surface p-6 text-ink-2 sm:col-span-2">{c.empty}</p>}
+            {items.map((r) => (
+              <figure key={r.id} className="surface p-6">
+                <Stars value={r.rating} />
+                <span className="sr-only">{r.rating} {c.rate}</span>
+                <blockquote className="mt-3 break-words text-sm leading-relaxed text-ink-2">« {r.comment} »</blockquote>
+                <figcaption className="mt-4 text-sm font-semibold text-ink">
+                  {r.name}
+                  <span className="block font-normal text-muted">{r.business || c.anonymous}</span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          <form onSubmit={submit} className="surface relative overflow-hidden p-6 sm:p-8" aria-label={c.formTitle}>
+            <h3 className="font-display text-xl font-bold text-ink">{c.formTitle}</h3>
+            <fieldset className="mt-5">
+              <legend className="text-sm font-semibold text-ink">{c.ratingLabel}</legend>
+              <div className="mt-2 flex gap-1" role="radiogroup" aria-label={c.ratingLabel}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button key={n} type="button" role="radio" aria-checked={rating === n} aria-label={`${n} ${c.rate}`} onClick={() => setRating(n)} className="rounded p-1 text-amber-500 transition hover:scale-110">
+                    <svg viewBox="0 0 24 24" className="h-8 w-8" fill={n <= rating ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" /></svg>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <label className="mt-4 block text-sm font-semibold text-ink">{c.name}
+              <input name="name" required maxLength={60} autoComplete="name" className={field} />
+            </label>
+            <label className="mt-4 block text-sm font-semibold text-ink">{c.business}
+              <input name="business" maxLength={80} className={field} />
+            </label>
+            <label className="mt-4 block text-sm font-semibold text-ink">{c.comment}
+              <textarea name="comment" required minLength={10} maxLength={600} rows={4} className={field} />
+              <span className="mt-1 block text-xs font-normal text-muted">{c.commentHint}</span>
+            </label>
+            {/* Piège anti-robots : invisible pour les humains */}
+            <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 opacity-0" />
+            <button type="submit" disabled={status === 'sending'} className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-brand-600 px-8 py-4 font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">
+              {status === 'sending' ? c.sending : c.submit}
+            </button>
+            <p role="status" aria-live="polite" className={`mt-3 text-sm ${status === 'error' ? 'text-red-600' : 'text-brand-700'}`}>
+              {status === 'done' && c.success}
+              {status === 'error' && (errMsg || c.error)}
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function FeatureIcon({ i }: { i: number }) {
   const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length];
   return <Icon className="h-6 w-6 text-brand-600" />;
@@ -217,6 +339,7 @@ export default function LandingPage() {
     { href: '#install', label: c.nav.install },
     { href: '#how', label: c.nav.how },
     { href: '#offline', label: c.nav.offline },
+    { href: '#reviews', label: c.reviews.eyebrow },
     { href: '#faq', label: c.nav.faq },
   ];
   const btnPrimary = 'inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 px-4 py-4 text-[15px] sm:px-8 sm:text-base font-semibold text-white transition hover:bg-brand-700';
@@ -457,6 +580,8 @@ export default function LandingPage() {
             </ul>
           </div>
         </section>
+
+        <ReviewsSection c={c.reviews} />
 
         {/* FAQ */}
         <section id="faq" className="scroll-mt-16 bg-paper py-20 sm:py-28">

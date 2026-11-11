@@ -14,6 +14,7 @@ export interface LandingDict {
   install: { eyebrow: string; title: string; text: string; steps: (Item & { alt: string })[]; reqLabel: string; req: string[]; warnTitle: string; warn: string; button: string };
   how: { eyebrow: string; title: string; steps: Item[] };
   offline: { eyebrow: string; title: string; text: string; points: string[] };
+  reviews: { eyebrow: string; title: string; text: string; empty: string; countLabel: string; formTitle: string; name: string; business: string; ratingLabel: string; comment: string; commentHint: string; submit: string; sending: string; success: string; error: string; rate: string; anonymous: string };
   faq: { eyebrow: string; title: string; items: { q: string; a: string }[] };
   cta: { title: string; text: string; button: string };
   contact: { eyebrow: string; title: string; text: string; button: string; floating: string; hoursLabel: string; hours: string; replyLabel: string; reply: string; helpLabel: string; help: string[]; message: string; unavailable: string };
@@ -108,6 +109,25 @@ const fr: LandingDict = {
     title: 'Une coupure Internet ne doit jamais arrêter une vente',
     text: 'L’application garde une base locale sur le poste et envoie les changements dès que la connexion revient.',
     points: ['Application bureau Windows avec base locale intégrée', 'Synchronisation automatique et sans doublons', 'Interface complète en arabe (RTL), français et anglais', 'Données séparées pour chaque commerce'],
+  },
+  reviews: {
+    eyebrow: 'Avis clients',
+    title: 'Ils tiennent leur commerce avec POS Algérie',
+    text: 'Vous utilisez le logiciel ? Dites-nous ce qui marche et ce qu’on peut améliorer — votre avis aide les autres commerçants à choisir.',
+    empty: 'Soyez le premier à partager votre expérience.',
+    countLabel: 'avis',
+    formTitle: 'Laissez votre avis',
+    name: 'Votre nom',
+    business: 'Votre commerce (facultatif)',
+    ratingLabel: 'Votre note',
+    comment: 'Votre commentaire',
+    commentHint: '10 à 600 caractères',
+    submit: 'Publier mon avis',
+    sending: 'Envoi…',
+    success: 'Merci ! Votre avis sera publié après vérification.',
+    error: 'Envoi impossible. Réessayez dans un instant.',
+    rate: 'étoiles sur 5',
+    anonymous: 'Commerçant',
   },
   faq: {
     eyebrow: 'FAQ',
@@ -228,6 +248,25 @@ const ar: LandingDict = {
     text: 'يحتفظ التطبيق بقاعدة بيانات محلية على الجهاز ويرسل التغييرات فور عودة الاتصال.',
     points: ['تطبيق ويندوز مكتبي بقاعدة بيانات محلية مدمجة', 'مزامنة تلقائية دون تكرار', 'واجهة كاملة بالعربية (من اليمين لليسار) والفرنسية والإنجليزية', 'بيانات منفصلة لكل محل'],
   },
+  reviews: {
+    eyebrow: 'آراء العملاء',
+    title: 'يسيّرون محلاتهم بفضل POS الجزائر',
+    text: 'هل تستخدم البرنامج؟ أخبرنا بما يعجبك وما يمكن تحسينه، فرأيك يساعد التجار الآخرين على الاختيار.',
+    empty: 'كن أول من يشارك تجربته.',
+    countLabel: 'رأي',
+    formTitle: 'اترك رأيك',
+    name: 'اسمك',
+    business: 'محلك (اختياري)',
+    ratingLabel: 'تقييمك',
+    comment: 'تعليقك',
+    commentHint: 'من 10 إلى 600 حرف',
+    submit: 'نشر رأيي',
+    sending: 'جارٍ الإرسال…',
+    success: 'شكرًا! سيُنشر رأيك بعد المراجعة.',
+    error: 'تعذر الإرسال. حاول مجددًا بعد قليل.',
+    rate: 'نجوم من 5',
+    anonymous: 'تاجر',
+  },
   faq: {
     eyebrow: 'الأسئلة',
     title: 'الأسئلة الشائعة',
@@ -346,6 +385,25 @@ const en: LandingDict = {
     title: 'An Internet outage should never stop a sale',
     text: 'The app keeps a local database on the device and sends changes as soon as the connection returns.',
     points: ['Windows desktop app with a built-in local database', 'Automatic, duplicate-free synchronisation', 'Full interface in Arabic (RTL) and French', 'Separate data for each business'],
+  },
+  reviews: {
+    eyebrow: 'Customer reviews',
+    title: 'Shop owners run their business with POS Algérie',
+    text: 'Using the software? Tell us what works and what we can improve — your review helps other shop owners decide.',
+    empty: 'Be the first to share your experience.',
+    countLabel: 'reviews',
+    formTitle: 'Leave your review',
+    name: 'Your name',
+    business: 'Your shop (optional)',
+    ratingLabel: 'Your rating',
+    comment: 'Your comment',
+    commentHint: '10 to 600 characters',
+    submit: 'Post my review',
+    sending: 'Sending…',
+    success: 'Thank you! Your review will be published after a quick check.',
+    error: 'Could not send. Please try again in a moment.',
+    rate: 'out of 5 stars',
+    anonymous: 'Shop owner',
   },
   faq: {
     eyebrow: 'FAQ',
