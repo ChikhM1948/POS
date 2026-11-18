@@ -51,6 +51,7 @@ export interface TranslationDict {
     noProductsSynced: string;
     noSearchResults: string;
     promoBadge: string;
+    purchasePrice: string;
     categoryAll: string;
     categoryOther: string;
     demoFooter: string;
@@ -948,6 +949,7 @@ const fr: TranslationDict = {
     noProductsSynced: "Aucun produit synchronisé. Vérifiez que l'API est démarrée et que le seed a été exécuté.",
     noSearchResults: 'Aucun produit ne correspond à cette recherche.',
     promoBadge: 'Promo',
+    purchasePrice: "Prix d'achat",
     categoryAll: 'Tous',
     categoryOther: 'Autres',
     demoFooter: 'Merci de votre visite !',
@@ -1852,6 +1854,7 @@ const ar: TranslationDict = {
     noProductsSynced: 'لا يوجد أي منتج تمت مزامنته. تأكد من أن واجهة البرمجة (API) قيد التشغيل وأن البيانات الأولية تم إدخالها.',
     noSearchResults: 'لا يوجد منتج يطابق هذا البحث.',
     promoBadge: 'عرض',
+    purchasePrice: 'سعر الشراء',
     categoryAll: 'الكل',
     categoryOther: 'أخرى',
     demoFooter: 'شكرًا لزيارتكم!',

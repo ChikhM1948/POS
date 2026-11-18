@@ -15,6 +15,7 @@ export interface Session {
   storeId: string;
   cashierId: string;
   cashierName: string;
+  canViewPurchasePrice?: boolean;
   /** Mode du commerce (Tenant.syncEnabled) — gate le SyncEngine côté caisse, voir app/page.tsx. */
   syncEnabled: boolean;
 }
@@ -114,7 +115,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
         setConfig(cfg);
       }
 
-      onLogin({ token, tenantId: cfg.tenantId, storeId: cfg.storeId, cashierId: user.id, cashierName: user.name, syncEnabled });
+      onLogin({ token, tenantId: cfg.tenantId, storeId: cfg.storeId, cashierId: user.id, cashierName: user.name, canViewPurchasePrice: user.canViewPurchasePrice === true, syncEnabled });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('login.errorGeneric'));
       setPinCode('');

@@ -28,35 +28,44 @@ async function isApiReachable(): Promise<boolean> {
 export class SyncEngine {
   private timer: ReturnType<typeof setInterval> | null = null;
   private syncing = false;
+  private stopped = false;
+  private firstPull = true;
+  private readonly onOnline = () => { void this.syncNow(); };
 
   constructor(
     private db: OfflineDB,
     private tenantId: string,
     private deviceId: string,
     private token: string,
+    private purchasePriceScope: string,
   ) {}
 
   start() {
+    this.stopped = false;
     if (typeof window !== 'undefined') {
-      window.addEventListener('online', () => this.syncNow());
+      window.addEventListener('online', this.onOnline);
     }
     this.timer = setInterval(() => this.syncNow(), RETRY_INTERVAL_MS);
     this.syncNow();
   }
 
   stop() {
+    this.stopped = true;
     if (this.timer) clearInterval(this.timer);
+    if (typeof window !== 'undefined') window.removeEventListener('online', this.onOnline);
   }
 
   /** Idempotent et sûr à appeler en concurrence (ex. event 'online' + interval qui se chevauchent). */
   async syncNow(): Promise<void> {
     // Verrou pris avant le health-check (asynchrone) : sinon deux déclencheurs simultanés
     // (event 'online' + intervalle) passent tous deux le test et poussent en double.
-    if (this.syncing) return;
+    if (this.syncing || this.stopped) return;
     this.syncing = true;
     try {
       if (!(await isApiReachable())) return;
+      if (this.stopped) return;
       await this.pushPending();
+      if (this.stopped) return;
       await this.pullChanges();
     } finally {
       this.syncing = false;
@@ -117,7 +126,9 @@ export class SyncEngine {
     }
 
     const lastSync = await this.db.meta.get('lastSyncedAt');
-    const since = lastSync?.value ?? new Date(0).toISOString();
+    // Les prix peuvent avoir été masqués pour le caissier précédent alors que les produits
+    // n'ont pas changé. Recharger le catalogue à chaque ouverture de session corrige ce cache.
+    const since = this.firstPull ? new Date(0).toISOString() : lastSync?.value ?? new Date(0).toISOString();
 
     const res = await fetch(
       `${API_BASE_URL}/sync/pull?tenantId=${this.tenantId}&since=${encodeURIComponent(since)}`,
@@ -126,8 +137,10 @@ export class SyncEngine {
     if (!res.ok) return;
 
     const { products, customers, deletedProductIds, serverTime } = await res.json();
+    if (this.stopped) return;
 
     await this.db.transaction('rw', this.db.products, this.db.customers, this.db.meta, async () => {
+      if (this.firstPull) await this.db.products.clear();
       // Suppressions définitives : le produit n'existe plus côté serveur, on purge le cache hors-ligne.
       for (const id of (deletedProductIds as string[] | undefined) ?? []) await this.db.products.delete(id);
       for (const p of products) {
@@ -161,6 +174,8 @@ export class SyncEngine {
         await this.db.customers.put({ id: c._id, name: c.name, phone: c.phone, creditLimitCents: c.creditLimitCents, balanceCents: c.balanceCents });
       }
       await this.db.meta.put({ key: 'lastSyncedAt', value: serverTime });
+      await this.db.meta.put({ key: 'purchasePriceScope', value: this.purchasePriceScope });
     });
+    this.firstPull = false;
   }
 }

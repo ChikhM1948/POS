@@ -4,6 +4,11 @@ const KEY = 'pos-session';
 /** Durée de vie du cache de session : au-delà, le caissier doit se reconnecter (en ligne). */
 const TTL_MS = 12 * 60 * 60 * 1000;
 
+/** Identifie les droits avec lesquels le catalogue du poste a été chargé. */
+export function purchasePriceCacheScope(session: Pick<Session, 'tenantId' | 'cashierId' | 'canViewPurchasePrice'>): string {
+  return JSON.stringify([session.tenantId, session.cashierId, session.canViewPurchasePrice === true]);
+}
+
 /**
  * Session caissier conservée dans le navigateur pour qu'un rechargement hors-ligne (ou la
  * réouverture de l'onglet) ne renvoie pas vers un écran de connexion impossible sans réseau.

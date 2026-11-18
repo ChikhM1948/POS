@@ -8,6 +8,7 @@ import { getOfflineDB, type HeldCart, type LocalProduct } from '../lib/db/offlin
 import { SyncEngine } from '../lib/sync/sync-engine';
 import { LOCAL_MODE } from '../lib/localMode';
 import { LoginForm, type Session } from '../components/pos/LoginForm';
+import { PurchasePrice } from '../components/pos/PurchasePrice';
 import { OfflineBanner } from '../components/pos/OfflineBanner';
 import { SaleCheckout, type SaleCheckoutHandle } from '../components/pos/SaleCheckout';
 import { HeldCartsModal } from '../components/pos/HeldCartsModal';
@@ -17,7 +18,7 @@ import { effectivePriceCents, isPromoActive, lineTotalCents, parseScaleBarcode, 
 import { DiscountEditor } from '../components/pos/DiscountEditor';
 import { Receipt, type CompletedSale } from '../components/pos/Receipt';
 import { BrandMark } from '../components/BrandMark';
-import { clearSession, loadSession, saveSession } from '../lib/session';
+import { clearSession, loadSession, purchasePriceCacheScope, saveSession } from '../lib/session';
 import { useBranding, useLoadBranding } from '../lib/branding';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useTranslation } from '../lib/i18n/LanguageContext';
@@ -72,13 +73,15 @@ export default function PosPage() {
 
   useEffect(() => {
     if (!db || !deviceId || !session || !(session.syncEnabled || LOCAL_MODE)) return;
-    const engine = new SyncEngine(db, session.tenantId, deviceId, session.token);
+    const engine = new SyncEngine(db, session.tenantId, deviceId, session.token, purchasePriceCacheScope(session));
     engine.start();
     return () => engine.stop();
   }, [db, deviceId, session]);
 
   const heldCount = useLiveQuery(() => (db ? db.heldCarts.count() : Promise.resolve(0)), [db]) ?? 0;
   const products = useLiveQuery(() => (db ? db.products.toArray() : Promise.resolve<LocalProduct[]>([])), [db]) ?? [];
+  const priceScope = useLiveQuery(() => db?.meta.get('purchasePriceScope'), [db]);
+  const canViewPurchasePrice = session?.canViewPurchasePrice === true && priceScope?.value === purchasePriceCacheScope(session);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -410,6 +413,7 @@ export default function PosPage() {
                         </>
                       )}
                     </p>
+                    <PurchasePrice allowed={canViewPurchasePrice} cents={product.costPriceCents} locale={locale} unit={product.soldByWeight ? product.unit : undefined} />
                   </div>
                 </button>
               ))}
@@ -470,6 +474,7 @@ export default function PosPage() {
                       <p className="text-xs text-neutral-500">
                         {formatDZD(line.unitPriceCents)} {t('pos.cart.perUnit')}
                       </p>
+                      <PurchasePrice allowed={canViewPurchasePrice} cents={product?.costPriceCents} locale={locale} unit={product?.soldByWeight ? product.unit : undefined} />
                       <DiscountEditor
                         quantity={line.quantity}
                         unitPriceCents={line.unitPriceCents}
