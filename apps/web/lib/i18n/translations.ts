@@ -238,6 +238,13 @@ export interface TranslationDict {
   };
   stock: {
     title: string;
+    searchLabel: string;
+    searchPlaceholder: string;
+    tablePrice: string;
+    tableValue: string;
+    totalValue: string;
+    totalValueHint: string;
+    noResults: string;
     tableCurrent: string;
     tableThreshold: string;
     lowStock: string;
@@ -1128,6 +1135,13 @@ const fr: TranslationDict = {
   },
   stock: {
     title: 'Stock',
+    searchLabel: 'Rechercher un produit',
+    searchPlaceholder: 'Nom, référence ou code-barres…',
+    tablePrice: 'Prix de vente unitaire',
+    tableValue: 'Valeur du stock',
+    totalValue: 'Valeur totale des produits affichés',
+    totalValueHint: 'Somme des quantités × prix de vente unitaires, selon les filtres actifs.',
+    noResults: 'Aucun produit ne correspond aux filtres.',
     tableCurrent: 'Stock actuel',
     tableThreshold: 'Seuil critique',
     lowStock: 'Stock faible',
@@ -2025,6 +2039,13 @@ const ar: TranslationDict = {
   },
   stock: {
     title: 'المخزون',
+    searchLabel: 'البحث عن منتج',
+    searchPlaceholder: 'الاسم أو المرجع أو الباركود…',
+    tablePrice: 'سعر بيع الوحدة',
+    tableValue: 'قيمة المخزون',
+    totalValue: 'القيمة الإجمالية للمنتجات المعروضة',
+    totalValueHint: 'مجموع الكميات × أسعار بيع الوحدات، حسب عوامل التصفية الحالية.',
+    noResults: 'لا توجد منتجات مطابقة لعوامل التصفية.',
     tableCurrent: 'المخزون الحالي',
     tableThreshold: 'الحد الحرج',
     lowStock: 'مخزون منخفض',

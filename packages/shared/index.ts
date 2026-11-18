@@ -143,6 +143,8 @@ export interface StoreDTO {
 export interface StockBalanceDTO {
   productId: string;
   sku: string;
+  barcode?: string;
+  sellingPriceCents: number;
   name: LocalizedText;
   unit: string;
   isPerishable: boolean;

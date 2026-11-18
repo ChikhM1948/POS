@@ -29,6 +29,8 @@ export async function getStockBalances(tenantId: string, storeId: string): Promi
   return products.map((p) => ({
     productId: String(p._id),
     sku: p.sku,
+    barcode: p.barcode,
+    sellingPriceCents: p.sellingPriceCents,
     name: p.name,
     unit: p.unit,
     isPerishable: p.isPerishable,

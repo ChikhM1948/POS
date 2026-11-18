@@ -44,6 +44,8 @@ export function stockRouter({ db }: Ctx) {
     const balances: StockBalanceDTO[] = rows.map((p) => ({
       productId: p.id,
       sku: p.sku,
+      barcode: p.barcode ?? undefined,
+      sellingPriceCents: p.selling_price_cents,
       name: { fr: p.name_fr, ar: p.name_ar ?? undefined },
       unit: p.unit,
       isPerishable: Boolean(p.is_perishable),
