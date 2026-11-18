@@ -3,6 +3,25 @@
 
 export type UserRole = 'super_admin' | 'store_admin' | 'cashier' | 'stock_manager';
 
+export interface AccountDTO {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+}
+
+export interface UpdateAccountInput {
+  currentPassword: string;
+  newPassword?: string;
+  /** Chaîne vide pour retirer le numéro de connexion secondaire. */
+  phone?: string;
+}
+
+export interface UpdateAccountResult {
+  account: AccountDTO;
+  token: string;
+}
+
 export type TaxRate = 19 | 9 | 0;
 
 export type PaymentMethod = 'cash' | 'cib' | 'edahabia' | 'cheque' | 'credit' | 'voucher';

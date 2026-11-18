@@ -6,6 +6,7 @@ import type { Db } from './db';
 import type { CloudSync } from './cloud';
 import type { BackupManager } from './backup';
 import type { LicenseManager } from './license';
+import { PERMISSION_VIEW_PURCHASE_PRICE } from './constants';
 
 export const newId = () => randomUUID();
 export const nowIso = () => new Date().toISOString();
@@ -50,8 +51,10 @@ export function requireAuth(secret: string, db: Db) {
       return res.status(401).json({ error: 'Token invalide.' });
     }
     // Les tokens n'expirent pas : un compte supprimé ou désactivé perd l'accès immédiatement.
-    const user = db.prepare('SELECT active FROM users WHERE id = ? AND tenant_id = ?').get(req.auth.sub, req.auth.tenantId) as { active: number } | undefined;
+    const user = db.prepare('SELECT active, token_version, role, store_id, permissions FROM users WHERE id = ? AND tenant_id = ?').get(req.auth.sub, req.auth.tenantId) as { active: number; token_version: number; role: UserRole; store_id: string | null; permissions: string } | undefined;
     if (!user?.active) return res.status(401).json({ error: 'Compte désactivé ou introuvable.' });
+    if (user.token_version !== (req.auth.tv ?? 0)) return res.status(401).json({ error: 'Session révoquée. Reconnectez-vous.' });
+    req.auth = { ...req.auth, role: user.role, storeId: user.store_id ?? undefined, canViewPurchasePrice: JSON.parse(user.permissions).includes(PERMISSION_VIEW_PURCHASE_PRICE) };
     next();
   };
 }

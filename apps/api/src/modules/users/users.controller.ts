@@ -5,6 +5,7 @@ import { asyncHandler } from '../../middleware/asyncHandler';
 import { User } from '../../models/User';
 import { listUsers, createUser, updateUser, deactivateUser } from './users.service';
 import type { CreateUserInput, UpdateUserInput } from '@pos-dz/shared';
+import { normalizeIdentifier } from '@pos-dz/shared';
 
 export const usersRouter = Router();
 
@@ -33,7 +34,8 @@ usersRouter.post('/', asyncHandler(async (req: AuthenticatedRequest, res: Respon
     return res.status(400).json({ error: 'Un code PIN est requis pour un compte caissier (utilisé pour se connecter à la caisse).' });
   }
 
-  const existing = await User.findOne({ tenantId: req.auth!.tenantId, email: String(email).toLowerCase() });
+  const identifier = normalizeIdentifier(String(email));
+  const existing = await User.findOne({ $or: [{ email: identifier }, { phone: identifier }] }).setOptions({ skipTenantScope: true });
   if (existing) {
     return res.status(409).json({ error: 'Un utilisateur avec cet email existe déjà.' });
   }

@@ -13,7 +13,7 @@ function canViewPurchasePrice(user: { permissions?: string[] }): boolean {
   return Boolean(user.permissions?.includes(PERMISSION_VIEW_PURCHASE_PRICE));
 }
 
-function signToken(claims: JwtClaims): string {
+export function signToken(claims: JwtClaims): string {
   // JWT_EXPIRES_IN=never : token sans expiration (postes installés).
   if (env.jwtExpiresIn === 'never') return jwt.sign(claims, env.jwtSecret);
   const options: jwt.SignOptions = { expiresIn: env.jwtExpiresIn as jwt.SignOptions['expiresIn'] };
@@ -45,7 +45,7 @@ export async function signupTenant(input: SignupInput): Promise<AuthResult> {
   // `email` désigne l'identifiant de connexion : email OU téléphone (normalisé).
   const email = identifier.value;
   // Le login se fait par identifiant seul (sans identifiant de commerce) : il doit donc être unique.
-  if (await User.exists({ email }).setOptions({ skipTenantScope: true })) {
+  if (await User.exists({ $or: [{ email }, { phone: email }] }).setOptions({ skipTenantScope: true })) {
     throw Object.assign(new Error('Un compte existe déjà avec cet identifiant.'), { status: 409 });
   }
   const phone = input.phone?.trim() || (identifier.kind === 'phone' ? email : undefined);
@@ -114,7 +114,8 @@ export async function signupTenant(input: SignupInput): Promise<AuthResult> {
 
 /** Login back-office standard : email + mot de passe, tous rôles. */
 export async function loginWithPassword(tenantId: string | undefined, email: string, password: string) {
-  const filter: Record<string, unknown> = { email: normalizeIdentifier(email), active: true };
+  const identifier = normalizeIdentifier(email);
+  const filter: Record<string, unknown> = { $or: [{ email: identifier }, { phone: identifier }], active: true };
   if (tenantId) filter.tenantId = tenantId;
   // Sans tenantId (login par email seul), le plugin tenantScope refuserait la requête : on l'ignore
   // explicitement ici, l'email étant unique globalement.
@@ -150,7 +151,8 @@ export async function loginWithPassword(tenantId: string | undefined, email: str
  */
 export async function loginCashierWithPassword(tenantId: string | undefined, email: string, password: string) {
   // tenantId optionnel : l'email est unique (voir signup), comme pour loginWithPassword.
-  const filter: Record<string, unknown> = { email: normalizeIdentifier(email), role: 'cashier', active: true };
+  const identifier = normalizeIdentifier(email);
+  const filter: Record<string, unknown> = { $or: [{ email: identifier }, { phone: identifier }], role: 'cashier', active: true };
   if (tenantId) filter.tenantId = tenantId;
   // Sans tenantId (login par email seul), le plugin tenantScope refuserait la requête : on l'ignore
   // explicitement ici, l'email étant unique globalement.

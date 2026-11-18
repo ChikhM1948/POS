@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import type { CreateUserInput, StoreDTO, TenantSettingsDTO, UpdateTenantSettingsInput, UpdateUserInput, UserDTO } from '@pos-dz/shared';
 import { Ctx, HttpError, bool, handler, newId, nowIso, requireRole } from '../util';
 import { PERMISSION_VIEW_PURCHASE_PRICE } from '../constants';
+import { normalizeIdentifier } from '../identifier';
 
 export function storesRouter({ db }: Ctx) {
   const router = Router();
@@ -105,8 +106,8 @@ export function usersRouter({ db }: Ctx) {
       throw new HttpError(400, 'Un code PIN est requis pour un compte caissier (utilisé pour se connecter à la caisse).');
     }
     const tenantId = req.auth!.tenantId;
-    const normalizedEmail = String(email).trim().toLowerCase();
-    if (db.prepare('SELECT 1 FROM users WHERE tenant_id = ? AND email = ?').get(tenantId, normalizedEmail)) {
+    const normalizedEmail = normalizeIdentifier(String(email));
+    if (db.prepare('SELECT 1 FROM users WHERE email = ? OR phone = ?').get(normalizedEmail, normalizedEmail)) {
       throw new HttpError(409, 'Un utilisateur avec cet email existe déjà.');
     }
     const main = db.prepare('SELECT id FROM stores WHERE tenant_id = ? AND is_main_store = 1').get(tenantId) as any;
@@ -123,14 +124,15 @@ export function usersRouter({ db }: Ctx) {
     const input = (req.body ?? {}) as UpdateUserInput;
     const u: any = db.prepare('SELECT * FROM users WHERE tenant_id = ? AND id = ?').get(req.auth!.tenantId, req.params.id);
     if (!u) throw new HttpError(404, 'Utilisateur introuvable.');
-    db.prepare('UPDATE users SET name=?, store_id=?, active=?, password_hash=?, pin_code_hash=?, permissions=?, updated_at=? WHERE id=?').run(
+    const revoke = input.password || input.pinCode || input.storeId !== undefined || input.canViewPurchasePrice !== undefined || input.active === false;
+    db.prepare('UPDATE users SET name=?, store_id=?, active=?, password_hash=?, pin_code_hash=?, permissions=?, updated_at=?, token_version=token_version+? WHERE id=?').run(
       input.name !== undefined ? input.name.trim() : u.name,
       input.storeId !== undefined ? input.storeId : u.store_id,
       input.active !== undefined ? bool(input.active) : u.active,
       input.password ? await bcrypt.hash(input.password, 10) : u.password_hash,
       input.pinCode ? await bcrypt.hash(input.pinCode, 10) : u.pin_code_hash,
       input.canViewPurchasePrice !== undefined ? JSON.stringify(input.canViewPurchasePrice ? [PERMISSION_VIEW_PURCHASE_PRICE] : []) : u.permissions,
-      nowIso(), u.id,
+      nowIso(), revoke ? 1 : 0, u.id,
     );
     res.json({ user: userDTO(get(u.id)) });
   }));

@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { normalizeIdentifier, parseIdentifier } from '../identifier';
 import type { AuthResult, JwtClaims, SignupInput } from '@pos-dz/shared';
-import { Ctx, HttpError, handler, newId, nowIso } from '../util';
+import { Ctx, HttpError, handler, newId, nowIso, requireAuth } from '../util';
 import { PERMISSION_VIEW_PURCHASE_PRICE } from '../constants';
 
 function slugify(input: string): string {
@@ -27,9 +27,55 @@ export function authRouter({ db, jwtSecret, license }: Ctx) {
       storeId: user.store_id ?? undefined,
       role: user.role,
       canViewPurchasePrice,
+      tv: user.token_version ?? 0,
     };
-    return { token: sign(claims), tenantId: user.tenant_id, license: license.status(), user: { id: user.id, name: user.name, role: user.role, canViewPurchasePrice } };
+    return { token: sign(claims), tenantId: user.tenant_id, license: license.status(), user: { id: user.id, tenantId: user.tenant_id, storeId: user.store_id, name: user.name, role: user.role, canViewPurchasePrice } };
   }
+
+  const accountDTO = (user: any) => ({ id: user.id, name: user.name, email: user.email, phone: user.phone ?? undefined });
+  const accountAuth = requireAuth(jwtSecret, db);
+  router.get('/account', accountAuth, handler((req, res) => {
+    const user = db.prepare('SELECT * FROM users WHERE id = ? AND tenant_id = ?').get(req.auth!.sub, req.auth!.tenantId);
+    res.json({ account: accountDTO(user) });
+  }));
+
+  router.patch('/account', accountAuth, handler(async (req, res) => {
+    const { currentPassword, newPassword, phone } = req.body ?? {};
+    if (typeof currentPassword !== 'string' || !currentPassword) throw new HttpError(400, 'Le mot de passe actuel est requis.');
+    if (newPassword !== undefined && (typeof newPassword !== 'string' || newPassword.length < 6 || Buffer.byteLength(newPassword, 'utf8') > 72)) {
+      throw new HttpError(400, 'Le nouveau mot de passe doit contenir au moins 6 caractères et au maximum 72 octets.');
+    }
+    if (phone !== undefined && typeof phone !== 'string') throw new HttpError(400, 'Numéro de téléphone invalide.');
+    const parsedPhone = phone?.trim() ? parseIdentifier(phone) : null;
+    if (phone?.trim() && parsedPhone?.kind !== 'phone') throw new HttpError(400, 'Numéro de téléphone invalide.');
+    if (phone === undefined && newPassword === undefined) throw new HttpError(400, 'Aucune modification fournie.');
+    const user: any = db.prepare('SELECT * FROM users WHERE id = ? AND tenant_id = ?').get(req.auth!.sub, req.auth!.tenantId);
+    if (!(await bcrypt.compare(currentPassword, user.password_hash))) throw new HttpError(400, 'Le mot de passe actuel est incorrect.');
+    const normalizedPhone = parsedPhone?.value ?? null;
+    const hash = newPassword !== undefined ? await bcrypt.hash(newPassword, 10) : user.password_hash;
+    db.transaction(() => {
+      if (normalizedPhone && db.prepare('SELECT 1 FROM users WHERE id != ? AND (email = ? OR phone = ?)').get(user.id, normalizedPhone, normalizedPhone)) {
+        throw new HttpError(409, 'Ce numéro de téléphone est déjà utilisé par un autre compte.');
+      }
+      const result = db.prepare('UPDATE users SET phone = ?, password_hash = ?, token_version = token_version + 1, updated_at = ? WHERE id = ? AND tenant_id = ? AND token_version = ? AND active = 1').run(
+        phone === undefined ? user.phone : normalizedPhone, hash, nowIso(), user.id, user.tenant_id, user.token_version,
+      );
+      if (!result.changes) throw new HttpError(409, 'Le compte a changé. Reconnectez-vous puis réessayez.');
+      // La synchronisation du poste se reconnectera avec le nouveau mot de passe après réplication.
+      const cloudEmail = db.prepare("SELECT value FROM app_meta WHERE key = 'cloud_email'").get() as { value: string } | undefined;
+      if (cloudEmail && [user.email, user.phone].includes(cloudEmail.value)) {
+        db.prepare("UPDATE app_meta SET value = ? WHERE key = 'cloud_email'").run(user.email);
+        if (newPassword !== undefined) {
+          // Conserver le dernier secret cloud jusqu'à la réception du nouveau hash : un jeton
+          // expiré avant la réplication doit encore pouvoir se renouveler avec l'ancien secret.
+          db.prepare("INSERT OR IGNORE INTO app_meta (key, value) SELECT 'cloud_previous_password', value FROM app_meta WHERE key = 'cloud_password'").run();
+          db.prepare("UPDATE app_meta SET value = ? WHERE key = 'cloud_password'").run(newPassword);
+        }
+      }
+    })();
+    const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+    res.json({ account: accountDTO(updated), token: session(updated).token });
+  }));
 
   /** Poste local : un seul commerce par installation — permet à l'UI de se pré-configurer sans saisie d'identifiants techniques. */
   router.get('/local-info', handler((_req, res) => {
@@ -93,9 +139,11 @@ export function authRouter({ db, jwtSecret, license }: Ctx) {
     // Poste local : un seul commerce, donc tenantId facultatif.
     const tid = tenantId ?? (db.prepare('SELECT id FROM tenants LIMIT 1').get() as { id: string } | undefined)?.id;
     if (!tid) throw new HttpError(401, 'Identifiants invalides.');
-    const user: any = db
-      .prepare(`SELECT * FROM users WHERE tenant_id = ? AND email = ? AND active = 1 ${cashierOnly ? "AND role = 'cashier'" : ''}`)
-      .get(tid, normalizeIdentifier(email));
+    const identifier = normalizeIdentifier(email);
+    const users = db
+      .prepare(`SELECT * FROM users WHERE tenant_id = ? AND (email = ? OR phone = ?) AND active = 1 ${cashierOnly ? "AND role = 'cashier'" : ''} LIMIT 2`)
+      .all(tid, identifier, identifier) as any[];
+    const user = users.length === 1 ? users[0] : undefined;
     if (!user || !(await bcrypt.compare(password, user.password_hash))) throw new HttpError(401, 'Identifiants invalides.');
     res.json(session(user));
   }

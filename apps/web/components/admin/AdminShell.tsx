@@ -37,7 +37,7 @@ const NAV: NavItem[] = [
   { href: '/admin/customers', labelKey: 'customers', icon: IconWallet, roles: ['store_admin', 'super_admin'] },
   // Provisionnement de l'équipe et branding — mêmes rôles que /users et /tenant côté API.
   { href: '/admin/team', labelKey: 'team', icon: IconUsers, roles: ['store_admin', 'super_admin'] },
-  { href: '/admin/settings', labelKey: 'settings', icon: IconSettings, roles: ['store_admin', 'super_admin'] },
+  { href: '/admin/settings', labelKey: 'settings', icon: IconSettings },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {

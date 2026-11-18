@@ -67,8 +67,8 @@ export function createApi(ctx: Ctx) {
   api.get('/health', (_req, res) => res.json({ status: 'ok' }));
   // Anti brute-force local (PIN court) : 10 essais / 15 min par identifiant visé, tous clients confondus.
   const attempts = new Map<string, { n: number; reset: number }>();
-  api.use(['/auth/login', '/auth/login-cashier', '/auth/login-pin'], (req, res, next) => {
-    if (req.method !== 'POST') return next();
+  api.use(['/auth/login', '/auth/login-cashier', '/auth/login-pin', '/auth/account'], (req, res, next) => {
+    if (req.method !== 'POST' && req.method !== 'PATCH') return next();
     const id = `${req.path}|${String(req.body?.email ?? req.body?.storeId ?? '').toLowerCase().slice(0, 100)}`;
     const now = Date.now();
     let a = attempts.get(id);

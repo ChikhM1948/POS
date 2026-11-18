@@ -9,6 +9,7 @@ import { SyncEngine } from '../lib/sync/sync-engine';
 import { LOCAL_MODE } from '../lib/localMode';
 import { LoginForm, type Session } from '../components/pos/LoginForm';
 import { PurchasePrice } from '../components/pos/PurchasePrice';
+import { AccountSettingsDialog } from '../components/AccountSettingsForm';
 import { OfflineBanner } from '../components/pos/OfflineBanner';
 import { SaleCheckout, type SaleCheckoutHandle } from '../components/pos/SaleCheckout';
 import { HeldCartsModal } from '../components/pos/HeldCartsModal';
@@ -61,6 +62,7 @@ export default function PosPage() {
   const [showHeld, setShowHeld] = useState(false);
   const [weighTarget, setWeighTarget] = useState<{ product: LocalProduct; replace: boolean } | null>(null);
   const [showLegend, setShowLegend] = useState(true);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   useLoadBranding(session?.token);
   const { branding } = useBranding();
@@ -324,6 +326,9 @@ export default function PosPage() {
             <kbd className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-500">F6</kbd>
           </button>
           <LanguageSwitcher />
+          <button onClick={() => setShowAccountSettings(true)} className="rounded-xl px-4 py-3 text-base font-semibold text-neutral-700 hover:bg-brand-50">
+            {t('settings.title')}
+          </button>
           <a
             href="/admin"
             className="rounded-xl px-4 py-3 text-base font-semibold text-neutral-700 transition hover:bg-brand-50 hover:text-brand-800"
@@ -595,6 +600,10 @@ export default function PosPage() {
             scanInputRef.current?.focus();
           }}
         />
+      )}
+
+      {showAccountSettings && (
+        <AccountSettingsDialog token={session.token} onTokenChange={(token) => setSession({ ...session, token })} onClose={() => setShowAccountSettings(false)} />
       )}
 
       {lastSale && (

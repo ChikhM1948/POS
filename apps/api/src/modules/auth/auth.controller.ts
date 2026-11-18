@@ -4,9 +4,11 @@ import { User } from '../../models/User';
 import { bootstrapTenant } from '../sync/replicate.service';
 import { parseIdentifier } from '@pos-dz/shared';
 import { str, oid } from '../../middleware/sanitize';
+import { accountRouter } from './account.controller';
 import { loginCashierWithPassword, loginWithPassword, loginWithPin, signupTenant } from './auth.service';
 
 export const authRouter = Router();
+authRouter.use('/account', accountRouter);
 
 /** Premier lancement : crée le commerce (tenant) et son premier compte administrateur. */
 authRouter.post('/setup', asyncHandler(async (req: Request, res: Response) => {

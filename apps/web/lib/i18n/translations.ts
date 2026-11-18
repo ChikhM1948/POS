@@ -431,6 +431,18 @@ export interface TranslationDict {
   settings: {
     title: string;
   };
+  account: {
+    title: string;
+    identifier: string;
+    phone: string;
+    phoneHint: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+    passwordHint: string;
+    passwordMismatch: string;
+    saved: string;
+  };
   tenantSettings: {
     changeLogo: string;
     addLogo: string;
@@ -1328,7 +1340,19 @@ const fr: TranslationDict = {
     secretsNote: 'Les identifiants de la synchronisation en ligne ne sont pas inclus dans les sauvegardes.',
   },
   settings: {
-    title: 'Paramètres du commerce',
+    title: 'Paramètres',
+  },
+  account: {
+    title: 'Mon compte',
+    identifier: 'Identifiant principal',
+    phone: 'Téléphone de connexion',
+    phoneHint: 'Vous pourrez aussi vous connecter avec ce numéro et votre mot de passe. Effacez-le pour le retirer.',
+    currentPassword: 'Mot de passe actuel',
+    newPassword: 'Nouveau mot de passe',
+    confirmPassword: 'Confirmer le nouveau mot de passe',
+    passwordHint: 'Au moins 6 caractères. Laissez vide pour conserver votre mot de passe.',
+    passwordMismatch: 'Les nouveaux mots de passe ne correspondent pas.',
+    saved: 'Compte mis à jour. Votre session reste ouverte ; les autres sessions devront se reconnecter.',
   },
   tenantSettings: {
     changeLogo: 'Changer le logo',
@@ -2233,7 +2257,19 @@ const ar: TranslationDict = {
     secretsNote: 'بيانات اعتماد المزامنة عبر الإنترنت غير مُضمَّنة في النسخ الاحتياطية.',
   },
   settings: {
-    title: 'إعدادات المتجر',
+    title: 'الإعدادات',
+  },
+  account: {
+    title: 'حسابي',
+    identifier: 'معرّف الدخول الأساسي',
+    phone: 'رقم الهاتف لتسجيل الدخول',
+    phoneHint: 'يمكنك أيضًا تسجيل الدخول بهذا الرقم وكلمة المرور. امسحه لإزالته.',
+    currentPassword: 'كلمة المرور الحالية',
+    newPassword: 'كلمة المرور الجديدة',
+    confirmPassword: 'تأكيد كلمة المرور الجديدة',
+    passwordHint: '6 أحرف على الأقل. اتركه فارغًا للاحتفاظ بكلمة المرور الحالية.',
+    passwordMismatch: 'كلمتا المرور الجديدتان غير متطابقتين.',
+    saved: 'تم تحديث الحساب. جلستك تبقى مفتوحة؛ يجب تسجيل الدخول من جديد في الجلسات الأخرى.',
   },
   tenantSettings: {
     changeLogo: 'تغيير الشعار',

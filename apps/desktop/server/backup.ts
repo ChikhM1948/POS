@@ -43,8 +43,8 @@ const TICK_MS = 5 * 60_000;
 const FILE_RE = /^pos-backup-\d{8}-\d{6}\.sqlite$/;
 const RESTORE_SUFFIX = '.restore';
 /** Lignes app_meta propres à ce poste, reprises de la base courante lors d'une restauration. */
-const KEEP_ON_RESTORE = ['jwt_secret', 'cloud_url', 'cloud_email', 'cloud_password', 'cloud_token', 'backup_config'];
-const SECRET_KEYS = ['cloud_password', 'cloud_token'];
+const KEEP_ON_RESTORE = ['jwt_secret', 'cloud_url', 'cloud_email', 'cloud_password', 'cloud_previous_password', 'cloud_token', 'backup_config'];
+const SECRET_KEYS = ['cloud_password', 'cloud_previous_password', 'cloud_token'];
 const REQUIRED_TABLES = ['tenants', 'users', 'products', 'sales', 'stock_movements', 'app_meta'];
 
 const stamp = (d = new Date()) => {

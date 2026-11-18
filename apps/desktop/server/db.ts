@@ -114,6 +114,12 @@ export function openDatabase(file: string, nativeBinding?: string): Db {
   db.exec(SCHEMA);
   // Migrations légères : colonnes ajoutées après la première version du schéma.
   const cols = (table: string) => (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((c) => c.name);
+  // Migration additive : les anciens comptes gardent leur identifiant et leurs sessions (version 0).
+  // Retour arrière applicatif possible en conservant ces colonnes, sans supprimer de données.
+  const userCols = cols('users');
+  if (!userCols.includes('phone')) db.exec('ALTER TABLE users ADD COLUMN phone TEXT');
+  if (!userCols.includes('token_version')) db.exec('ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0');
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone ON users (phone) WHERE phone IS NOT NULL');
   if (!cols('customers').includes('credit_limit_cents')) db.exec('ALTER TABLE customers ADD COLUMN credit_limit_cents INTEGER');
   const productCols = cols('products');
   for (const [col, type] of [['promo_price_cents', 'INTEGER'], ['promo_start', 'TEXT'], ['promo_end', 'TEXT'], ['sold_by_weight', 'INTEGER NOT NULL DEFAULT 0']] as const) {

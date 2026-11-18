@@ -7,6 +7,7 @@ export interface IUser extends Document {
   storeId?: Types.ObjectId;
   name: string;
   email: string;
+  phone?: string;
   passwordHash: string;
   pinCodeHash?: string; // connexion rapide au poste de caisse
   role: UserRole;
@@ -21,6 +22,7 @@ const UserSchema = new Schema<IUser>(
     storeId: { type: Schema.Types.ObjectId, ref: 'Store' },
     name: { type: String, required: true },
     email: { type: String, required: true, lowercase: true, trim: true },
+    phone: { type: String, trim: true },
     passwordHash: { type: String, required: true },
     pinCodeHash: String,
     role: {
@@ -37,5 +39,6 @@ const UserSchema = new Schema<IUser>(
 
 UserSchema.plugin(tenantScopePlugin);
 UserSchema.index({ tenantId: 1, email: 1 }, { unique: true });
+UserSchema.index({ phone: 1 }, { unique: true, partialFilterExpression: { phone: { $type: 'string' } } });
 
 export const User = model<IUser>('User', UserSchema);

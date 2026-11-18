@@ -52,6 +52,7 @@ const TABLES: TableSpec[] = [
     table: 'users', ts: 'updated_at', batch: 100,
     map: (r) => ['users', {
       _id: oid(r.id), storeId: oidOrUndef(r.store_id), name: r.name, email: r.email, passwordHash: r.password_hash,
+      phone: r.phone ?? null,
       pinCodeHash: r.pin_code_hash ?? undefined, role: r.role, permissions: json(r.permissions), active: !!r.active,
       createdAt: r.created_at, updatedAt: r.updated_at,
     }],
@@ -194,9 +195,16 @@ export class CloudSync {
 
   private async login(): Promise<string> {
     const tenant = this.db.prepare('SELECT id FROM tenants LIMIT 1').get() as { id: string };
-    const { status, data } = await this.http('/auth/login', {
+    let { status, data } = await this.http('/auth/login', {
       tenantId: oid(tenant.id), email: this.getMeta('cloud_email'), password: this.getMeta('cloud_password'),
     });
+    if (status === 401 && this.getMeta('cloud_previous_password')) {
+      ({ status, data } = await this.http('/auth/login', {
+        tenantId: oid(tenant.id), email: this.getMeta('cloud_email'), password: this.getMeta('cloud_previous_password'),
+      }));
+    } else if (status === 200) {
+      this.setMeta('cloud_previous_password', undefined);
+    }
     if (status !== 200 || !data.token) throw new Error(data.error ?? `Connexion cloud refusée (${status}).`);
     this.setMeta('cloud_token', data.token);
     return data.token;
@@ -227,12 +235,14 @@ export class CloudSync {
     const password = String(input.password ?? '');
     if (!/^https?:\/\//.test(url) || !email || !password) throw new HttpError(400, 'Adresse du serveur, email (ou téléphone) et mot de passe sont requis.');
 
-    const user: any = this.db.prepare("SELECT * FROM users WHERE email = ? AND active = 1 AND role IN ('store_admin','super_admin')").get(email);
+    const matches = this.db.prepare("SELECT * FROM users WHERE (email = ? OR phone = ?) AND active = 1 AND role IN ('store_admin','super_admin') LIMIT 2").all(email, email) as any[];
+    const user = matches.length === 1 ? matches[0] : undefined;
     if (!user || !(await bcrypt.compare(password, user.password_hash))) throw new HttpError(401, 'Identifiants administrateur invalides.');
 
     this.setMeta('cloud_url', url);
     this.setMeta('cloud_email', email);
     this.setMeta('cloud_password', password);
+    this.setMeta('cloud_previous_password', undefined);
     try {
       await this.wake(url);
       const [, tenant] = TABLES[0].map(this.db.prepare('SELECT * FROM tenants WHERE id = ?').get(user.tenant_id));
@@ -242,7 +252,7 @@ export class CloudSync {
       if (boot.status !== 200) throw new Error(boot.data.error ?? `Serveur injoignable ou incompatible (${boot.status}).`);
       await this.login();
     } catch (err) {
-      for (const k of ['cloud_url', 'cloud_email', 'cloud_password', 'cloud_token']) this.setMeta(k, undefined);
+      for (const k of ['cloud_url', 'cloud_email', 'cloud_password', 'cloud_previous_password', 'cloud_token']) this.setMeta(k, undefined);
       if (err instanceof HttpError) throw err;
       const msg = err instanceof Error ? err.message : String(err);
       const code = (err as { cause?: { code?: string } })?.cause?.code ?? /net::(ERR_[A-Z_]+)/.exec(msg)?.[1];
@@ -258,7 +268,7 @@ export class CloudSync {
 
   disconnect() {
     for (const spec of TABLES) this.setMeta(`cloud_cursor_${spec.table}`, undefined);
-    for (const k of ['cloud_url', 'cloud_email', 'cloud_password', 'cloud_token', 'cloud_last_sync', 'cloud_last_error']) this.setMeta(k, undefined);
+    for (const k of ['cloud_url', 'cloud_email', 'cloud_password', 'cloud_previous_password', 'cloud_token', 'cloud_last_sync', 'cloud_last_error']) this.setMeta(k, undefined);
   }
 
   private async replicate(records: Record<string, any[]>): Promise<void> {
@@ -269,6 +279,11 @@ export class CloudSync {
       res = await this.http('/sync/replicate', { records }, token);
     }
     if (res.status !== 200) throw new Error(res.data.error ?? `Réplication refusée (${res.status}).`);
+    const account = records.users?.find((user) => user.email === this.getMeta('cloud_email'));
+    if (account && res.data.result?.users?.rejected === 0 && this.getMeta('cloud_previous_password')) {
+      const password = this.getMeta('cloud_password');
+      if (password && await bcrypt.compare(password, account.passwordHash)) this.setMeta('cloud_previous_password', undefined);
+    }
   }
 
   /** Envoie tout ce qui est en attente. Sans effet hors-ligne ; jamais deux cycles en parallèle. */

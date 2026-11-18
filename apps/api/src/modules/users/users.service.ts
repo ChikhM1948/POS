@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 import { User } from '../../models/User';
 import { Store } from '../../models/Store';
 import { invalidateAuthCache } from '../../middleware/auth';
-import { PERMISSION_VIEW_PURCHASE_PRICE } from '@pos-dz/shared';
+import { PERMISSION_VIEW_PURCHASE_PRICE, normalizeIdentifier } from '@pos-dz/shared';
 import type { CreateUserInput, UpdateUserInput, UserDTO } from '@pos-dz/shared';
 
 const MANAGED_ROLES = ['cashier', 'stock_manager'] as const;
@@ -45,7 +45,7 @@ export async function createUser(tenantId: string, input: CreateUserInput): Prom
     tenantId: new Types.ObjectId(tenantId),
     storeId: storeId ? new Types.ObjectId(storeId) : undefined,
     name: input.name.trim(),
-    email: input.email.trim().toLowerCase(),
+    email: normalizeIdentifier(input.email),
     passwordHash,
     pinCodeHash,
     role: input.role,

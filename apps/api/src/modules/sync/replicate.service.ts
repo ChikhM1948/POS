@@ -14,6 +14,7 @@ import { CustomerLedgerEntry } from '../../models/CustomerLedgerEntry';
 import { SupplierLedgerEntry } from '../../models/SupplierLedgerEntry';
 import { deleteProductPermanently } from '../products/products.service';
 import { TRIAL_DAYS } from '@pos-dz/shared';
+import { invalidateAuthCache } from '../../middleware/auth';
 
 /**
  * Réplication poste installé → cloud. Le poste (SQLite) envoie ses enregistrements avec des
@@ -107,6 +108,7 @@ export async function replicate(tenantId: string, records: Record<string, any[]>
     if (!Array.isArray(docs) || docs.length === 0) continue;
 
     const ops: any[] = [];
+    const changedAccounts: string[] = [];
     let rejected = 0;
     for (const raw of docs) {
       try {
@@ -118,6 +120,14 @@ export async function replicate(tenantId: string, records: Record<string, any[]>
           doc.tenantId = tenantOid;
         }
         const { _id, createdAt, ...rest } = doc;
+        let revokeAccount = false;
+        if (name === 'users') {
+          // La version des jetons appartient au serveur : ne jamais la remplacer par celle du poste.
+          delete rest.tokenVersion;
+          const previous = await User.collection.findOne({ _id, tenantId: tenantOid });
+          revokeAccount = !!previous && (previous.passwordHash !== rest.passwordHash || (previous.phone ?? null) !== (rest.phone ?? null));
+          if (revokeAccount) changedAccounts.push(String(_id));
+        }
         if (spec.appendOnly) {
           ops.push({
             updateOne: {
@@ -128,7 +138,7 @@ export async function replicate(tenantId: string, records: Record<string, any[]>
           });
         } else {
           ops.push({
-            updateOne: { filter: { _id }, update: { $set: rest, ...(createdAt ? { $setOnInsert: { createdAt } } : {}) }, upsert: true },
+            updateOne: { filter: { _id }, update: { $set: rest, ...(createdAt ? { $setOnInsert: { createdAt } } : {}), ...(revokeAccount ? { $inc: { tokenVersion: 1 } } : {}) }, upsert: true },
           });
         }
       } catch {
@@ -146,6 +156,7 @@ export async function replicate(tenantId: string, records: Record<string, any[]>
       }
     }
     result[name] = { received: docs.length, rejected };
+    for (const id of changedAccounts) invalidateAuthCache(id);
   }
 
   // Suppressions définitives faites sur le poste : même garde-fous que côté poste (historique cloud compris),
