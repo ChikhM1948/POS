@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAdminAuth } from '../../lib/adminAuth';
 import { BrandMark } from '../BrandMark';
+import { PasswordInput } from '../PasswordInput';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
 import { LOCAL_MODE, fetchLocalInfo } from '../../lib/localMode';
@@ -82,17 +83,18 @@ export function AdminLoginForm({ onSwitchToSetup }: Props) {
             required
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-          {t('adminLogin.passwordLabel')}
-          <input
+        <div className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+          <label htmlFor="admin-login-password">{t('adminLogin.passwordLabel')}</label>
+          <PasswordInput
+            id="admin-login-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={t('adminLogin.passwordPlaceholder')}
-            type="password"
+            autoComplete="current-password"
             className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-brand-500/40"
             required
           />
-        </label>
+        </div>
 
         {error && (
           <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700" role="alert">

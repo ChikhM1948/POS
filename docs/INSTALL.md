@@ -89,6 +89,12 @@ sans imprimante, ces actions échoueront simplement, c'est normal en dev.
 
 ## Build de l'app desktop (installateur `.exe`)
 
+Le build charge les paramètres publics `POS_LICENSE_PUBLIC_KEY`, `POS_API_URL` et
+`POS_UPDATE_URL` depuis `licensing.env` à la racine ; les variables d'environnement ont priorité.
+La clé publique Ed25519 doit correspondre à la clé privée du serveur et rester identique entre
+les versions. Le build de production échoue si elle est absente ou invalide. Les secrets
+`LICENSE_PRIVATE_KEY` et `LICENSE_ADMIN_KEY` ne sont pas embarqués dans l'application.
+
 ```bash
 npm run build:desktop:win
 ```
@@ -113,6 +119,25 @@ Pour obtenir l'installateur `.exe` complet, deux options :
 
 D'autres cibles sont disponibles via electron-builder (`--mac`, `--linux`) en ajoutant les
 sections correspondantes dans le champ `"build"` de `apps/desktop/package.json`.
+
+### Mise à jour et conservation de l'activation
+
+Les nouvelles installations et les nouveaux portables utilisent le dossier utilisateur
+`%APPDATA%\POS Algerie` sous Windows, indépendant de la version et du chemin du `.exe`.
+La base `db/pos-data.sqlite` contient l'ID du poste et la licence signée ; le sous-dossier
+`electron` conserve les sessions. L'installateur conserve les données à la désinstallation.
+
+Si un ancien portable possède déjà `POS-Data/db/pos-data.sqlite` à côté de son exécutable,
+ce dossier est réutilisé et son emplacement est mémorisé dans
+`%APPDATA%\POS Algerie\data-location.json`. Lancez d'abord la version portable corrigée à
+côté de ce dossier avant de passer à Setup. Les lancements suivants retrouvent ainsi le même
+poste et la même licence. Ce dossier doit rester accessible ; s'il manque, l'application
+refuse de créer silencieusement un nouveau poste. Les nouveaux portables utilisent désormais
+le profil utilisateur : copier uniquement leur `.exe` ne transporte pas les données.
+
+Si une ancienne mise à jour a déjà ouvert une base vide, il faut retrouver l'ancien dossier
+de données (ou sa sauvegarde) pour récupérer l'ID et l'activation. Ne supprimez pas l'ancienne
+base et ne régénérez pas les clés de signature lors d'une mise à jour.
 
 ## Déploiement production : desktop connecté à une API en ligne
 

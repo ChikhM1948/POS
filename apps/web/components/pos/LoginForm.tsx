@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { BrandMark } from '../BrandMark';
+import { PasswordInput } from '../PasswordInput';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
 import { LOCAL_MODE, fetchLocalInfo } from '../../lib/localMode';
@@ -241,17 +242,18 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
                 required
               />
             </label>
-            <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
-              {t('login.passwordLabel')}
-              <input
+            <div className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+              <label htmlFor="cashier-login-password">{t('login.passwordLabel')}</label>
+              <PasswordInput
+                id="cashier-login-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t('login.passwordPlaceholder')}
-                type="password"
+                autoComplete="current-password"
                 className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-brand-500/40"
                 required
               />
-            </label>
+            </div>
           </>
         )}
 

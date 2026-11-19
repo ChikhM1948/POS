@@ -2,6 +2,8 @@ export type Locale = 'fr' | 'ar';
 
 export interface TranslationDict {
   common: {
+    showPassword: string;
+    hidePassword: string;
     loading: string;
     cancel: string;
     close: string;
@@ -912,6 +914,8 @@ export interface TranslationDict {
 
 const fr: TranslationDict = {
   common: {
+    showPassword: 'Afficher le mot de passe',
+    hidePassword: 'Masquer le mot de passe',
     loading: 'Chargement…',
     cancel: 'Annuler',
     close: 'Fermer',
@@ -1829,6 +1833,8 @@ const fr: TranslationDict = {
 
 const ar: TranslationDict = {
   common: {
+    showPassword: 'إظهار كلمة المرور',
+    hidePassword: 'إخفاء كلمة المرور',
     loading: 'جارٍ التحميل…',
     cancel: 'إلغاء',
     close: 'إغلاق',

@@ -5,6 +5,7 @@ import fs from 'node:fs';
 // Alternative Windows/partagée réseau : passer par le spouleur (node-thermal-printer, driver "raw").
 import { startLocalServer } from './server';
 import { setupAutoUpdate, type Updater } from './updater';
+import { resolveDataDir } from './data-dir';
 
 /**
  * Chargés à la demande : si le module USB natif est indisponible, l'application démarre quand
@@ -31,30 +32,8 @@ let updater: Updater | null = null;
  */
 const RENDERER_PORT = 47623;
 
-/**
- * Dossier de données. Version portable : à côté de l'exécutable (`PORTABLE_EXECUTABLE_DIR`, défini
- * par electron-builder) pour que la base SQLite suive l'application (clé USB, copie de dossier) ;
- * repli sur le dossier utilisateur si l'emplacement n'est pas inscriptible.
- */
-function resolveDataDir(): string {
-  const candidates = [
-    process.env.PORTABLE_EXECUTABLE_DIR && path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'POS-Data'),
-    path.join(app.getPath('appData'), 'POS Algerie'),
-  ].filter((p): p is string => Boolean(p));
-  for (const dir of candidates) {
-    try {
-      fs.mkdirSync(dir, { recursive: true });
-      fs.accessSync(dir, fs.constants.W_OK);
-      return dir;
-    } catch {
-      /* essaie l'emplacement suivant */
-    }
-  }
-  throw new Error("Aucun dossier de données inscriptible.");
-}
-
 // Doit être fixé avant `ready` : le profil Chromium (localStorage, IndexedDB) rejoint les données.
-const dataDir = resolveDataDir();
+const dataDir = resolveDataDir(app.getPath('appData'), process.env.PORTABLE_EXECUTABLE_DIR);
 app.setPath('userData', path.join(dataDir, 'electron'));
 
 /**

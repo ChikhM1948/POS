@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { LOCAL_MODE } from '../../lib/localMode';
+import { PasswordInput } from '../../components/PasswordInput';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 const SESSION_KEY = 'pos:superadmin-token';
@@ -70,7 +71,7 @@ function Login({ onToken }: { onToken: (t: string) => void }) {
       <h1 className="text-2xl font-semibold tracking-[-0.025em] text-neutral-900">Super administrateur</h1>
       <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="username" placeholder="Email" required
         className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500/40 focus:bg-white" />
-      <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="current-password" placeholder="Mot de passe" required
+      <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" aria-label="Mot de passe" placeholder="Mot de passe" required
         className="rounded-xl border border-transparent bg-black/[0.05] px-3.5 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500/40 focus:bg-white" />
       {error && <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700" role="alert">{error}</p>}
       <button disabled={busy} className="rounded-md bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">

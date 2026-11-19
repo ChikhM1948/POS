@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useAdminAuth } from '../../lib/adminAuth';
 import { adminFetch } from '../../lib/adminApi';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
+import { PasswordInput } from '../PasswordInput';
 
 interface CloudStatus {
   configured: boolean;
@@ -95,9 +96,10 @@ export function CloudSyncPanel() {
           <label className="flex flex-col gap-1 text-neutral-700">{t('cloudSync.email')}
             <input required type="text" inputMode="email" autoComplete="username" autoCapitalize="none" dir="ltr" placeholder="email@exemple.dz / 0555 12 34 56" value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
           </label>
-          <label className="flex flex-col gap-1 text-neutral-700">{t('cloudSync.password')}
-            <input required type="password" dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
-          </label>
+          <div className="flex flex-col gap-1 text-neutral-700">
+            <label htmlFor="cloud-login-password">{t('cloudSync.password')}</label>
+            <PasswordInput id="cloud-login-password" required autoComplete="current-password" dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
+          </div>
           <p className="text-xs text-neutral-500">{t('cloudSync.passwordNote')}</p>
           {error && <p className="text-red-600">{error}</p>}
           <button disabled={busy} className="self-start rounded-lg bg-brand-600 px-4 py-2 font-medium text-white disabled:opacity-50">

@@ -4,6 +4,10 @@
 const esbuild = require('esbuild');
 const path = require('node:path');
 const fs = require('node:fs');
+const { licenseBuildConfig } = require('./license-build-config');
+
+// Valider avant de remplacer le dernier bundle fonctionnel.
+const define = licenseBuildConfig(path.join(__dirname, '../../../licensing.env'), process.env, process.argv.includes('--production'));
 
 const dist = path.join(__dirname, '../dist');
 fs.rmSync(dist, { recursive: true, force: true });
@@ -18,9 +22,7 @@ esbuild
     format: 'cjs',
     external: ['electron', 'better-sqlite3', 'escpos', 'escpos-usb'],
     // Clé publique de licence + URL du serveur figées dans l'exécutable (voir scripts/license-keygen.js).
-    define: Object.fromEntries(
-      ['POS_LICENSE_PUBLIC_KEY', 'POS_API_URL', 'POS_UPDATE_URL'].filter((k) => process.env[k]).map((k) => [`process.env.${k}`, JSON.stringify(process.env[k])]),
-    ),
+    define,
     logLevel: 'info',
   })
   .catch(() => process.exit(1));
