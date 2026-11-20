@@ -123,19 +123,25 @@ export const SaleCheckout = forwardRef<SaleCheckoutHandle, Props>(function SaleC
   }));
 
   return (
-    <div className="flex flex-col gap-3 border-t border-neutral-200 bg-neutral-100 p-4">
+    <div className="flex shrink-0 flex-col gap-3 border-t border-neutral-200 bg-neutral-50 p-4">
       <div className="panel-dark flex flex-col gap-1 rounded-2xl p-4">
-        <div className="flex items-baseline justify-between text-sm text-white/70">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm text-white/80">
           <span>{t('common.subtotal')}</span>
           <span>{formatDZD(totals.subtotalCents)}</span>
         </div>
-        <div className="flex items-baseline justify-between text-sm text-white/70">
+        {totals.discountTotalCents > 0 && (
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm text-signal-300">
+            <span>{t('pos.discountTotal')}</span>
+            <span className="tabular-nums">−{formatDZD(totals.discountTotalCents)}</span>
+          </div>
+        )}
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm text-white/80">
           <span>{t('common.tax')}</span>
           <span>{formatDZD(totals.taxTotalCents)}</span>
         </div>
-        <div className="flex items-baseline justify-between pt-2 font-display text-4xl font-bold tracking-tight text-white">
+        <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-white/20 pt-3 font-display text-3xl font-bold tracking-tight text-white">
           <span className="font-sans text-base font-medium text-signal-300">{t('common.total')}</span>
-          <span className="tabular-nums">{formatDZD(totals.grandTotalCents)}</span>
+          <span className="ms-auto tabular-nums [overflow-wrap:anywhere]">{formatDZD(totals.grandTotalCents)}</span>
         </div>
       </div>
 
@@ -159,7 +165,7 @@ export const SaleCheckout = forwardRef<SaleCheckoutHandle, Props>(function SaleC
         <button
           disabled={isBusy || cartLines.length === 0}
           onClick={handleCib}
-          className="flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex flex-wrap items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-2 py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <IconCreditCard className="h-5 w-5" />
           {processingMethod === 'cib' ? t('saleCheckout.processing') : 'CIB / Edahabia'}
@@ -168,7 +174,7 @@ export const SaleCheckout = forwardRef<SaleCheckoutHandle, Props>(function SaleC
         <button
           disabled={isBusy || cartLines.length === 0}
           onClick={() => setShowCreditModal(true)}
-          className="flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex flex-wrap items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-2 py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <IconWallet className="h-5 w-5" />
           {t('saleCheckout.credit')}

@@ -42,7 +42,7 @@ export function DiscountEditor({ quantity, unitPriceCents, minSellingPriceCents,
 
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)} className="flex items-center gap-1 text-xs font-medium text-neutral-500 hover:text-brand-700">
+      <button onClick={() => setOpen(true)} className="flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-medium text-neutral-600 hover:bg-white hover:text-brand-700">
         <IconMinus className="h-3 w-3" />
         {discountCents > 0 ? `-${formatDZD(discountCents)}` : t('discountEditor.button')}
       </button>
@@ -50,7 +50,7 @@ export function DiscountEditor({ quantity, unitPriceCents, minSellingPriceCents,
   }
 
   return (
-    <div className="absolute inset-x-3 top-full z-10 mt-1 flex flex-col gap-2 rounded-xl bg-white shadow-card p-3 shadow-popover">
+    <div className="flex w-full min-w-0 flex-col gap-2 rounded-xl border border-brand-200 bg-white p-3">
       <label className="flex flex-col gap-1 text-xs font-medium text-neutral-700">
         {t('discountEditor.label')}
         <input

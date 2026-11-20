@@ -49,6 +49,12 @@ export interface TranslationDict {
     backoffice: string;
     logout: string;
     searchPlaceholder: string;
+    clearSearch: string;
+    resetFilters: string;
+    results: string;
+    inCart: string;
+    addProduct: string;
+    discountTotal: string;
     noProductFound: string;
     noProductsSynced: string;
     noSearchResults: string;
@@ -59,6 +65,7 @@ export interface TranslationDict {
     demoFooter: string;
     cart: {
       title: string;
+      productCount: string;
       empty: string;
       perUnit: string;
       decrease: string;
@@ -961,6 +968,12 @@ const fr: TranslationDict = {
     backoffice: 'Back-office',
     logout: 'Déconnexion',
     searchPlaceholder: 'Scanner un code-barres ou rechercher un produit…',
+    clearSearch: 'Effacer la recherche',
+    resetFilters: 'Afficher tous les produits',
+    results: 'Produits affichés : {n}',
+    inCart: '{n} dans le panier',
+    addProduct: 'Ajouter {name} au panier',
+    discountTotal: 'Remises',
     noProductFound: 'Aucun produit pour « {value} »',
     noProductsSynced: "Aucun produit synchronisé. Vérifiez que l'API est démarrée et que le seed a été exécuté.",
     noSearchResults: 'Aucun produit ne correspond à cette recherche.',
@@ -971,6 +984,7 @@ const fr: TranslationDict = {
     demoFooter: 'Merci de votre visite !',
     cart: {
       title: 'Panier',
+      productCount: 'Produits : {n}',
       empty: 'Le panier est vide — sélectionnez un produit ou scannez un code-barres.',
       perUnit: '/ unité',
       decrease: 'Diminuer',
@@ -1880,6 +1894,12 @@ const ar: TranslationDict = {
     backoffice: 'الإدارة',
     logout: 'تسجيل الخروج',
     searchPlaceholder: 'امسح باركود أو ابحث عن منتج…',
+    clearSearch: 'مسح البحث',
+    resetFilters: 'عرض جميع المنتجات',
+    results: 'المنتجات المعروضة: {n}',
+    inCart: '{n} في السلة',
+    addProduct: 'إضافة {name} إلى السلة',
+    discountTotal: 'التخفيضات',
     noProductFound: 'لا يوجد منتج مطابق لـ « {value} »',
     noProductsSynced: 'لا يوجد أي منتج تمت مزامنته. تأكد من أن واجهة البرمجة (API) قيد التشغيل وأن البيانات الأولية تم إدخالها.',
     noSearchResults: 'لا يوجد منتج يطابق هذا البحث.',
@@ -1890,6 +1910,7 @@ const ar: TranslationDict = {
     demoFooter: 'شكرًا لزيارتكم!',
     cart: {
       title: 'السلة',
+      productCount: 'المنتجات: {n}',
       empty: 'السلة فارغة — اختر منتجًا أو امسح باركود.',
       perUnit: '/ الوحدة',
       decrease: 'إنقاص',

@@ -34,9 +34,9 @@ export function WeightModal({ name, unit, unitPriceCents, initialQuantity, onCan
         }}
         className="flex w-full max-w-sm flex-col sheet overflow-hidden rounded-2xl bg-white shadow-popover"
       >
-        <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4 text-neutral-900">
-          <p className="text-sm font-semibold">{t('weightModal.title', { name })}</p>
-          <button type="button" onClick={onCancel} className="rounded-lg p-1 bg-neutral-100 text-neutral-500 transition hover:bg-neutral-200 hover:text-neutral-900">
+        <div className="flex items-start justify-between gap-3 border-b border-neutral-100 px-5 py-4 text-neutral-900">
+          <p dir="auto" className="min-w-0 text-base font-semibold [overflow-wrap:anywhere]">{t('weightModal.title', { name })}</p>
+          <button type="button" onClick={onCancel} aria-label={t('common.close')} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500 transition hover:bg-neutral-200 hover:text-neutral-900">
             <IconX className="h-5 w-5" />
           </button>
         </div>
