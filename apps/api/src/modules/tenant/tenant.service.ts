@@ -1,4 +1,5 @@
 import { Tenant } from '../../models/Tenant';
+import { DEFAULT_ZAKAT_RATE_PERCENT, isValidZakatRate } from '@pos-dz/shared';
 import type { TenantSettingsDTO, UpdateTenantSettingsInput } from '@pos-dz/shared';
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
@@ -27,6 +28,7 @@ function toDTO(t: any): TenantSettingsDTO {
     phone: t.legal?.phone,
     legal: { address: t.legal?.address, rc: t.legal?.rc, nif: t.legal?.nif, nis: t.legal?.nis, ai: t.legal?.ai },
     taxRegime: t.legal?.taxRegime === 'ifu' ? 'ifu' : 'real',
+    zakatRatePercent: t.legal?.zakatRatePercent ?? DEFAULT_ZAKAT_RATE_PERCENT,
     syncEnabled: t.syncEnabled ?? true,
   };
 }
@@ -42,6 +44,9 @@ export async function updateTenantSettings(
 ): Promise<TenantSettingsDTO | null> {
   const invalid = validateBranding(input.branding);
   if (invalid) throw Object.assign(new Error(invalid), { status: 400 });
+  if (input.zakatRatePercent !== undefined && !isValidZakatRate(input.zakatRatePercent)) {
+    throw Object.assign(new Error('Le taux de Zakat doit être un nombre compris entre 0 et 100 %.'), { status: 400 });
+  }
   const $set: Record<string, unknown> = {};
   const $unset: Record<string, ''> = {};
   if (input.name !== undefined) $set.name = input.name.trim();
@@ -54,6 +59,7 @@ export async function updateTenantSettings(
   if (input.branding?.primaryColor !== undefined) $set['branding.primaryColor'] = input.branding.primaryColor;
   if (input.branding?.secondaryColor !== undefined) $set['branding.secondaryColor'] = input.branding.secondaryColor;
   if (input.taxRegime === 'ifu' || input.taxRegime === 'real') $set['legal.taxRegime'] = input.taxRegime;
+  if (input.zakatRatePercent !== undefined) $set['legal.zakatRatePercent'] = input.zakatRatePercent;
   if (input.syncEnabled !== undefined) $set.syncEnabled = input.syncEnabled;
 
   const tenant = await Tenant.findByIdAndUpdate(tenantId, { $set, ...(Object.keys($unset).length ? { $unset } : {}) }, { new: true }).lean();

@@ -542,6 +542,12 @@ export interface UpdateUserInput {
 
 // --- Back-office paramètres du commerce (branding) ---
 
+export const DEFAULT_ZAKAT_RATE_PERCENT = 2.5;
+
+export function isValidZakatRate(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
+}
+
 export interface TenantSettingsDTO {
   name: string;
   slug: string;
@@ -555,6 +561,8 @@ export interface TenantSettingsDTO {
   legal: TenantLegalInfo;
   /** Régime fiscal : détermine quelle déclaration s'applique (G12 pour l'IFU, G50 pour le réel). */
   taxRegime: TaxRegime;
+  /** Pourcentage appliqué à la valeur de vente du stock. Défaut : 2,5 %. */
+  zakatRatePercent?: number;
   /** true = synchronise en ligne, le commerce est accessible depuis le web ; false = local uniquement, aucune donnée ne quitte le poste. */
   syncEnabled: boolean;
 }
@@ -575,6 +583,7 @@ export interface UpdateTenantSettingsInput {
   phone?: string;
   legal?: TenantLegalInfo;
   taxRegime?: TaxRegime;
+  zakatRatePercent?: number;
   branding?: {
     logoUrl?: string;
     primaryColor?: string;

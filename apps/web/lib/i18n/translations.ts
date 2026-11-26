@@ -157,6 +157,7 @@ export interface TranslationDict {
       sales: string;
       reports: string;
       taxes: string;
+      zakat: string;
       documents: string;
       accounting: string;
       suppliers: string;
@@ -260,6 +261,24 @@ export interface TranslationDict {
     lowStock: string;
     outOfStock: string;
     movementHistory: string;
+  };
+  zakat: {
+    title: string;
+    description: string;
+    store: string;
+    refresh: string;
+    stockValue: string;
+    formula: string;
+    estimate: string;
+    rate: string;
+    rateLabel: string;
+    settingsFormula: string;
+    invalidRate: string;
+    editSettings: string;
+    scope: string;
+    details: string;
+    empty: string;
+    restricted: string;
   };
   stockMovement: {
     currentStock: string;
@@ -1076,6 +1095,7 @@ const fr: TranslationDict = {
       sales: 'Ventes',
       reports: 'Rapports',
       taxes: 'Déclarations',
+      zakat: 'Zakat',
       documents: 'Documents',
       accounting: 'Export comptable',
       suppliers: 'Fournisseurs',
@@ -1179,6 +1199,24 @@ const fr: TranslationDict = {
     lowStock: 'Stock faible',
     outOfStock: 'Rupture de stock',
     movementHistory: 'Ajouter du stock / historique',
+  },
+  zakat: {
+    title: 'Zakat du stock',
+    description: 'Le montant que rapporterait la vente de tous les produits disponibles aux prix de vente enregistrés.',
+    store: 'Boutique',
+    refresh: 'Actualiser',
+    stockValue: 'Valeur totale de vente du stock',
+    formula: 'Somme des quantités disponibles × prix de vente unitaires.',
+    estimate: 'Zakat estimée sur le stock',
+    rate: 'Valeur de vente du stock × {rate} %',
+    rateLabel: 'Taux de Zakat (%)',
+    settingsFormula: 'Formule : valeur de vente du stock × {rate} / 100. Saisissez un taux entre 0 et 100, puis enregistrez.',
+    invalidRate: 'Le taux de Zakat doit être un nombre compris entre 0 et 100 %.',
+    editSettings: 'Modifier le taux dans les paramètres',
+    scope: 'Estimation sur le stock actif à quantité positive uniquement, sous réserve du nisab et du hawl. Trésorerie, créances et dettes non incluses.',
+    details: 'Détail du stock pris en compte',
+    empty: 'Aucun produit disponible en stock pour cette sélection.',
+    restricted: 'Cette section est réservée aux administrateurs.',
   },
   stockMovement: {
     currentStock: 'stock actuel : {qty} {unit}',
@@ -2002,6 +2040,7 @@ const ar: TranslationDict = {
       sales: 'المبيعات',
       reports: 'التقارير',
       taxes: 'التصريحات',
+      zakat: 'الزكاة',
       documents: 'الوثائق',
       accounting: 'التصدير المحاسبي',
       suppliers: 'الموردون',
@@ -2105,6 +2144,24 @@ const ar: TranslationDict = {
     lowStock: 'مخزون منخفض',
     outOfStock: 'نفاد المخزون',
     movementHistory: 'إضافة مخزون / السجل',
+  },
+  zakat: {
+    title: 'زكاة المخزون',
+    description: 'المبلغ المتوقع تحصيله عند بيع جميع المنتجات المتوفرة بأسعار البيع المسجلة.',
+    store: 'المتجر',
+    refresh: 'تحديث',
+    stockValue: 'إجمالي قيمة بيع المخزون',
+    formula: 'مجموع الكميات المتوفرة × أسعار بيع الوحدات.',
+    estimate: 'الزكاة التقديرية على المخزون',
+    rate: 'قيمة بيع المخزون × {rate}٪',
+    rateLabel: 'نسبة الزكاة (٪)',
+    settingsFormula: 'الصيغة: قيمة بيع المخزون × {rate} / 100. أدخل نسبة بين 0 و100 ثم احفظ.',
+    invalidRate: 'يجب أن تكون نسبة الزكاة رقماً بين 0 و100٪.',
+    editSettings: 'تعديل النسبة في الإعدادات',
+    scope: 'تقدير للمنتجات النشطة ذات الكميات الموجبة فقط، مع مراعاة النصاب والحول. لا يشمل النقد والمستحقات والديون.',
+    details: 'تفاصيل المخزون المحتسب',
+    empty: 'لا توجد منتجات متوفرة في المخزون لهذا الاختيار.',
+    restricted: 'هذا القسم مخصص للمسؤولين.',
   },
   stockMovement: {
     currentStock: 'المخزون الحالي: {qty} {unit}',

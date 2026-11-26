@@ -4,6 +4,7 @@ import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useTranslation } from '../../lib/i18n/LanguageContext';
 import { HEX_RE, buildScale, contrastWithWhite } from '../../lib/branding';
 import type { TaxRegime, TenantSettingsDTO, UpdateTenantSettingsInput } from '@pos-dz/shared';
+import { DEFAULT_ZAKAT_RATE_PERCENT, isValidZakatRate } from '@pos-dz/shared';
 
 const MAX_LOGO_DIMENSION = 320;
 const MAX_LOGO_FILE_BYTES = 5 * 1024 * 1024;
@@ -58,6 +59,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
   const [primaryColor, setPrimaryColor] = useState(initial.branding.primaryColor);
   const [secondaryColor, setSecondaryColor] = useState(initial.branding.secondaryColor);
   const [taxRegime, setTaxRegime] = useState<TaxRegime>(initial.taxRegime ?? 'real');
+  const [zakatRate, setZakatRate] = useState(String(initial.zakatRatePercent ?? DEFAULT_ZAKAT_RATE_PERCENT));
   const [syncEnabled, setSyncEnabled] = useState(initial.syncEnabled);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +89,11 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
     e.preventDefault();
     setError(null);
     setSaved(false);
+    const zakatRatePercent = Number(zakatRate.replace(',', '.'));
+    if (!zakatRate.trim() || !isValidZakatRate(zakatRatePercent)) {
+      setError(t('zakat.invalidRate'));
+      return;
+    }
     if (!HEX_RE.test(primaryColor) || !HEX_RE.test(secondaryColor)) {
       setError(t('tenantSettings.invalidColor'));
       return;
@@ -99,6 +106,7 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
         legal: { address: legal.address.trim(), rc: legal.rc.trim(), nif: legal.nif.trim(), nis: legal.nis.trim(), ai: legal.ai.trim() },
         branding: { logoUrl /* '' = logo retiré : undefined serait ignoré par le serveur */, primaryColor, secondaryColor },
         taxRegime,
+        zakatRatePercent,
         syncEnabled,
       });
       setSaved(true);
@@ -174,6 +182,23 @@ export function TenantSettingsForm({ initial, onSubmit }: Props) {
           </select>
           <span className="text-xs font-normal text-neutral-500">{t('tenantSettings.taxRegimeHint')}</span>
         </label>
+      </fieldset>
+
+      <fieldset id="zakat-settings" className="scroll-mt-24 flex flex-col gap-3 rounded-lg border border-neutral-200 p-3">
+        <legend className="px-1 text-sm font-medium text-neutral-700">{t('zakat.title')}</legend>
+        <label className="flex flex-col gap-1 text-sm font-medium text-neutral-700">
+          {t('zakat.rateLabel')}
+          <input
+            type="text"
+            inputMode="decimal"
+            required
+            value={zakatRate}
+            onChange={(event) => { setZakatRate(event.target.value); setSaved(false); }}
+            aria-describedby="zakat-formula"
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-neutral-900 focus:border-brand-500"
+          />
+        </label>
+        <p id="zakat-formula" className="text-xs text-neutral-500">{t('zakat.settingsFormula', { rate: zakatRate || '—' })}</p>
       </fieldset>
 
       <fieldset className="flex flex-col gap-3 rounded-lg border border-neutral-200 p-3">

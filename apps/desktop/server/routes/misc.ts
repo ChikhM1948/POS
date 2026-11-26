@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import type { CreateUserInput, StoreDTO, TenantSettingsDTO, UpdateTenantSettingsInput, UpdateUserInput, UserDTO } from '@pos-dz/shared';
+import { DEFAULT_ZAKAT_RATE_PERCENT, isValidZakatRate } from '@pos-dz/shared';
 import { Ctx, HttpError, bool, handler, newId, nowIso, requireRole } from '../util';
 import { PERMISSION_VIEW_PURCHASE_PRICE } from '../constants';
 import { normalizeIdentifier } from '../identifier';
@@ -31,6 +32,7 @@ function tenantDTO(t: any): TenantSettingsDTO {
     phone: legal.phone,
     legal: { address: legal.address, rc: legal.rc, nif: legal.nif, nis: legal.nis, ai: legal.ai },
     taxRegime: legal.taxRegime === 'ifu' ? 'ifu' : 'real',
+    zakatRatePercent: legal.zakatRatePercent ?? DEFAULT_ZAKAT_RATE_PERCENT,
     syncEnabled: Boolean(t.sync_enabled),
   };
 }
@@ -48,6 +50,9 @@ export function tenantRouter({ db }: Ctx) {
   }));
   router.patch('/', requireRole('store_admin', 'super_admin'), handler((req, res) => {
     const input = (req.body ?? {}) as UpdateTenantSettingsInput;
+    if (input.zakatRatePercent !== undefined && !isValidZakatRate(input.zakatRatePercent)) {
+      throw new HttpError(400, 'Le taux de Zakat doit être un nombre compris entre 0 et 100 %.');
+    }
     const t: any = db.prepare('SELECT * FROM tenants WHERE id = ?').get(req.auth!.tenantId);
     if (!t) throw new HttpError(404, 'Commerce introuvable.');
     const branding = JSON.parse(t.branding);
@@ -63,6 +68,7 @@ export function tenantRouter({ db }: Ctx) {
       if (input.legal?.[k] !== undefined) legal[k] = input.legal[k]!.trim();
     }
     if (input.taxRegime === 'ifu' || input.taxRegime === 'real') legal.taxRegime = input.taxRegime;
+    if (input.zakatRatePercent !== undefined) legal.zakatRatePercent = input.zakatRatePercent;
     for (const k of ['logoUrl', 'primaryColor', 'secondaryColor'] as const) {
       if (input.branding?.[k] === undefined) continue;
       if (input.branding[k] === '') delete branding[k]; // '' = logo retiré
