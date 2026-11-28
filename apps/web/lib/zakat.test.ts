@@ -26,7 +26,7 @@ test('zakat : rejette les taux invalides côté saisie et calcul', () => {
 });
 
 test('zakat : valorise la quantité au prix de vente, indépendamment du prix d’achat', () => {
-  const balance = { ...product, purchasePriceCents: 5000 };
+  const balance = { ...product, costPriceCents: 5000 };
   assert.deepEqual(calculateStockZakat([balance]), { stockValueCents: 200000, zakatCents: 5000 });
 });
 
