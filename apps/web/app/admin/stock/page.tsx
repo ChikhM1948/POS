@@ -14,6 +14,7 @@ import type { StockBalanceDTO, StoreDTO } from '@pos-dz/shared';
 export default function StockPage() {
   const { t, locale } = useTranslation();
   const { session } = useAdminAuth();
+  const canViewCostPrice = session ? session.role !== 'cashier' || session.canViewPurchasePrice === true : false;
   const [stores, setStores] = useState<StoreDTO[]>([]);
   const [storeId, setStoreId] = useState('');
   const [balances, setBalances] = useState<StockBalanceDTO[]>([]);
@@ -146,6 +147,7 @@ export default function StockPage() {
               <th className="px-4 py-3">{t('products.tableProduct')}</th>
               <th className="px-4 py-3">{t('stock.tableCurrent')}</th>
               <th className="px-4 py-3">{t('stock.tablePrice')}</th>
+              {canViewCostPrice && <th className="px-4 py-3">{t('stock.tablePurchasePrice')}</th>}
               <th className="px-4 py-3">{t('stock.tableValue')}</th>
               <th className="px-4 py-3">{t('stock.tableThreshold')}</th>
               <th className="px-4 py-3"></th>
@@ -167,6 +169,7 @@ export default function StockPage() {
                     {isLow && <span className="ms-2 rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{t('stock.lowStock')}</span>}
                   </td>
                   <td className="whitespace-nowrap px-4 py-2.5 text-neutral-600">{formatCurrency(b.sellingPriceCents, locale)}</td>
+                  {canViewCostPrice && <td className="whitespace-nowrap px-4 py-2.5 text-neutral-600">{formatCurrency(b.costPriceCents ?? 0, locale)}</td>}
                   <td className="whitespace-nowrap px-4 py-2.5 font-medium text-neutral-900">{formatCurrency(stockValueCents(b), locale)}</td>
                   <td className="px-4 py-2.5 text-neutral-600">{b.lowStockThreshold ?? '—'}</td>
                   <td className="px-4 py-2.5 text-end">
@@ -178,11 +181,11 @@ export default function StockPage() {
               );
             })}
             {loading && (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-neutral-500">{t('common.loading')}</td></tr>
+              <tr><td colSpan={canViewCostPrice ? 7 : 6} className="px-4 py-6 text-center text-neutral-500">{t('common.loading')}</td></tr>
             )}
             {!loading && !error && filteredBalances.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-neutral-500">
+                <td colSpan={canViewCostPrice ? 7 : 6} className="px-4 py-6 text-center text-neutral-500">
                   {balances.length === 0 ? t('products.empty') : t('stock.noResults')}
                 </td>
               </tr>

@@ -146,6 +146,7 @@ export default function SalesPage() {
                 <th className="py-1.5">{t('sales.tableItem')}</th>
                 <th className="py-1.5">{t('sales.tableQty')}</th>
                 <th className="py-1.5">{t('sales.tableUnitPrice')}</th>
+                <th className="py-1.5">{t('sales.tablePurchasePrice')}</th>
                 <th className="py-1.5">{t('sales.tableTax')}</th>
                 <th className="py-1.5 text-end">{t('common.total')}</th>
               </tr>
@@ -156,6 +157,7 @@ export default function SalesPage() {
                   <td className="py-1.5">{l.name.fr}</td>
                   <td className="py-1.5">{l.quantity}</td>
                   <td className="py-1.5">{formatDZD(l.unitPriceCents)}</td>
+                  <td className="py-1.5">{formatDZD(l.costPriceCents)}</td>
                   <td className="py-1.5">{l.taxRate}%</td>
                   <td className="py-1.5 text-end">{formatDZD(l.lineTotalCents)}</td>
                 </tr>

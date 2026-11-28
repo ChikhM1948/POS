@@ -46,6 +46,9 @@ export function stockRouter({ db }: Ctx) {
       sku: p.sku,
       barcode: p.barcode ?? undefined,
       sellingPriceCents: p.selling_price_cents,
+      ...(req.auth!.role !== 'cashier' || Boolean(req.auth!.canViewPurchasePrice)
+        ? { costPriceCents: p.cost_price_cents ?? 0 }
+        : {}),
       name: { fr: p.name_fr, ar: p.name_ar ?? undefined },
       unit: p.unit,
       isPerishable: Boolean(p.is_perishable),

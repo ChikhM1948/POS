@@ -164,6 +164,8 @@ export interface StockBalanceDTO {
   sku: string;
   barcode?: string;
   sellingPriceCents: number;
+  /** Coût d'achat unitaire courant, visible uniquement aux rôles autorisés. */
+  costPriceCents?: number;
   name: LocalizedText;
   unit: string;
   isPerishable: boolean;

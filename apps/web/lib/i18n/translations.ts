@@ -252,6 +252,7 @@ export interface TranslationDict {
     searchLabel: string;
     searchPlaceholder: string;
     tablePrice: string;
+    tablePurchasePrice: string;
     tableValue: string;
     totalValue: string;
     totalValueHint: string;
@@ -325,6 +326,7 @@ export interface TranslationDict {
     tableItem: string;
     tableQty: string;
     tableUnitPrice: string;
+    tablePurchasePrice: string;
     tableTax: string;
     subtotalLine: string;
     taxLine: string;
@@ -1190,6 +1192,7 @@ const fr: TranslationDict = {
     searchLabel: 'Rechercher un produit',
     searchPlaceholder: 'Nom, référence ou code-barres…',
     tablePrice: 'Prix de vente unitaire',
+    tablePurchasePrice: "Prix d'achat unitaire",
     tableValue: 'Valeur du stock',
     totalValue: 'Valeur totale des produits affichés',
     totalValueHint: 'Somme des quantités × prix de vente unitaires, selon les filtres actifs.',
@@ -1263,6 +1266,7 @@ const fr: TranslationDict = {
     tableItem: 'Article',
     tableQty: 'Qté',
     tableUnitPrice: 'PU',
+    tablePurchasePrice: "Prix d'achat",
     tableTax: 'TVA',
     subtotalLine: 'Sous-total : {amount}',
     taxLine: 'TVA : {amount}',
@@ -2135,6 +2139,7 @@ const ar: TranslationDict = {
     searchLabel: 'البحث عن منتج',
     searchPlaceholder: 'الاسم أو المرجع أو الباركود…',
     tablePrice: 'سعر بيع الوحدة',
+    tablePurchasePrice: 'سعر شراء الوحدة',
     tableValue: 'قيمة المخزون',
     totalValue: 'القيمة الإجمالية للمنتجات المعروضة',
     totalValueHint: 'مجموع الكميات × أسعار بيع الوحدات، حسب عوامل التصفية الحالية.',
@@ -2208,6 +2213,7 @@ const ar: TranslationDict = {
     tableItem: 'الصنف',
     tableQty: 'الكمية',
     tableUnitPrice: 'سعر الوحدة',
+    tablePurchasePrice: 'سعر الشراء',
     tableTax: 'الضريبة',
     subtotalLine: 'المجموع الفرعي: {amount}',
     taxLine: 'الضريبة: {amount}',

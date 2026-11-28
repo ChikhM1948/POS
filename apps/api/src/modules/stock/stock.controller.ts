@@ -11,7 +11,8 @@ stockRouter.get('/balances', asyncHandler(async (req: AuthenticatedRequest, res:
   const { storeId } = req.query as { storeId?: string };
   if (!storeId) return res.status(400).json({ error: 'storeId est requis.' });
 
-  const balances = await getStockBalances(req.auth!.tenantId, storeId);
+  const canViewPurchasePrice = req.auth!.role !== 'cashier' || Boolean(req.auth!.canViewPurchasePrice);
+  const balances = await getStockBalances(req.auth!.tenantId, storeId, canViewPurchasePrice);
   res.json({ balances });
 }));
 

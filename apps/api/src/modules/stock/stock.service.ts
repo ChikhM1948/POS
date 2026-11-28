@@ -12,7 +12,7 @@ import type { StockBalanceDTO, StockMovementDTO, CreateStockMovementInput, Creat
  * volume, ce total peut être matérialisé dans une collection de cache recalculable ; à ce stade
  * l'agrégation directe reste largement assez rapide et évite tout risque de désynchronisation.
  */
-export async function getStockBalances(tenantId: string, storeId: string): Promise<StockBalanceDTO[]> {
+export async function getStockBalances(tenantId: string, storeId: string, canViewPurchasePrice = true): Promise<StockBalanceDTO[]> {
   const tenantObjectId = new Types.ObjectId(tenantId);
   const storeObjectId = new Types.ObjectId(storeId);
 
@@ -31,6 +31,7 @@ export async function getStockBalances(tenantId: string, storeId: string): Promi
     sku: p.sku,
     barcode: p.barcode,
     sellingPriceCents: p.sellingPriceCents,
+    ...(canViewPurchasePrice ? { costPriceCents: p.costPriceCents ?? 0 } : {}),
     name: p.name,
     unit: p.unit,
     isPerishable: p.isPerishable,
